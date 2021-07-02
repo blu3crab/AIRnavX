@@ -29,11 +29,12 @@ class SenseFragment : Fragment(), SensorEventListener {
     private lateinit var sensorManager: SensorManager
     private val accelerometerReading = FloatArray(3)
     private val magnetometerReading = FloatArray(3)
-    //////////////////
 
     private val rotationMatrix = FloatArray(9)
     private val orientationAngles = FloatArray(3)
     private val orientationDegrees = FloatArray(3)
+    //////////////////
+    private var soundMeter = SoundMeter()
 
 
     private lateinit var senseViewModel: SenseViewModel
@@ -153,9 +154,15 @@ class SenseFragment : Fragment(), SensorEventListener {
 
         updateOrientationAngles()
 
-//        val axisX: Float = event.values[0]
-//        val axisY: Float = event.values[1]
-//        val axisZ: Float = event.values[2]
+        // capture decibel level
+        if (soundMeter != null) {
+        //soundMeter?.let {
+            soundMeter.start()
+            var amplitude = soundMeter.amplitude
+            Log.d(TAG, "onSensorChanged soundMeter.amplitude->$amplitude")
+            soundMeter.stop()
+        }
+        else Log.d(TAG, "onSensorChanged soundMeter NULL")
 
     }
 
@@ -169,22 +176,22 @@ class SenseFragment : Fragment(), SensorEventListener {
             accelerometerReading,
             magnetometerReading
         )
-
         // "rotationMatrix" now has up-to-date information.
 
         SensorManager.getOrientation(rotationMatrix, orientationAngles)
-
         // "orientationAngles" now has up-to-date information.
 
         //Log.d(TAG, "updateOrientationAngles rotationMatrix->" + rotationMatrix.contentToString())
         Log.d(TAG, "updateOrientationAngles orientationAngles->" + orientationAngles.contentToString())
 
+        // convert orientation angles (radians) to degrees
         for ((index, angle) in orientationAngles.withIndex()) {
             orientationDegrees[index] = (orientationAngles[index] * (180/ PI)).toFloat()
-            orientationDegrees[index] = orientationAngles[index] * 57.2958f
+//            orientationDegrees[index] = orientationAngles[index] * 57.2958f
         }
         Log.d(TAG, "updateOrientationAngles orientationDegrees->" + orientationDegrees.contentToString())
 
+        // shift orientation degrees to camera angle - 0=parallel to earth, 90=perpendicular to earth
         senseViewModel.editCameraAngle.value = 90 + orientationDegrees[1].toInt()   // adjust neg angles to 0(parallel to earth) to 90(flat, straight up)
         //senseViewModel.editCameraAngle.value = (orientationDegrees[1].toInt() * -1)
         Log.d(TAG, "updateOrientationAngles editCameraAngle PITCH->" + senseViewModel.editCameraAngle.value)
@@ -194,8 +201,6 @@ class SenseFragment : Fragment(), SensorEventListener {
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
 //        updateOrientationAngles()
     }
-
-
 
 }
 
