@@ -1,10 +1,13 @@
 package com.ahandyapp.airnavx.ui.sense
 
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager.*
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
+import android.media.MediaRecorder
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -14,12 +17,14 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.TextView
+import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.ahandyapp.airnavx.databinding.FragmentSenseBinding
-import java.util.*
+import java.io.File
 import kotlin.math.PI
+
 
 class SenseFragment : Fragment(), SensorEventListener {
 
@@ -35,6 +40,10 @@ class SenseFragment : Fragment(), SensorEventListener {
     private val orientationDegrees = FloatArray(3)
     //////////////////
     private var soundMeter = SoundMeter()
+    private val REQUEST_RECORD_AUDIO_PERMISSION = 200
+//    private var recorder: MediaRecorder? = null
+//    private var recorderStarted = false
+
 
 
     private lateinit var senseViewModel: SenseViewModel
@@ -132,6 +141,11 @@ class SenseFragment : Fragment(), SensorEventListener {
                 SensorManager.SENSOR_DELAY_UI * 1000 * 1000
             )
         }
+        if (isPermissionAudioGranted()) {
+            // start sound meter
+            this.context?.let { soundMeter.start(it) }
+            Log.d(TAG, "onSensorChanged soundMeter started.")
+        }
     }
 
     override fun onPause() {
@@ -139,6 +153,9 @@ class SenseFragment : Fragment(), SensorEventListener {
 
         // Don't receive any more updates from either sensor.
         sensorManager.unregisterListener(this)
+        // stop sound meter
+        soundMeter.stop()
+
     }
 
     // Get readings from accelerometer and magnetometer. To simplify calculations,
@@ -154,15 +171,12 @@ class SenseFragment : Fragment(), SensorEventListener {
 
         updateOrientationAngles()
 
-        // capture decibel level
-        if (soundMeter != null) {
-        //soundMeter?.let {
-            soundMeter.start()
+        if (isPermissionAudioGranted()) {
+            // get amplitude
             var amplitude = soundMeter.amplitude
-            Log.d(TAG, "onSensorChanged soundMeter.amplitude->$amplitude")
-            soundMeter.stop()
+            var db = soundMeter.deriveDecibel()
+            Log.d(TAG, "onSensorChanged soundMeter.amplitude->$amplitude, db->$db")
         }
-        else Log.d(TAG, "onSensorChanged soundMeter NULL")
 
     }
 
@@ -201,6 +215,74 @@ class SenseFragment : Fragment(), SensorEventListener {
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
 //        updateOrientationAngles()
     }
+    //////////////////////
+    // permissions
+    fun isPermissionAudioGranted(): Boolean {
+        if (this.context?.let { ActivityCompat.checkSelfPermission(it, Manifest.permission.RECORD_AUDIO) }
+            != PERMISSION_GRANTED
+        ) {
+            this.activity?.let {
+                ActivityCompat.requestPermissions(
+//                    it, arrayOf(Manifest.permission.RECORD_AUDIO, Manifest.permission.WRITE_EXTERNAL_STORAGE),
+                    it, arrayOf(Manifest.permission.RECORD_AUDIO),
+                    REQUEST_RECORD_AUDIO_PERMISSION
+                )
+            }
+        } else {
+            Log.d(TAG, "onRequestPermissionAudio Manifest.permission.RECORD_AUDIO granted.")
+            return true
+        }
+        Log.d(TAG, "onRequestPermissionAudio Manifest.permission.RECORD_AUDIO denied!")
+        return false
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int, permissions: Array<String?>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == REQUEST_RECORD_AUDIO_PERMISSION) {
+            if (grantResults[0] == PERMISSION_GRANTED) {
+                Log.d(TAG, "onRequestPermissionsResult Manifest.permission.RECORD_AUDIO granted.")
+            } else {
+                Log.d(TAG, "onRequestPermissionsResult Manifest.permission.RECORD_AUDIO denied!")
+            }
+        }
+    }
+
+//    //////////////////////////////////////
+//    fun start(): Boolean {
+//        val cacheDirectory: File? = this.requireContext().externalCacheDir
+//        try {
+//            if (recorder == null) {
+//                recorder = MediaRecorder()
+//                recorder!!.setAudioSource(MediaRecorder.AudioSource.MIC)
+//                recorder!!.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP)
+//                recorder!!.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB)
+//                recorder!!.setOutputFile("${cacheDirectory}/test.3gp")
+//                recorder!!.prepare()
+////                Thread.sleep(10000)
+//                recorder!!.start()
+//                recorderStarted = true
+//                return recorderStarted
+//            }
+//        }
+//        catch (e: Exception) {
+//            Log.e(TAG, "SoundMeter exception ${e.message}")
+//        }
+//        return recorderStarted
+//    }
+//
+//    fun stop() {
+//        if (recorder != null) {
+//            recorder!!.stop()
+//            recorder!!.release()
+//            recorder = null
+//        }
+//    }
+//
+//    val amplitude: Double
+//        get() = if (recorder != null) recorder!!.maxAmplitude.toDouble() else 0.0
 
 }
 
