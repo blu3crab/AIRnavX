@@ -24,6 +24,8 @@ import androidx.lifecycle.ViewModelProvider
 import com.ahandyapp.airnavx.databinding.FragmentSenseBinding
 import java.io.File
 import kotlin.math.PI
+import kotlin.math.log10
+import kotlin.math.truncate
 
 
 class SenseFragment : Fragment(), SensorEventListener {
@@ -72,6 +74,10 @@ class SenseFragment : Fragment(), SensorEventListener {
         val editTextAngle: EditText = binding.editCameraAngle
         senseViewModel.editCameraAngle.observe(viewLifecycleOwner, Observer {
             editTextAngle.text = it.toString().toEditable()
+        })
+        val editTextDecibel: EditText = binding.editDecibelLevel
+        senseViewModel.editDecibelLevel.observe(viewLifecycleOwner, Observer {
+            editTextDecibel.text = it.toString().toEditable()
         })
 
         editTextAngle.addTextChangedListener(object : TextWatcher {
@@ -174,10 +180,25 @@ class SenseFragment : Fragment(), SensorEventListener {
         if (isPermissionAudioGranted()) {
             // get amplitude
             var amplitude = soundMeter.amplitude
-            var db = soundMeter.deriveDecibel()
-            Log.d(TAG, "onSensorChanged soundMeter.amplitude->$amplitude, db->$db")
+//            var db = soundMeter.deriveDecibel(32767.0)
+//            Log.d(TAG, "onSensorChanged soundMeter.deriveDecibel 32767->$amplitude, db->$db")
+//            var db = soundMeter.deriveDecibel(65534.0)
+//            Log.d(TAG, "onSensorChanged soundMeter.deriveDecibel 65534->$amplitude, db->$db")
+//            var db = soundMeter.deriveDecibel(0.2)
+//            var db = deriveDecibel(amplitude, 0.2)
+            var db = deriveDecibel(amplitude, 2.7)
+            Log.d(TAG, "onSensorChanged soundMeter.deriveDecibel 2.7->${amplitude.toString()}, db->${db.toString()}")
+            if (db < 0.0) db = 0.0
+            db = truncate(db)
+            senseViewModel.editDecibelLevel.value = db
         }
 
+    }
+    fun deriveDecibel(amplitude: Double, ref:Double): Double {
+        val maxAmplScaled: Double = amplitude / ref
+//        val maxAmplScaled: Double = amplitude
+        val db: Double = 20 * log10(maxAmplScaled)
+        return db
     }
 
     // Compute the three orientation angles based on the most recent readings from

@@ -47,10 +47,10 @@ class SoundMeter {
     val amp: Int
         get() = if (recorder != null) recorder!!.maxAmplitude else 0
 
-    fun deriveDecibel(): Double {
-        val maxAmplScaled: Double = amplitude / 32767.0
-//        val maxAmplScaled: Double = amplitude
-        val db: Double = 20 * log10(maxAmplScaled)
-        return db
-    }
+//    fun deriveDecibel(ref:Double): Double {
+//        val maxAmplScaled: Double = amplitude / ref
+////        val maxAmplScaled: Double = amplitude
+//        val db: Double = 20 * log10(maxAmplScaled)
+//        return db
+//    }
 }

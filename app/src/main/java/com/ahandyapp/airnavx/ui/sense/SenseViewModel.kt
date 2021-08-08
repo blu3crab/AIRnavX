@@ -17,4 +17,9 @@ class SenseViewModel : ViewModel() {
     }
     var editCameraAngle: MutableLiveData<Int> = _editCameraAngle
 
+    private var _editDecibelLevel = MutableLiveData<Double>().apply {
+        value = 0.0
+    }
+    var editDecibelLevel: MutableLiveData<Double> = _editDecibelLevel
+
 }
