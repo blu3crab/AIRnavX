@@ -105,32 +105,27 @@ class SenseFragment : Fragment(), SensorEventListener {
 
         //////////////////
         // sensor listener
-        //        sensorManager = activity?.getSystemService(Context.SENSOR_SERVICE) as SensorManager
         sensorManager = activity?.getSystemService(Context.SENSOR_SERVICE) as SensorManager
         //////////////////
 
         return root
     }
 
+    fun String.toEditable(): Editable =  Editable.Factory.getInstance().newEditable(this)
+
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
     }
-
-    fun String.toEditable(): Editable =  Editable.Factory.getInstance().newEditable(this)
 
     //////////////////
     // sensor listener
     override fun onResume() {
         super.onResume()
 
-        // Get updates from the accelerometer and magnetometer at a constant rate.
-        // To make batch operations more efficient and reduce power consumption,
-        // provide support for delaying updates to the application.
-        //
-        // In this example, the sensor reporting delay is small enough such that
-        // the application receives an update before the system checks the sensor
-        // readings again.
+        // get updates from the accelerometer and magnetometer at a constant rate.
+        // https://developer.android.com/guide/topics/sensors/sensors_position
+        // https://developer.android.com/reference/android/hardware/SensorEventListener
         sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)?.also { accelerometer ->
             sensorManager.registerListener(
                 this,
@@ -161,7 +156,6 @@ class SenseFragment : Fragment(), SensorEventListener {
         sensorManager.unregisterListener(this)
         // stop sound meter
         soundMeter.stop()
-
     }
 
     // Get readings from accelerometer and magnetometer. To simplify calculations,
@@ -178,29 +172,14 @@ class SenseFragment : Fragment(), SensorEventListener {
         updateOrientationAngles()
 
         if (isPermissionAudioGranted()) {
-            // get amplitude
-            var amplitude = soundMeter.amplitude
-//            var db = soundMeter.deriveDecibel(32767.0)
-//            Log.d(TAG, "onSensorChanged soundMeter.deriveDecibel 32767->$amplitude, db->$db")
-//            var db = soundMeter.deriveDecibel(65534.0)
-//            Log.d(TAG, "onSensorChanged soundMeter.deriveDecibel 65534->$amplitude, db->$db")
-//            var db = soundMeter.deriveDecibel(0.2)
-//            var db = deriveDecibel(amplitude, 0.2)
-            var db = deriveDecibel(amplitude, 2.7)
-            Log.d(TAG, "onSensorChanged soundMeter.deriveDecibel 2.7->${amplitude.toString()}, db->${db.toString()}")
+            var db = soundMeter.deriveDecibel()
+            Log.d(TAG, "onSensorChanged soundMeter.deriveDecibel db->${db.toString()}")
             if (db < 0.0) db = 0.0
             db = truncate(db)
             senseViewModel.editDecibelLevel.value = db
         }
 
     }
-    fun deriveDecibel(amplitude: Double, ref:Double): Double {
-        val maxAmplScaled: Double = amplitude / ref
-//        val maxAmplScaled: Double = amplitude
-        val db: Double = 20 * log10(maxAmplScaled)
-        return db
-    }
-
     // Compute the three orientation angles based on the most recent readings from
     // the device's accelerometer and magnetometer.
     fun updateOrientationAngles() {
@@ -221,8 +200,8 @@ class SenseFragment : Fragment(), SensorEventListener {
 
         // convert orientation angles (radians) to degrees
         for ((index, angle) in orientationAngles.withIndex()) {
+            // orientationDegrees[index] = orientationAngles[index] * 57.2958f
             orientationDegrees[index] = (orientationAngles[index] * (180/ PI)).toFloat()
-//            orientationDegrees[index] = orientationAngles[index] * 57.2958f
         }
         Log.d(TAG, "updateOrientationAngles orientationDegrees->" + orientationDegrees.contentToString())
 
@@ -270,40 +249,5 @@ class SenseFragment : Fragment(), SensorEventListener {
             }
         }
     }
-
-//    //////////////////////////////////////
-//    fun start(): Boolean {
-//        val cacheDirectory: File? = this.requireContext().externalCacheDir
-//        try {
-//            if (recorder == null) {
-//                recorder = MediaRecorder()
-//                recorder!!.setAudioSource(MediaRecorder.AudioSource.MIC)
-//                recorder!!.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP)
-//                recorder!!.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB)
-//                recorder!!.setOutputFile("${cacheDirectory}/test.3gp")
-//                recorder!!.prepare()
-////                Thread.sleep(10000)
-//                recorder!!.start()
-//                recorderStarted = true
-//                return recorderStarted
-//            }
-//        }
-//        catch (e: Exception) {
-//            Log.e(TAG, "SoundMeter exception ${e.message}")
-//        }
-//        return recorderStarted
-//    }
-//
-//    fun stop() {
-//        if (recorder != null) {
-//            recorder!!.stop()
-//            recorder!!.release()
-//            recorder = null
-//        }
-//    }
-//
-//    val amplitude: Double
-//        get() = if (recorder != null) recorder!!.maxAmplitude.toDouble() else 0.0
-
 }
 

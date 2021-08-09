@@ -7,6 +7,9 @@ import java.io.File
 import kotlin.math.log10
 
 class SoundMeter {
+    // https://developer.android.com/guide/topics/media/mediarecorder
+    // https://developer.android.com/reference/android/media/MediaRecorder
+    // https://developer.android.com/reference/android/media/MediaRecorder#getMaxAmplitude()
     private val TAG = "SoundMeter"
     private var recorder: MediaRecorder? = null
     private var recorderStarted = false
@@ -47,10 +50,11 @@ class SoundMeter {
     val amp: Int
         get() = if (recorder != null) recorder!!.maxAmplitude else 0
 
-//    fun deriveDecibel(ref:Double): Double {
-//        val maxAmplScaled: Double = amplitude / ref
-////        val maxAmplScaled: Double = amplitude
-//        val db: Double = 20 * log10(maxAmplScaled)
-//        return db
-//    }
+    fun deriveDecibel(): Double {
+        val ref = 2.7
+        val maxAmplScaled: Double = amplitude / ref
+        val db: Double = 20 * log10(maxAmplScaled)
+        Log.d(TAG, "SoundMeter.deriveDecibel ref->${ref.toString()}, amp->${amplitude.toString()}, db->${db.toString()}")
+        return db
+    }
 }
