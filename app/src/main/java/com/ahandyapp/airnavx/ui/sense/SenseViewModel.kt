@@ -1,6 +1,6 @@
+///////////////////////////////////////////////////////////////////////////////
 package com.ahandyapp.airnavx.ui.sense
 
-import android.text.Editable
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -21,5 +21,5 @@ class SenseViewModel : ViewModel() {
         value = 0.0
     }
     var editDecibelLevel: MutableLiveData<Double> = _editDecibelLevel
-
 }
+///////////////////////////////////////////////////////////////////////////////

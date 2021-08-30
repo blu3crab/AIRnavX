@@ -1,6 +1,7 @@
+///////////////////////////////////////////////////////////////////////////////
 package com.ahandyapp.airnavx.ui.sense
 
-import android.app.Activity
+
 import android.content.Context
 import android.hardware.Sensor
 import android.hardware.SensorEvent
@@ -9,7 +10,6 @@ import android.hardware.SensorManager
 import android.util.Log
 import androidx.fragment.app.FragmentActivity
 import kotlin.math.PI
-import kotlin.math.truncate
 
 class AngleMeter: SensorEventListener {
 
@@ -122,5 +122,5 @@ class AngleMeter: SensorEventListener {
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
 //        updateOrientationAngles()
     }
-
 }
+///////////////////////////////////////////////////////////////////////////////

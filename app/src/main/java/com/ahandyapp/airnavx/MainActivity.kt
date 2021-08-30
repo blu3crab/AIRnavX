@@ -1,10 +1,6 @@
+///////////////////////////////////////////////////////////////////////////////
 package com.ahandyapp.airnavx
 
-import android.content.Context
-import android.hardware.Sensor
-import android.hardware.SensorEvent
-import android.hardware.SensorEventListener
-import android.hardware.SensorManager
 import android.os.Bundle
 import android.view.Menu
 import com.google.android.material.snackbar.Snackbar
@@ -18,10 +14,9 @@ import androidx.drawerlayout.widget.DrawerLayout
 import androidx.appcompat.app.AppCompatActivity
 import com.ahandyapp.airnavx.databinding.ActivityMainBinding
 
-class MainActivity : AppCompatActivity(), SensorEventListener {
+class MainActivity : AppCompatActivity() {
 
     private val TAG = "MainActivity"
-    private lateinit var sensorManager: SensorManager
 
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var binding: ActivityMainBinding
@@ -50,12 +45,6 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
         )
         setupActionBarWithNavController(navController, appBarConfiguration)
         navView.setupWithNavController(navController)
-
-        //////////////////
-        // sensor listener
-        //        sensorManager = activity?.getSystemService(Context.SENSOR_SERVICE) as SensorManager
-        sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
-
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -68,14 +57,5 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
         val navController = findNavController(R.id.nav_host_fragment_content_main)
         return navController.navigateUp(appBarConfiguration) || super.onSupportNavigateUp()
     }
-
-    //////////////////
-    // sensor listener
-    override fun onSensorChanged(event: SensorEvent?) {
-        TODO("Not yet implemented")
-    }
-
-    override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
-        TODO("Not yet implemented")
-    }
 }
+///////////////////////////////////////////////////////////////////////////////
