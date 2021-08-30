@@ -28,18 +28,21 @@ import kotlin.math.log10
 import kotlin.math.truncate
 
 
-class SenseFragment : Fragment(), SensorEventListener {
+class SenseFragment : Fragment() {
+    //class SenseFragment : Fragment(), SensorEventListener {
 
     private val TAG = "SenseFragment"
-    //////////////////
-    // sensor listener
-    private lateinit var sensorManager: SensorManager
-    private val accelerometerReading = FloatArray(3)
-    private val magnetometerReading = FloatArray(3)
+//    //////////////////
+//    // sensor listener
+//    private lateinit var sensorManager: SensorManager
+//    private val accelerometerReading = FloatArray(3)
+//    private val magnetometerReading = FloatArray(3)
+//
+//    private val rotationMatrix = FloatArray(9)
+//    private val orientationAngles = FloatArray(3)
+//    private val orientationDegrees = FloatArray(3)
+    private var angleMeter = AngleMeter()
 
-    private val rotationMatrix = FloatArray(9)
-    private val orientationAngles = FloatArray(3)
-    private val orientationDegrees = FloatArray(3)
     //////////////////
     private var soundMeter = SoundMeter()
     private val REQUEST_RECORD_AUDIO_PERMISSION = 200
@@ -105,7 +108,8 @@ class SenseFragment : Fragment(), SensorEventListener {
 
         //////////////////
         // sensor listener
-        sensorManager = activity?.getSystemService(Context.SENSOR_SERVICE) as SensorManager
+        //sensorManager = activity?.getSystemService(Context.SENSOR_SERVICE) as SensorManager
+        angleMeter.create(requireActivity())
         //////////////////
 
         return root
@@ -123,25 +127,26 @@ class SenseFragment : Fragment(), SensorEventListener {
     override fun onResume() {
         super.onResume()
 
-        // get updates from the accelerometer and magnetometer at a constant rate.
-        // https://developer.android.com/guide/topics/sensors/sensors_position
-        // https://developer.android.com/reference/android/hardware/SensorEventListener
-        sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)?.also { accelerometer ->
-            sensorManager.registerListener(
-                this,
-                accelerometer,
-                SensorManager.SENSOR_DELAY_NORMAL * 1000 * 1000,    // 3 secs
-                SensorManager.SENSOR_DELAY_UI * 1000 * 1000       // 2 secs
-            )
-        }
-        sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)?.also { magneticField ->
-            sensorManager.registerListener(
-                this,
-                magneticField,
-                SensorManager.SENSOR_DELAY_NORMAL * 1000 * 1000,
-                SensorManager.SENSOR_DELAY_UI * 1000 * 1000
-            )
-        }
+        angleMeter.start(senseViewModel)
+//        // get updates from the accelerometer and magnetometer at a constant rate.
+//        // https://developer.android.com/guide/topics/sensors/sensors_position
+//        // https://developer.android.com/reference/android/hardware/SensorEventListener
+//        sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)?.also { accelerometer ->
+//            sensorManager.registerListener(
+//                this,
+//                accelerometer,
+//                SensorManager.SENSOR_DELAY_NORMAL * 1000 * 1000,    // 3 secs
+//                SensorManager.SENSOR_DELAY_UI * 1000 * 1000       // 2 secs
+//            )
+//        }
+//        sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)?.also { magneticField ->
+//            sensorManager.registerListener(
+//                this,
+//                magneticField,
+//                SensorManager.SENSOR_DELAY_NORMAL * 1000 * 1000,
+//                SensorManager.SENSOR_DELAY_UI * 1000 * 1000
+//            )
+//        }
         if (isPermissionAudioGranted()) {
             // start sound meter
             this.context?.let { soundMeter.start(it) }
@@ -152,24 +157,26 @@ class SenseFragment : Fragment(), SensorEventListener {
     override fun onPause() {
         super.onPause()
 
-        // Don't receive any more updates from either sensor.
-        sensorManager.unregisterListener(this)
+//        // Don't receive any more updates from either sensor.
+//        sensorManager.unregisterListener(this)
+        // stop angle meter
+        angleMeter.stop()
         // stop sound meter
         soundMeter.stop()
     }
 
-    // Get readings from accelerometer and magnetometer. To simplify calculations,
-    // consider storing these readings as unit vectors.
-    override fun onSensorChanged(event: SensorEvent) {
-        if (event.sensor.type == Sensor.TYPE_ACCELEROMETER) {
-            System.arraycopy(event.values, 0, accelerometerReading, 0, accelerometerReading.size)
-            Log.d(TAG, "onSensorChanged accelerometerReading->" + accelerometerReading.contentToString())
-        } else if (event.sensor.type == Sensor.TYPE_MAGNETIC_FIELD) {
-            System.arraycopy(event.values, 0, magnetometerReading, 0, magnetometerReading.size)
-            Log.d(TAG, "onSensorChanged magnetometerReading->" + magnetometerReading.contentToString())
-        }
-
-        updateOrientationAngles()
+//    // Get readings from accelerometer and magnetometer. To simplify calculations,
+//    // consider storing these readings as unit vectors.
+//    override fun onSensorChanged(event: SensorEvent) {
+//        if (event.sensor.type == Sensor.TYPE_ACCELEROMETER) {
+//            System.arraycopy(event.values, 0, accelerometerReading, 0, accelerometerReading.size)
+//            Log.d(TAG, "onSensorChanged accelerometerReading->" + accelerometerReading.contentToString())
+//        } else if (event.sensor.type == Sensor.TYPE_MAGNETIC_FIELD) {
+//            System.arraycopy(event.values, 0, magnetometerReading, 0, magnetometerReading.size)
+//            Log.d(TAG, "onSensorChanged magnetometerReading->" + magnetometerReading.contentToString())
+//        }
+//
+//        updateOrientationAngles()
 
         if (isPermissionAudioGranted()) {
             var db = soundMeter.deriveDecibel()
@@ -180,41 +187,41 @@ class SenseFragment : Fragment(), SensorEventListener {
         }
 
     }
-    // Compute the three orientation angles based on the most recent readings from
-    // the device's accelerometer and magnetometer.
-    fun updateOrientationAngles() {
-        // Update rotation matrix, which is needed to update orientation angles.
-        SensorManager.getRotationMatrix(
-            rotationMatrix,
-            null,
-            accelerometerReading,
-            magnetometerReading
-        )
-        // "rotationMatrix" now has up-to-date information.
+//    // Compute the three orientation angles based on the most recent readings from
+//    // the device's accelerometer and magnetometer.
+//    fun updateOrientationAngles() {
+//        // Update rotation matrix, which is needed to update orientation angles.
+//        SensorManager.getRotationMatrix(
+//            rotationMatrix,
+//            null,
+//            accelerometerReading,
+//            magnetometerReading
+//        )
+//        // "rotationMatrix" now has up-to-date information.
+//
+//        SensorManager.getOrientation(rotationMatrix, orientationAngles)
+//        // "orientationAngles" now has up-to-date information.
+//
+//        //Log.d(TAG, "updateOrientationAngles rotationMatrix->" + rotationMatrix.contentToString())
+//        Log.d(TAG, "updateOrientationAngles orientationAngles->" + orientationAngles.contentToString())
+//
+//        // convert orientation angles (radians) to degrees
+//        for ((index, angle) in orientationAngles.withIndex()) {
+//            // orientationDegrees[index] = orientationAngles[index] * 57.2958f
+//            orientationDegrees[index] = (orientationAngles[index] * (180/ PI)).toFloat()
+//        }
+//        Log.d(TAG, "updateOrientationAngles orientationDegrees->" + orientationDegrees.contentToString())
+//
+//        // shift orientation degrees to camera angle - 0=parallel to earth, 90=perpendicular to earth
+//        senseViewModel.editCameraAngle.value = 90 + orientationDegrees[1].toInt()   // adjust neg angles to 0(parallel to earth) to 90(flat, straight up)
+//        //senseViewModel.editCameraAngle.value = (orientationDegrees[1].toInt() * -1)
+//        Log.d(TAG, "updateOrientationAngles editCameraAngle PITCH->" + senseViewModel.editCameraAngle.value)
+//
+//    }
 
-        SensorManager.getOrientation(rotationMatrix, orientationAngles)
-        // "orientationAngles" now has up-to-date information.
-
-        //Log.d(TAG, "updateOrientationAngles rotationMatrix->" + rotationMatrix.contentToString())
-        Log.d(TAG, "updateOrientationAngles orientationAngles->" + orientationAngles.contentToString())
-
-        // convert orientation angles (radians) to degrees
-        for ((index, angle) in orientationAngles.withIndex()) {
-            // orientationDegrees[index] = orientationAngles[index] * 57.2958f
-            orientationDegrees[index] = (orientationAngles[index] * (180/ PI)).toFloat()
-        }
-        Log.d(TAG, "updateOrientationAngles orientationDegrees->" + orientationDegrees.contentToString())
-
-        // shift orientation degrees to camera angle - 0=parallel to earth, 90=perpendicular to earth
-        senseViewModel.editCameraAngle.value = 90 + orientationDegrees[1].toInt()   // adjust neg angles to 0(parallel to earth) to 90(flat, straight up)
-        //senseViewModel.editCameraAngle.value = (orientationDegrees[1].toInt() * -1)
-        Log.d(TAG, "updateOrientationAngles editCameraAngle PITCH->" + senseViewModel.editCameraAngle.value)
-
-    }
-
-    override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
-//        updateOrientationAngles()
-    }
+//    override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
+////        updateOrientationAngles()
+//    }
     //////////////////////
     // permissions
     fun isPermissionAudioGranted(): Boolean {
