@@ -9,6 +9,7 @@ import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.media.MediaRecorder
 import android.os.Bundle
+import android.os.CountDownTimer
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
@@ -49,7 +50,7 @@ class SenseFragment : Fragment() {
 //    private var recorder: MediaRecorder? = null
 //    private var recorderStarted = false
 
-
+    private var timerOn = false
 
     private lateinit var senseViewModel: SenseViewModel
     private var _binding: FragmentSenseBinding? = null
@@ -127,7 +128,19 @@ class SenseFragment : Fragment() {
     override fun onResume() {
         super.onResume()
 
+        // TODO: why not location permission?
         angleMeter.start(senseViewModel)
+
+        if (isPermissionAudioGranted()) {
+            // start sound meter
+            this.context?.let { soundMeter.start(it) }
+            Log.d(TAG, "onSensorChanged soundMeter started.")
+        }
+
+        // start timer
+        timerOn = true
+        timer.start()
+
 //        // get updates from the accelerometer and magnetometer at a constant rate.
 //        // https://developer.android.com/guide/topics/sensors/sensors_position
 //        // https://developer.android.com/reference/android/hardware/SensorEventListener
@@ -147,11 +160,6 @@ class SenseFragment : Fragment() {
 //                SensorManager.SENSOR_DELAY_UI * 1000 * 1000
 //            )
 //        }
-        if (isPermissionAudioGranted()) {
-            // start sound meter
-            this.context?.let { soundMeter.start(it) }
-            Log.d(TAG, "onSensorChanged soundMeter started.")
-        }
     }
 
     override fun onPause() {
@@ -163,6 +171,8 @@ class SenseFragment : Fragment() {
         angleMeter.stop()
         // stop sound meter
         soundMeter.stop()
+        // turn off timer
+        timerOn = false
     }
 
 //    // Get readings from accelerometer and magnetometer. To simplify calculations,
@@ -178,11 +188,33 @@ class SenseFragment : Fragment() {
 //
 //        updateOrientationAngles()
 
+    private val timer = object: CountDownTimer(2000, 1000) {
+        override fun onTick(millisUntilFinished: Long) {
+            onTimerUpdateView()
+            Log.d(TAG, "timer onTick ${millisUntilFinished.toString()} millisUntilFinished...")
+        }
+
+        override fun onFinish() {
+            Log.d(TAG, "timer onFinish...")
+            if (timerOn) start()
+        }
+    }
+
+//    fun start() {
+//        timer.start()
+//    }
+    fun onTimerUpdateView() {
+        // update angle UI
+        var angle = angleMeter.getAngle()
+        Log.d(TAG, "onTimerUpdateView angleMeter.getAngle ->${angle.toString()}")
+        senseViewModel.editCameraAngle.value = angle
+
+        // update decibel UI
         if (isPermissionAudioGranted()) {
-            var db = soundMeter.deriveDecibel()
-            Log.d(TAG, "onSensorChanged soundMeter.deriveDecibel db->${db.toString()}")
-            if (db < 0.0) db = 0.0
-            db = truncate(db)
+            var db = soundMeter.deriveDecibel(forceFormat = true)
+            Log.d(TAG, "onTimerUpdateView soundMeter.deriveDecibel db->${db.toString()}")
+//            if (db < 0.0) db = 0.0
+//            db = truncate(db)
             senseViewModel.editDecibelLevel.value = db
         }
 

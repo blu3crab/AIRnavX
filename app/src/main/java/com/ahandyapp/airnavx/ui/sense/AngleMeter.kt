@@ -14,6 +14,8 @@ import kotlin.math.truncate
 class AngleMeter: SensorEventListener {
 
     private val TAG = "AngleMeter"
+    // accessed via getAngle
+    private var angle = 0
 
     //////////////////
     // sensor listener
@@ -31,7 +33,6 @@ class AngleMeter: SensorEventListener {
     fun create(activity: FragmentActivity) {
         sensorManager = activity?.getSystemService(Context.SENSOR_SERVICE) as SensorManager
     }
-
     //////////////////
     // start sensor listener
     fun start(senseViewModel: SenseViewModel) {
@@ -64,7 +65,11 @@ class AngleMeter: SensorEventListener {
         // unregister listener
         sensorManager.unregisterListener(this)
     }
-
+    //////////////////
+    // get camera angle
+    fun getAngle(): Int {
+        return angle
+    }
     // Get readings from accelerometer and magnetometer. To simplify calculations,
     // consider storing these readings as unit vectors.
     override fun onSensorChanged(event: SensorEvent) {
@@ -76,12 +81,14 @@ class AngleMeter: SensorEventListener {
             Log.d(TAG, "onSensorChanged magnetometerReading->" + magnetometerReading.contentToString())
         }
 
-        updateOrientationAngles()
+        this.angle = updateOrientationAngles()
+        // TODO: remove UI object ref!
+        //senseViewModel.editCameraAngle.value = angle
     }
 
     // Compute the three orientation angles based on the most recent readings from
     // the device's accelerometer and magnetometer.
-    fun updateOrientationAngles(): Int {
+    private fun updateOrientationAngles(): Int {
         // Update rotation matrix, which is needed to update orientation angles.
         SensorManager.getRotationMatrix(
             rotationMatrix,
@@ -109,8 +116,6 @@ class AngleMeter: SensorEventListener {
 //        senseViewModel.editCameraAngle.value = 90 + orientationDegrees[1].toInt()   // adjust neg angles to 0(parallel to earth) to 90(flat, straight up)
         //senseViewModel.editCameraAngle.value = (orientationDegrees[1].toInt() * -1)
         Log.d(TAG, "updateOrientationAngles CameraAngle->$angle")
-        // TODO: remove UI object ref!
-        senseViewModel.editCameraAngle.value = angle
         return angle
     }
     // mandatory unused override
