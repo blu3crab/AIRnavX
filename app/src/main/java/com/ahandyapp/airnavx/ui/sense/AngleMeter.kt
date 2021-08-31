@@ -83,7 +83,7 @@ class AngleMeter: SensorEventListener {
 
         this.angle = updateOrientationAngles()
         // TODO: remove UI object ref!
-        //senseViewModel.editCameraAngle.value = angle
+        senseViewModel.editCameraAngle.value = angle
     }
 
     // Compute the three orientation angles based on the most recent readings from
@@ -113,7 +113,7 @@ class AngleMeter: SensorEventListener {
 
         // shift orientation degrees to camera angle - 0=parallel to earth, 90=perpendicular to earth
         val angle = 90 + orientationDegrees[1].toInt()   // adjust neg angles to 0(parallel to earth) to 90(flat, straight up)
-//        senseViewModel.editCameraAngle.value = 90 + orientationDegrees[1].toInt()   // adjust neg angles to 0(parallel to earth) to 90(flat, straight up)
+        //senseViewModel.editCameraAngle.value = 90 + orientationDegrees[1].toInt()   // adjust neg angles to 0(parallel to earth) to 90(flat, straight up)
         //senseViewModel.editCameraAngle.value = (orientationDegrees[1].toInt() * -1)
         Log.d(TAG, "updateOrientationAngles CameraAngle->$angle")
         return angle
