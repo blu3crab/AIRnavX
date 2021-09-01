@@ -20,7 +20,6 @@ class AngleMeter: SensorEventListener {
     //////////////////
     // sensor listener
     private lateinit var sensorManager: SensorManager
-    private lateinit var senseViewModel: SenseViewModel
     private val accelerometerReading = FloatArray(3)
     private val magnetometerReading = FloatArray(3)
 
@@ -35,9 +34,7 @@ class AngleMeter: SensorEventListener {
     }
     //////////////////
     // start sensor listener
-    fun start(senseViewModel: SenseViewModel) {
-        // TODO: remove UI object ref!
-        this.senseViewModel = senseViewModel
+    fun start() {
         // get updates from the accelerometer and magnetometer at a constant rate.
         // https://developer.android.com/guide/topics/sensors/sensors_position
         // https://developer.android.com/reference/android/hardware/SensorEventListener
@@ -82,8 +79,6 @@ class AngleMeter: SensorEventListener {
         }
 
         this.angle = updateOrientationAngles()
-        // TODO: remove UI object ref!
-        senseViewModel.editCameraAngle.value = angle
     }
 
     // Compute the three orientation angles based on the most recent readings from

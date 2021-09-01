@@ -4,7 +4,9 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.TextView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
@@ -34,6 +36,16 @@ class HomeFragment : Fragment() {
         homeViewModel.text.observe(viewLifecycleOwner, Observer {
             textView.text = it
         })
+
+        // get reference to button
+        val idString = "button_camera"
+        val packageName = this.context?.getPackageName()
+        val buttonCameraId = resources.getIdentifier(idString, "id", packageName)
+        val buttonCamera = root.findViewById(buttonCameraId) as Button
+        // set on-click listener
+        buttonCamera.setOnClickListener {
+            Toast.makeText(this.context, "camera button clicked...", Toast.LENGTH_SHORT).show()
+        }
         return root
     }
 

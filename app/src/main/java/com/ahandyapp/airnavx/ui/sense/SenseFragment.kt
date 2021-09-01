@@ -122,7 +122,7 @@ class SenseFragment : Fragment() {
 
         // TODO: why not location permission required?
         // start angle meter
-        angleMeter.start(senseViewModel)
+        angleMeter.start()
 
         if (isPermissionAudioGranted()) {
             // start sound meter
@@ -146,7 +146,7 @@ class SenseFragment : Fragment() {
         timerOn = false
     }
 
-    private val timer = object: CountDownTimer(8000, 1000) {
+    private val timer = object: CountDownTimer(8000, 500) {
         override fun onTick(millisUntilFinished: Long) {
             onTimerUpdateView()
             Log.d(TAG, "timer onTick ${millisUntilFinished.toString()} millisUntilFinished...")
