@@ -97,14 +97,14 @@ class AngleMeter: SensorEventListener {
         // "orientationAngles" now has up-to-date information.
 
         //Log.d(TAG, "updateOrientationAngles rotationMatrix->" + rotationMatrix.contentToString())
-        Log.d(TAG, "updateOrientationAngles orientationAngles->" + orientationAngles.contentToString())
+        //Log.d(TAG, "updateOrientationAngles orientationAngles->" + orientationAngles.contentToString())
 
         // convert orientation angles (radians) to degrees
         for ((index, angle) in orientationAngles.withIndex()) {
             // orientationDegrees[index] = orientationAngles[index] * 57.2958f
             orientationDegrees[index] = (orientationAngles[index] * (180/ PI)).toFloat()
         }
-        Log.d(TAG, "updateOrientationAngles orientationDegrees->" + orientationDegrees.contentToString())
+        //Log.d(TAG, "updateOrientationAngles orientationDegrees->" + orientationDegrees.contentToString())
 
         // shift orientation degrees to camera angle - 0=parallel to earth, 90=perpendicular to earth
         val angle = 90 + orientationDegrees[1].toInt()   // adjust neg angles to 0(parallel to earth) to 90(flat, straight up)

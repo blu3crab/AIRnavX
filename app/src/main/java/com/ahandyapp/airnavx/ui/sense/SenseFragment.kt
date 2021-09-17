@@ -31,17 +31,16 @@ import kotlin.math.truncate
 
 
 class SenseFragment : Fragment() {
-    //class SenseFragment : Fragment(), SensorEventListener {
 
     private val TAG = "SenseFragment"
 
     //////////////////
     // angle & location meters
     private var angleMeter = AngleMeter()
-
     private var soundMeter = SoundMeter()
-    private val REQUEST_RECORD_AUDIO_PERMISSION = 200
 
+    private val REQUEST_RECORD_AUDIO_PERMISSION = 200
+    // view refresh timer
     private var timerOn = false
 
     private lateinit var senseViewModel: SenseViewModel
@@ -100,8 +99,7 @@ class SenseFragment : Fragment() {
         })
 
         //////////////////
-        // sensor listener
-        //sensorManager = activity?.getSystemService(Context.SENSOR_SERVICE) as SensorManager
+        // angle meter one-time init
         angleMeter.create(requireActivity())
         //////////////////
 
@@ -116,18 +114,19 @@ class SenseFragment : Fragment() {
     }
 
     //////////////////
-    // sensor listener
+    // onResume - start angle & sound meters, start timer
     override fun onResume() {
         super.onResume()
 
         // TODO: why not location permission required?
         // start angle meter
         angleMeter.start()
+        Log.d(TAG, "onResume angleMeter started.")
 
         if (isPermissionAudioGranted()) {
             // start sound meter
             this.context?.let { soundMeter.start(it) }
-            Log.d(TAG, "onSensorChanged soundMeter started.")
+            Log.d(TAG, "onResume soundMeter started.")
         }
 
         // start timer
