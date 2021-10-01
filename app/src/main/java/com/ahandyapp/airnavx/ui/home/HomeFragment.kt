@@ -230,6 +230,8 @@ class HomeFragment : Fragment() {
             }
             // generate thumbnail from file uri if not available as thumbnail
             Log.d(TAG, "dispatchTakePictureIntent onActivityResult generate thumbnail...")
+            // TODO: read photo into bitmap
+
             // Bitmap resized = ThumbnailUtils.extractThumbnail(sourceBitmap, width, height);
             //imageBitmap = ThumbnailUtils.extractThumbnail()
             // Bitmap resized = ThumbnailUtils.extractThumbnail(BitmapFactory.decodeFile(file.getPath()), width, height);
