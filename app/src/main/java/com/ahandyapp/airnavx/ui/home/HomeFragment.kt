@@ -25,12 +25,16 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.ahandyapp.airnavx.databinding.FragmentHomeBinding
+import com.ahandyapp.airnavx.model.AirCapture
 import com.ahandyapp.airnavx.ui.sense.AngleMeter
 import com.ahandyapp.airnavx.ui.sense.SoundMeter
+import com.google.gson.Gson
 import java.io.File
 import java.io.IOException
+import java.net.URI
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.properties.Delegates
 
 class HomeFragment : Fragment() {
 
@@ -39,17 +43,21 @@ class HomeFragment : Fragment() {
     private lateinit var homeViewModel: HomeViewModel
     private var _binding: FragmentHomeBinding? = null
 
-    // This property is only valid between onCreateView and
-    // onDestroyView.
+    // property is only valid between onCreateView and onDestroyView.
     private val binding get() = _binding!!
 
-    //
-    lateinit var imageView: ImageView
     //////////////////
     // angle & location meters
     private var angleMeter = AngleMeter()
     private var soundMeter = SoundMeter()
 
+    private var decibel by Delegates.notNull<Double>()
+    private var cameraAngle by Delegates.notNull<Int>()
+
+    // photo thumb
+    private lateinit var imageView: ImageView       // thumb photo display
+    private lateinit var photoFile: File            // photo file
+    private lateinit var photoUri: Uri              // photo URI
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -99,13 +107,13 @@ class HomeFragment : Fragment() {
     // onResume
     override fun onResume() {
         super.onResume()
-
-        // start angle meter
-        angleMeter.start()
-        Log.d(TAG, "onResume angleMeter started.")
-        // start sound meter
-        this.context?.let { soundMeter.start(it) }
-        Log.d(TAG, "onResume soundMeter started.")
+//        // start angle meter
+//        angleMeter.start()
+//        Log.d(TAG, "onResume angleMeter started.")
+//        // TODO: init soundMeter - works if SenseFrag run 1st!
+//        // start sound meter
+//        this.context?.let { soundMeter.start(it) }
+//        Log.d(TAG, "onResume soundMeter started.")
 
     }
 
@@ -122,18 +130,30 @@ class HomeFragment : Fragment() {
 
     private fun dispatchTakePictureIntent() {
         val THUMBNAIL_ONLY = false
-        // exercise meters
-        var angle = angleMeter.getAngle()
-        Log.d(TAG, "dispatchTakePictureIntent angleMeter.getAngle ->${angle.toString()}")
-        var db = soundMeter.deriveDecibel(forceFormat = true)
-        Log.d(TAG, "dispatchTakePictureIntent soundMeter.deriveDecibel db->${db.toString()}")
+        try {
+            // start angle meter
+            angleMeter.start()
+            Log.d(TAG, "onResume angleMeter started.")
+            // TODO: init soundMeter - works if SenseFrag run 1st!
+            // start sound meter
+            this.context?.let { soundMeter.start(it) }
+            Log.d(TAG, "onResume soundMeter started.")
 
+            // exercise meters
+            cameraAngle = angleMeter.getAngle()
+            Log.d(TAG, "dispatchTakePictureIntent angleMeter.getAngle ->${cameraAngle.toString()}")
+            decibel = soundMeter.deriveDecibel(forceFormat = true)
+            Log.d(TAG, "dispatchTakePictureIntent soundMeter.deriveDecibel db->${decibel.toString()}")
+        } catch (ex: Exception) {
+            Log.e(TAG, "dispatchTakePictureIntent Meter Exception ${ex.stackTrace}")
+        }
         if (!THUMBNAIL_ONLY) {
             val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
             try {
-                // Create the File where the photo should go
-                val photoFile: File? = try {
-                    createImageFile()
+                // create the photo File
+//                val photoFile: File? = try {
+                try {
+                    photoFile = createImageFile()
                 } catch (ex: IOException) {
                     // Error occurred while creating the File
                     Log.e(TAG, "dispatchTakePictureIntent IOException ${ex.stackTrace}")
@@ -141,12 +161,13 @@ class HomeFragment : Fragment() {
                 }
                 // Continue only if the File was successfully created
                 photoFile?.also {
-                    val photoURI: Uri = FileProvider.getUriForFile(
+//                    val photoURI: Uri = FileProvider.getUriForFile(
+                    photoUri = FileProvider.getUriForFile(
                         requireContext(),
                         "com.ahandyapp.airnavx",
                         it
                     )
-                    takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI)
+                    takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri)
                     startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE)
                 }
             } catch (e: ActivityNotFoundException) {
@@ -165,50 +186,6 @@ class HomeFragment : Fragment() {
                 Log.d(TAG, "dispatchTakePictureIntent -> NO camera launch...")
             }
         }
-
-//    private fun dispatchTakePictureIntent() {
-//        // exercise meters
-//        var angle = angleMeter.getAngle()
-//        Log.d(TAG, "dispatchTakePictureIntent angleMeter.getAngle ->${angle.toString()}")
-//        var db = soundMeter.deriveDecibel(forceFormat = true)
-//        Log.d(TAG, "dispatchTakePictureIntent soundMeter.deriveDecibel db->${db.toString()}")
-//        // define intent
-//        Intent(MediaStore.ACTION_IMAGE_CAPTURE).also { takePictureIntent ->
-//            // Ensure that there's a camera activity to handle the intent
-//            var packageManager = context?.getPackageManager()
-//            if (packageManager != null) {
-//                Log.d(TAG, "dispatchTakePictureIntent resolveActivity ${takePictureIntent.resolveActivity(packageManager)}")
-//                takePictureIntent.resolveActivity(packageManager)?.also {
-//                    // Create the File where the photo should go
-//                    val photoFile: File? = try {
-//                        createImageFile()
-//                    } catch (ex: IOException) {
-//                        // Error occurred while creating the File
-//                        Log.e(TAG, "dispatchTakePictureIntent IOException ${ex.stackTrace}")
-//                        null
-//                    }
-//                    // Continue only if the File was successfully created
-//                    photoFile?.also {
-//                        val photoURI: Uri = FileProvider.getUriForFile(
-//                            requireContext(),
-//                            "com.ahandyapp.airnavx",
-//                            it
-//                        )
-//                        takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI)
-//                        startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE)
-//                    }
-//                }
-//            }
-//        }
-
-//        val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-//        try {
-//            startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE)
-//        } catch (e: ActivityNotFoundException) {
-//            // display error state
-//            Toast.makeText(this.context, "NO camera launch...", Toast.LENGTH_SHORT).show()
-//            Log.d(TAG, "dispatchTakePictureIntent -> NO camera launch...")
-//        }
     }
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         Log.d(TAG, "dispatchTakePictureIntent onActivityResult requestCode ${requestCode}, resultCode ${resultCode}")
@@ -216,18 +193,21 @@ class HomeFragment : Fragment() {
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
             Toast.makeText(this.context, "camera image captured...", Toast.LENGTH_SHORT).show()
             Log.d(TAG, "dispatchTakePictureIntent onActivityResult camera image captured...")
-            //if (data != null) {
+            // extra will contain thumbnail image if image capture not in play
+            // if (data != null) {
             data?.let {
                 data.extras?.let {
-//                    val imageBitmap = data.extras?.get("data") as Bitmap
-                    imageBitmap = data.extras?.get("data") as Bitmap
-                    imageView.setImageBitmap(imageBitmap)
+                        val extraPhotoUri: Uri = data.extras?.get(MediaStore.EXTRA_OUTPUT) as Uri
+                        Log.d(TAG, "dispatchTakePictureIntent onActivityResult URI $extraPhotoUri")
+
+                        imageBitmap = data.extras?.get("data") as Bitmap
+                        imageView.setImageBitmap(imageBitmap)
+                    } ?: run {
+                        Log.e(TAG, "dispatchTakePictureIntent onActivityResult data.extras NULL.")
+                    }
                 } ?: run {
-                    Log.e(TAG, "dispatchTakePictureIntent onActivityResult data.extras NULL.")
+                    Log.e(TAG, "dispatchTakePictureIntent onActivityResult data NULL.")
                 }
-            } ?: run {
-                Log.e(TAG, "dispatchTakePictureIntent onActivityResult data NULL.")
-            }
             // generate thumbnail from file uri if not available as thumbnail
             Log.d(TAG, "dispatchTakePictureIntent onActivityResult generate thumbnail...")
             // TODO: read photo into bitmap
@@ -236,12 +216,26 @@ class HomeFragment : Fragment() {
             //imageBitmap = ThumbnailUtils.extractThumbnail()
             // Bitmap resized = ThumbnailUtils.extractThumbnail(BitmapFactory.decodeFile(file.getPath()), width, height);
 
-            // capture meters
-            var angle = angleMeter.getAngle()
-            Log.d(TAG, "dispatchTakePictureIntent onActivityResult angleMeter.getAngle ->${angle.toString()}")
-            var db = soundMeter.deriveDecibel(forceFormat = true)
-            Log.d(TAG, "dispatchTakePictureIntent onActivityResult soundMeter.deriveDecibel db->${db.toString()}")
+            try {
+                // capture meters
+                cameraAngle = angleMeter.getAngle()
+                Log.d(TAG, "dispatchTakePictureIntent angleMeter.getAngle ->${cameraAngle.toString()}")
+                decibel = soundMeter.deriveDecibel(forceFormat = true)
+                Log.d(TAG, "dispatchTakePictureIntent soundMeter.deriveDecibel db->${decibel.toString()}")
+//                var angle = angleMeter.getAngle()
+//                Log.d(TAG, "dispatchTakePictureIntent onActivityResult angleMeter.getAngle ->${angle.toString()}")
+//                var db = soundMeter.deriveDecibel(forceFormat = true)
+//                Log.d(TAG, "dispatchTakePictureIntent onActivityResult soundMeter.deriveDecibel db->${db.toString()}")
+            } catch (ex: Exception) {
+                Log.e(TAG, "dispatchTakePictureIntent Meter Exception ${ex.stackTrace}")
+            }
 
+            // create AirCapture data class
+            //val timeStamp = c
+            //val location =
+            val airCapture = AirCapture(currentPhotoPath, decibel, cameraAngle)
+            val jsonCapture = Gson().toJson(airCapture)
+            Log.d(TAG, "dispatchTakePictureIntent onActivityResult $jsonCapture")
             // loop dispatch until cancelled
             Log.d(TAG, "dispatchTakePictureIntent onActivityResult launching camera...")
             dispatchTakePictureIntent()
@@ -249,7 +243,10 @@ class HomeFragment : Fragment() {
         else if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_CANCELED) {
             Toast.makeText(this.context, "camera canceled...", Toast.LENGTH_SHORT).show()
             Log.d(TAG, "dispatchTakePictureIntent onActivityResult camera canceled...")
-
+            // stop angle meter
+            angleMeter.stop()
+            // stop sound meter
+            soundMeter.stop()
         }
     }
 

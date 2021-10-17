@@ -1,2 +1,2 @@
 # AIRnavX
- Arial Inspector Recorder
+Aerial Inspector Recorder

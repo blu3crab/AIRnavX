@@ -24,6 +24,8 @@ class SoundMeter {
         val cacheDirectory: File? = context.externalCacheDir
         try {
             if (recorder == null) {
+                Log.d(TAG, "SoundMeter.start starting MediaRecorder...")
+
                 recorder = MediaRecorder()
                 recorder!!.setAudioSource(MediaRecorder.AudioSource.MIC)
                 recorder!!.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP)

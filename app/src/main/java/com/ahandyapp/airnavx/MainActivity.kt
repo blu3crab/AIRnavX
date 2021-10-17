@@ -16,25 +16,21 @@ import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContentProviderCompat.requireContext
 import androidx.core.content.ContextCompat
 import com.ahandyapp.airnavx.databinding.ActivityMainBinding
 import kotlin.system.exitProcess
 
-// permissions
-private const val PERMISSIONS_REQUEST_CODE = 101
-private val PERMISSIONS_REQUIRED = arrayOf(
-    Manifest.permission.CAMERA,
-    Manifest.permission.RECORD_AUDIO,
-    Manifest.permission.WRITE_EXTERNAL_STORAGE)
-
 class MainActivity : AppCompatActivity() {
 
     private val TAG = "MainActivity"
+//    val TAG: String = MainActivity::class.java.simpleName
 
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var binding: ActivityMainBinding
 
+    private val PERMISSIONS_REQUEST_CODE = 101
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -61,15 +57,15 @@ class MainActivity : AppCompatActivity() {
         setupActionBarWithNavController(navController, appBarConfiguration)
         navView.setupWithNavController(navController)
 
-        if (!hasPermissions(this)) {
+        if (!hasPermissions(this, PERMISSIONS_REQUIRED)) {
             Log.d(TAG, "onCreate hasPermissions FALSE...")
             requestPermissions(PERMISSIONS_REQUIRED, PERMISSIONS_REQUEST_CODE)
-            // if denied, exit
-            if (!hasPermissions(this)) {
-                Log.d(TAG, "onCreate permissions DENIED, exiting...")
-                moveTaskToBack(true);
-                exitProcess(-1)
-            }
+//            // if denied, exit
+//            if (!hasPermissions(this, PERMISSIONS_REQUIRED)) {
+//                Log.d(TAG, "onCreate permissions DENIED, exiting...")
+//                moveTaskToBack(true);
+//                exitProcess(-1)
+//            }
         }
     }
 
@@ -85,11 +81,25 @@ class MainActivity : AppCompatActivity() {
     }
 
     companion object {
+        private val PERMISSIONS_REQUIRED = arrayOf(
+            Manifest.permission.RECORD_AUDIO,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            Manifest.permission.CAMERA)
 
-        /** Convenience method used to check if all permissions required by this app are granted */
-        fun hasPermissions(context: Context) = PERMISSIONS_REQUIRED.all {
-            ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
-        }
+//        /** Convenience method used to check if all permissions required by this app are granted */
+//        fun hasPermissions(context: Context) = PERMISSIONS_REQUIRED.all {
+//            Log.d("TAG", "it->$it")
+//            Log.d("TAG", "checkSelf->${ContextCompat.checkSelfPermission(context, it)}")
+//            Log.d("TAG", "GRANTED->${PackageManager.PERMISSION_GRANTED}")
+//            ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
+//        }
+    }
+    // util method
+    private fun hasPermissions(context: Context, permissions: Array<String>): Boolean = permissions.all {
+        Log.d(TAG, "it->$it")
+        Log.d(TAG, "checkSelf->${ActivityCompat.checkSelfPermission(context, it)}")
+        Log.d(TAG, "GRANTED->${PackageManager.PERMISSION_GRANTED}")
+        ActivityCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
     }
 }
 ///////////////////////////////////////////////////////////////////////////////
