@@ -30,6 +30,7 @@ import com.ahandyapp.airnavx.ui.sense.AngleMeter
 import com.ahandyapp.airnavx.ui.sense.SoundMeter
 import com.google.gson.Gson
 import java.io.File
+import java.io.FileDescriptor.out
 import java.io.IOException
 import java.net.URI
 import java.text.SimpleDateFormat
@@ -53,6 +54,12 @@ class HomeFragment : Fragment() {
 
     private var decibel by Delegates.notNull<Double>()
     private var cameraAngle by Delegates.notNull<Int>()
+
+    // image capture
+    val REQUEST_IMAGE_CAPTURE = 1
+    lateinit var timeStamp: String
+    lateinit var currentPhotoPath: String
+    lateinit var storageDir: File
 
     // photo thumb
     private lateinit var imageView: ImageView       // thumb photo display
@@ -125,8 +132,6 @@ class HomeFragment : Fragment() {
 //        // stop sound meter
 //        soundMeter.stop()
     }
-
-    val REQUEST_IMAGE_CAPTURE = 1
 
     private fun dispatchTakePictureIntent() {
         val THUMBNAIL_ONLY = false
@@ -206,15 +211,15 @@ class HomeFragment : Fragment() {
                         Log.e(TAG, "dispatchTakePictureIntent onActivityResult data.extras NULL.")
                     }
                 } ?: run {
-                    Log.e(TAG, "dispatchTakePictureIntent onActivityResult data NULL.")
-                }
-            // generate thumbnail from file uri if not available as thumbnail
-            Log.d(TAG, "dispatchTakePictureIntent onActivityResult generate thumbnail...")
-            // TODO: read photo into bitmap
+                //Log.e(TAG, "dispatchTakePictureIntent onActivityResult data NULL.")
+                // generate thumbnail from file uri if not available as thumbnail
+                Log.d(TAG, "dispatchTakePictureIntent onActivityResult generate thumbnail...")
+                // TODO: read photo into bitmap
 
-            // Bitmap resized = ThumbnailUtils.extractThumbnail(sourceBitmap, width, height);
-            //imageBitmap = ThumbnailUtils.extractThumbnail()
-            // Bitmap resized = ThumbnailUtils.extractThumbnail(BitmapFactory.decodeFile(file.getPath()), width, height);
+                // Bitmap resized = ThumbnailUtils.extractThumbnail(sourceBitmap, width, height);
+                //imageBitmap = ThumbnailUtils.extractThumbnail()
+                // Bitmap resized = ThumbnailUtils.extractThumbnail(BitmapFactory.decodeFile(file.getPath()), width, height);
+            }
 
             try {
                 // capture meters
@@ -236,6 +241,34 @@ class HomeFragment : Fragment() {
             val airCapture = AirCapture(currentPhotoPath, decibel, cameraAngle)
             val jsonCapture = Gson().toJson(airCapture)
             Log.d(TAG, "dispatchTakePictureIntent onActivityResult $jsonCapture")
+
+            Log.d(TAG, "dispatchTakePictureIntent onActivityResult fileDir->$context.filesDir()")
+            File(context?.filesDir,"aircapture.json").printWriter().use { out ->
+                out.println("$jsonCapture")
+            }
+            var name = "AIR-"+timeStamp+".json"
+            File(storageDir,name).printWriter().use { out ->
+                out.println("$jsonCapture")
+            }
+//            val jsonPath = String.(storageDir + "aircapture.json")
+//            File("aircapture.json").printWriter().use { out ->
+////                history.forEach {
+////                    out.println("${it.key}, ${it.value}")
+//                out.println("$jsonCapture")
+//            }
+//            jsonFile = File.createTempFile(
+//                "AIR_${timeStamp}_", /* prefix */
+//                ".json", /* suffix */
+//                storageDir /* directory */
+//            ).apply {
+//                // Save a file: path for use with ACTION_VIEW intents
+//                this. ($jsonCapture)
+//                Log.d(TAG, "createImageFile imagePath->$currentPhotoPath")
+//            }
+//            String jsonPath = storageDir + "aircapture.json"
+//            File(jsonPath).bufferedWriter().use { out ->
+//                    out.writeLn(jsonCapture.toString())
+//            }
             // loop dispatch until cancelled
             Log.d(TAG, "dispatchTakePictureIntent onActivityResult launching camera...")
             dispatchTakePictureIntent()
@@ -250,14 +283,14 @@ class HomeFragment : Fragment() {
         }
     }
 
-    lateinit var currentPhotoPath: String
-
     @Throws(IOException::class)
     private fun createImageFile(): File {
         var context = getContext()
         // Create an image file name
-        val timeStamp: String = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())
-        val storageDir: File? = context?.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+//        val timeStamp: String = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())
+//        val storageDir: File? = context?.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+        timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())
+        storageDir = context?.getExternalFilesDir(Environment.DIRECTORY_PICTURES)!!
         Log.d(TAG, "createImageFile storageDir->${storageDir.toString()}")
         return File.createTempFile(
             "JPEG_${timeStamp}_", /* prefix */
@@ -266,6 +299,7 @@ class HomeFragment : Fragment() {
         ).apply {
             // Save a file: path for use with ACTION_VIEW intents
             currentPhotoPath = absolutePath
+            Log.d(TAG, "createImageFile imagePath->$currentPhotoPath")
         }
     }
 }
