@@ -31,11 +31,16 @@ import com.ahandyapp.airnavx.ui.sense.SoundMeter
 import com.google.gson.Gson
 import java.io.File
 import java.io.FileDescriptor.out
+import java.io.FileNotFoundException
 import java.io.IOException
 import java.net.URI
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.properties.Delegates
+import android.graphics.BitmapFactory
+
+
+
 
 class HomeFragment : Fragment() {
 
@@ -57,6 +62,8 @@ class HomeFragment : Fragment() {
 
     // image capture
     val REQUEST_IMAGE_CAPTURE = 1
+    lateinit var imagePath: String
+    lateinit var imageName: String
     lateinit var timeStamp: String
     lateinit var currentPhotoPath: String
     lateinit var storageDir: File
@@ -194,31 +201,58 @@ class HomeFragment : Fragment() {
     }
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         Log.d(TAG, "dispatchTakePictureIntent onActivityResult requestCode ${requestCode}, resultCode ${resultCode}")
-        var imageBitmap: Bitmap? = null
+        //var imageBitmap: Bitmap?
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
             Toast.makeText(this.context, "camera image captured...", Toast.LENGTH_SHORT).show()
             Log.d(TAG, "dispatchTakePictureIntent onActivityResult camera image captured...")
-            // extra will contain thumbnail image if image capture not in play
             // if (data != null) {
             data?.let {
+                // extra will contain thumbnail image if image capture not in play
                 data.extras?.let {
-                        val extraPhotoUri: Uri = data.extras?.get(MediaStore.EXTRA_OUTPUT) as Uri
-                        Log.d(TAG, "dispatchTakePictureIntent onActivityResult URI $extraPhotoUri")
+                    val extraPhotoUri: Uri = data.extras?.get(MediaStore.EXTRA_OUTPUT) as Uri
+                    Log.d(TAG, "dispatchTakePictureIntent onActivityResult URI $extraPhotoUri")
 
-                        imageBitmap = data.extras?.get("data") as Bitmap
-                        imageView.setImageBitmap(imageBitmap)
-                    } ?: run {
-                        Log.e(TAG, "dispatchTakePictureIntent onActivityResult data.extras NULL.")
-                    }
+                    var imageBitmap = data.extras?.get("data") as Bitmap
+                    imageView.setImageBitmap(imageBitmap)
                 } ?: run {
-                //Log.e(TAG, "dispatchTakePictureIntent onActivityResult data NULL.")
-                // generate thumbnail from file uri if not available as thumbnail
-                Log.d(TAG, "dispatchTakePictureIntent onActivityResult generate thumbnail...")
-                // TODO: read photo into bitmap
+                    Log.d(TAG, "dispatchTakePictureIntent onActivityResult data.extras NULL.")
+                    // generate thumbnail from file uri if not available as thumbnail
+                    Log.d(TAG, "dispatchTakePictureIntent onActivityResult generate thumbnail...")
+                    // TODO: read photo into bitmap
+                    val uri =
+                        Uri.fromFile(photoFile) // Here photo file is the file EXTRA_OUTPUT location where you saved the actual camera image
 
-                // Bitmap resized = ThumbnailUtils.extractThumbnail(sourceBitmap, width, height);
-                //imageBitmap = ThumbnailUtils.extractThumbnail()
-                // Bitmap resized = ThumbnailUtils.extractThumbnail(BitmapFactory.decodeFile(file.getPath()), width, height);
+                    var imageBitmap: Bitmap?
+                    try {
+                        imageBitmap = MediaStore.Images.Media.getBitmap(
+                            activity?.applicationContext?.contentResolver, uri)
+                        //imageBitmap = cropAndScale(imageBitmap, 768)
+
+                        imageBitmap?.let {
+                            val width = (imageBitmap.width)?.div(4)
+                            val height = (imageBitmap.height)?.div(4)
+                            val thumbImage = ThumbnailUtils.extractThumbnail(
+                                BitmapFactory.decodeFile(imagePath),
+                                width,
+                                height
+                            )
+                        }
+
+                        imageView.setImageBitmap(imageBitmap)
+
+                        // Bitmap resized = ThumbnailUtils.extractThumbnail(sourceBitmap, width, height);
+                        //imageBitmap = ThumbnailUtils.extractThumbnail()
+                        // Bitmap resized = ThumbnailUtils.extractThumbnail(BitmapFactory.decodeFile(file.getPath()), width, height);
+                    } catch (e: FileNotFoundException) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace()
+                    } catch (e: IOException) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace()
+                    }
+                }
+            } ?: run {
+                Log.e(TAG, "dispatchTakePictureIntent onActivityResult data NULL.")
             }
 
             try {
@@ -236,9 +270,8 @@ class HomeFragment : Fragment() {
             }
 
             // create AirCapture data class
-            //val timeStamp = c
             //val location =
-            val airCapture = AirCapture(currentPhotoPath, decibel, cameraAngle)
+            val airCapture = AirCapture(timeStamp, imagePath, imageName, decibel, cameraAngle)
             val jsonCapture = Gson().toJson(airCapture)
             Log.d(TAG, "dispatchTakePictureIntent onActivityResult $jsonCapture")
 
@@ -250,25 +283,6 @@ class HomeFragment : Fragment() {
             File(storageDir,name).printWriter().use { out ->
                 out.println("$jsonCapture")
             }
-//            val jsonPath = String.(storageDir + "aircapture.json")
-//            File("aircapture.json").printWriter().use { out ->
-////                history.forEach {
-////                    out.println("${it.key}, ${it.value}")
-//                out.println("$jsonCapture")
-//            }
-//            jsonFile = File.createTempFile(
-//                "AIR_${timeStamp}_", /* prefix */
-//                ".json", /* suffix */
-//                storageDir /* directory */
-//            ).apply {
-//                // Save a file: path for use with ACTION_VIEW intents
-//                this. ($jsonCapture)
-//                Log.d(TAG, "createImageFile imagePath->$currentPhotoPath")
-//            }
-//            String jsonPath = storageDir + "aircapture.json"
-//            File(jsonPath).bufferedWriter().use { out ->
-//                    out.writeLn(jsonCapture.toString())
-//            }
             // loop dispatch until cancelled
             Log.d(TAG, "dispatchTakePictureIntent onActivityResult launching camera...")
             dispatchTakePictureIntent()
@@ -283,6 +297,16 @@ class HomeFragment : Fragment() {
         }
     }
 
+    private fun cropAndScale(source: Bitmap, scale: Int): Bitmap? {
+        var source = source
+        val factor = if (source.height <= source.width) source.height else source.width
+        val longer = if (source.height >= source.width) source.height else source.width
+        val x = if (source.height >= source.width) 0 else (longer - factor) / 2
+        val y = if (source.height <= source.width) 0 else (longer - factor) / 2
+        source = Bitmap.createBitmap(source, x, y, factor, factor)
+        source = Bitmap.createScaledBitmap(source, scale, scale, false)
+        return source
+    }
     @Throws(IOException::class)
     private fun createImageFile(): File {
         var context = getContext()
@@ -290,16 +314,29 @@ class HomeFragment : Fragment() {
 //        val timeStamp: String = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())
 //        val storageDir: File? = context?.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
         timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())
-        storageDir = context?.getExternalFilesDir(Environment.DIRECTORY_PICTURES)!!
+        imagePath = Environment.DIRECTORY_PICTURES
+//        imagePath = Environment.DIRECTORY_DCIM
+        imageName = "AIR-"+timeStamp+".jpg"
+        storageDir = context?.getExternalFilesDir(imagePath)!!
         Log.d(TAG, "createImageFile storageDir->${storageDir.toString()}")
-        return File.createTempFile(
-            "JPEG_${timeStamp}_", /* prefix */
-            ".jpg", /* suffix */
-            storageDir /* directory */
-        ).apply {
-            // Save a file: path for use with ACTION_VIEW intents
-            currentPhotoPath = absolutePath
-            Log.d(TAG, "createImageFile imagePath->$currentPhotoPath")
-        }
+
+        val imageFile = File(storageDir,imageName)
+        currentPhotoPath = imageFile.absolutePath
+        return imageFile
+
+//        val dir = File(
+//            Environment.getExternalStoragePublicDirectory(
+//                Environment.DIRECTORY_DCIM
+//            ), "Camera"
+//        )
+//        return File.createTempFile(
+//            "JPEG_${timeStamp}_", /* prefix */
+//            ".jpg", /* suffix */
+//            storageDir /* directory */
+//        ).apply {
+//            // Save a file: path for use with ACTION_VIEW intents
+//            currentPhotoPath = absolutePath
+//            Log.d(TAG, "createImageFile imagePath->$currentPhotoPath")
+//        }
     }
 }

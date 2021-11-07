@@ -72,10 +72,10 @@ class AngleMeter: SensorEventListener {
     override fun onSensorChanged(event: SensorEvent) {
         if (event.sensor.type == Sensor.TYPE_ACCELEROMETER) {
             System.arraycopy(event.values, 0, accelerometerReading, 0, accelerometerReading.size)
-            Log.d(TAG, "onSensorChanged accelerometerReading->" + accelerometerReading.contentToString())
+            //Log.d(TAG, "onSensorChanged accelerometerReading->" + accelerometerReading.contentToString())
         } else if (event.sensor.type == Sensor.TYPE_MAGNETIC_FIELD) {
             System.arraycopy(event.values, 0, magnetometerReading, 0, magnetometerReading.size)
-            Log.d(TAG, "onSensorChanged magnetometerReading->" + magnetometerReading.contentToString())
+            //Log.d(TAG, "onSensorChanged magnetometerReading->" + magnetometerReading.contentToString())
         }
 
         this.angle = updateOrientationAngles()
@@ -110,7 +110,7 @@ class AngleMeter: SensorEventListener {
         val angle = 90 + orientationDegrees[1].toInt()   // adjust neg angles to 0(parallel to earth) to 90(flat, straight up)
         //senseViewModel.editCameraAngle.value = 90 + orientationDegrees[1].toInt()   // adjust neg angles to 0(parallel to earth) to 90(flat, straight up)
         //senseViewModel.editCameraAngle.value = (orientationDegrees[1].toInt() * -1)
-        Log.d(TAG, "updateOrientationAngles CameraAngle->$angle")
+        //Log.d(TAG, "updateOrientationAngles CameraAngle->$angle")
         return angle
     }
     // mandatory unused override
