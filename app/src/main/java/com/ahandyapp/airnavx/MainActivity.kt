@@ -60,12 +60,6 @@ class MainActivity : AppCompatActivity() {
         if (!hasPermissions(this, PERMISSIONS_REQUIRED)) {
             Log.d(TAG, "onCreate hasPermissions FALSE...")
             requestPermissions(PERMISSIONS_REQUIRED, PERMISSIONS_REQUEST_CODE)
-//            // if denied, exit
-//            if (!hasPermissions(this, PERMISSIONS_REQUIRED)) {
-//                Log.d(TAG, "onCreate permissions DENIED, exiting...")
-//                moveTaskToBack(true);
-//                exitProcess(-1)
-//            }
         }
     }
 
@@ -83,16 +77,7 @@ class MainActivity : AppCompatActivity() {
     companion object {
         private val PERMISSIONS_REQUIRED = arrayOf(
             Manifest.permission.RECORD_AUDIO,
-            Manifest.permission.WRITE_EXTERNAL_STORAGE,
             Manifest.permission.CAMERA)
-
-//        /** Convenience method used to check if all permissions required by this app are granted */
-//        fun hasPermissions(context: Context) = PERMISSIONS_REQUIRED.all {
-//            Log.d("TAG", "it->$it")
-//            Log.d("TAG", "checkSelf->${ContextCompat.checkSelfPermission(context, it)}")
-//            Log.d("TAG", "GRANTED->${PackageManager.PERMISSION_GRANTED}")
-//            ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
-//        }
     }
     // util method
     private fun hasPermissions(context: Context, permissions: Array<String>): Boolean = permissions.all {
