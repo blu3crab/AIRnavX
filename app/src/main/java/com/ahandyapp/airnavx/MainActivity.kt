@@ -77,6 +77,8 @@ class MainActivity : AppCompatActivity() {
     companion object {
         private val PERMISSIONS_REQUIRED = arrayOf(
             Manifest.permission.RECORD_AUDIO,
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_MEDIA_LOCATION,
             Manifest.permission.CAMERA)
     }
     // util method

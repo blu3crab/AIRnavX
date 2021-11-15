@@ -3,10 +3,8 @@ package com.ahandyapp.airnavx.ui.home
 import android.app.Activity.RESULT_CANCELED
 import android.app.Activity.RESULT_OK
 import android.content.ActivityNotFoundException
-import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
-import android.graphics.Camera
 import android.media.ThumbnailUtils
 import android.net.Uri
 import android.os.Bundle
@@ -30,14 +28,16 @@ import com.ahandyapp.airnavx.ui.sense.AngleMeter
 import com.ahandyapp.airnavx.ui.sense.SoundMeter
 import com.google.gson.Gson
 import java.io.File
-import java.io.FileDescriptor.out
 import java.io.FileNotFoundException
 import java.io.IOException
-import java.net.URI
 import java.text.SimpleDateFormat
 import java.util.*
-import kotlin.properties.Delegates
 import android.graphics.BitmapFactory
+
+import android.media.ExifInterface
+
+
+
 
 
 
@@ -57,16 +57,25 @@ class HomeFragment : Fragment() {
     private var angleMeter = AngleMeter()
     private var soundMeter = SoundMeter()
 
-    private var decibel by Delegates.notNull<Double>()
-    private var cameraAngle by Delegates.notNull<Int>()
+//    private var decibel by Delegates.notNull<Double>()
+//    private var cameraAngle by Delegates.notNull<Int>()
 
     // image capture
-    val REQUEST_IMAGE_CAPTURE = 1
-    lateinit var imagePath: String
-    lateinit var imageName: String
-    lateinit var timeStamp: String
+    val REQUEST_IMAGE_CAPTURE = 1001
+    val DEFAULT_DATAFILE_EXT = "json"
+    val DEFAULT_STRING = "nada"
+    val DEFAULT_DOUBLE = 0.0
+    val DEFAULT_INT = 0
+    val DEFAULT_FLOAT_ARRAY: FloatArray = floatArrayOf(0.0F,0.0F)
+    val DEFAULT_FLOAT = 0.0F
+//    lateinit var imagePath: String
+//    lateinit var imageName: String
+//    lateinit var timeStamp: String
     lateinit var currentPhotoPath: String
     lateinit var storageDir: File
+
+    // air capture & framing
+    lateinit var airCapture: AirCapture
 
     // photo thumb
     private lateinit var imageView: ImageView       // thumb photo display
@@ -96,6 +105,8 @@ class HomeFragment : Fragment() {
         val buttonCamera = root.findViewById(buttonCameraId) as Button
         // set on-click listener
         buttonCamera.setOnClickListener {
+            // init AirCapture data class
+            airCapture = initAirCapture();
             Toast.makeText(this.context, "launching camera...", Toast.LENGTH_SHORT).show()
             Log.d(TAG, "buttonCamera.setOnClickListener launching camera...")
             dispatchTakePictureIntent()
@@ -117,45 +128,47 @@ class HomeFragment : Fragment() {
         _binding = null
     }
 
-    //////////////////
-    // onResume
     override fun onResume() {
         super.onResume()
-//        // start angle meter
-//        angleMeter.start()
-//        Log.d(TAG, "onResume angleMeter started.")
-//        // TODO: init soundMeter - works if SenseFrag run 1st!
-//        // start sound meter
-//        this.context?.let { soundMeter.start(it) }
-//        Log.d(TAG, "onResume soundMeter started.")
-
+        Log.d(TAG, "onResume...")
     }
 
     override fun onPause() {
         super.onPause()
-
-//        // stop angle meter
-//        angleMeter.stop()
-//        // stop sound meter
-//        soundMeter.stop()
+        Log.d(TAG, "onPause...")
     }
 
+    fun initAirCapture() : AirCapture {
+        val airCapture = AirCapture(
+            DEFAULT_STRING,
+            DEFAULT_STRING,
+            DEFAULT_STRING,
+            DEFAULT_DOUBLE,
+            DEFAULT_INT,
+            DEFAULT_INT,
+            DEFAULT_INT,
+            DEFAULT_FLOAT_ARRAY,
+            DEFAULT_FLOAT,
+            DEFAULT_FLOAT,
+            DEFAULT_FLOAT
+        )
+        return airCapture
+    }
     private fun dispatchTakePictureIntent() {
         val THUMBNAIL_ONLY = false
         try {
             // start angle meter
             angleMeter.start()
-            Log.d(TAG, "onResume angleMeter started.")
-            // TODO: init soundMeter - works if SenseFrag run 1st!
+            Log.d(TAG, "dispatchTakePictureIntent angleMeter started.")
             // start sound meter
             this.context?.let { soundMeter.start(it) }
-            Log.d(TAG, "onResume soundMeter started.")
+            Log.d(TAG, "dispatchTakePictureIntent soundMeter started.")
 
             // exercise meters
-            cameraAngle = angleMeter.getAngle()
-            Log.d(TAG, "dispatchTakePictureIntent angleMeter.getAngle ->${cameraAngle.toString()}")
-            decibel = soundMeter.deriveDecibel(forceFormat = true)
-            Log.d(TAG, "dispatchTakePictureIntent soundMeter.deriveDecibel db->${decibel.toString()}")
+            airCapture.cameraAngle = angleMeter.getAngle()
+            Log.d(TAG, "dispatchTakePictureIntent angleMeter.getAngle ->${airCapture.cameraAngle.toString()}")
+            airCapture.decibel = soundMeter.deriveDecibel(forceFormat = true)
+            Log.d(TAG, "dispatchTakePictureIntent soundMeter.deriveDecibel db->${airCapture.decibel.toString()}")
         } catch (ex: Exception) {
             Log.e(TAG, "dispatchTakePictureIntent Meter Exception ${ex.stackTrace}")
         }
@@ -163,7 +176,6 @@ class HomeFragment : Fragment() {
             val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
             try {
                 // create the photo File
-//                val photoFile: File? = try {
                 try {
                     photoFile = createImageFile()
                 } catch (ex: IOException) {
@@ -173,7 +185,6 @@ class HomeFragment : Fragment() {
                 }
                 // Continue only if the File was successfully created
                 photoFile?.also {
-//                    val photoURI: Uri = FileProvider.getUriForFile(
                     photoUri = FileProvider.getUriForFile(
                         requireContext(),
                         "com.ahandyapp.airnavx",
@@ -210,18 +221,15 @@ class HomeFragment : Fragment() {
                 // extra will contain thumbnail image if image capture not in play
                 data.extras?.let {
                     val extraPhotoUri: Uri = data.extras?.get(MediaStore.EXTRA_OUTPUT) as Uri
-                    Log.d(TAG, "dispatchTakePictureIntent onActivityResult URI $extraPhotoUri")
+                    Log.d(TAG, "dispatchTakePictureIntent onActivityResult thumb URI $extraPhotoUri")
 
                     var imageBitmap = data.extras?.get("data") as Bitmap
                     imageView.setImageBitmap(imageBitmap)
                 } ?: run {
-                    Log.d(TAG, "dispatchTakePictureIntent onActivityResult data.extras NULL.")
-                    // generate thumbnail from file uri if not available as thumbnail
                     Log.d(TAG, "dispatchTakePictureIntent onActivityResult generate thumbnail...")
-                    // TODO: read photo into bitmap
-                    val uri =
-                        Uri.fromFile(photoFile) // Here photo file is the file EXTRA_OUTPUT location where you saved the actual camera image
-
+                    // generate thumbnail from file uri if not available as thumbnail
+                    // photo file is file EXTRA_OUTPUT location of actual camera image
+                    val uri = Uri.fromFile(photoFile)
                     var imageBitmap: Bitmap?
                     try {
                         imageBitmap = MediaStore.Images.Media.getBitmap(
@@ -232,7 +240,7 @@ class HomeFragment : Fragment() {
                             val width = (imageBitmap.width)?.div(4)
                             val height = (imageBitmap.height)?.div(4)
                             val thumbImage = ThumbnailUtils.extractThumbnail(
-                                BitmapFactory.decodeFile(imagePath),
+                                BitmapFactory.decodeFile(airCapture.imagePath),
                                 width,
                                 height
                             )
@@ -256,30 +264,53 @@ class HomeFragment : Fragment() {
             }
 
             try {
-                // capture meters
-                cameraAngle = angleMeter.getAngle()
-                Log.d(TAG, "dispatchTakePictureIntent angleMeter.getAngle ->${cameraAngle.toString()}")
-                decibel = soundMeter.deriveDecibel(forceFormat = true)
-                Log.d(TAG, "dispatchTakePictureIntent soundMeter.deriveDecibel db->${decibel.toString()}")
-//                var angle = angleMeter.getAngle()
-//                Log.d(TAG, "dispatchTakePictureIntent onActivityResult angleMeter.getAngle ->${angle.toString()}")
-//                var db = soundMeter.deriveDecibel(forceFormat = true)
-//                Log.d(TAG, "dispatchTakePictureIntent onActivityResult soundMeter.deriveDecibel db->${db.toString()}")
+                // extract EXIF attributes from photoFile
+                var rotate = 0
+
+                val exif = ExifInterface(photoFile.getAbsolutePath())
+                val orientation: Int = exif.getAttributeInt(
+                    ExifInterface.TAG_ORIENTATION,
+                    ExifInterface.ORIENTATION_NORMAL
+                )
+
+                when (orientation) {
+                    ExifInterface.ORIENTATION_ROTATE_270 -> rotate = 270
+                    ExifInterface.ORIENTATION_ROTATE_180 -> rotate = 180
+                    ExifInterface.ORIENTATION_ROTATE_90 -> rotate = 90
+                }
+
+                Log.i(TAG, "dispatchTakePictureIntent onActivityResult Exif orientation: $orientation")
+                Log.i(TAG, "dispatchTakePictureIntent onActivityResult Rotate value: $rotate")
+                var latlong: FloatArray = floatArrayOf(0.0F,0.0F)
+                exif.getLatLong(latlong)
+                Log.d(TAG, "dispatchTakePictureIntent EXIF ->${latlong[0]} , ${latlong[1]}")
+                // update airCapture data
+                airCapture.exifOrientation = orientation
+                airCapture.exifRotation = rotate
+                airCapture.exifLatLon = latlong
             } catch (ex: Exception) {
                 Log.e(TAG, "dispatchTakePictureIntent Meter Exception ${ex.stackTrace}")
             }
 
-            // create AirCapture data class
-            //val location =
-            val airCapture = AirCapture(timeStamp, imagePath, imageName, decibel, cameraAngle)
+            try {
+                // capture meters
+                airCapture.cameraAngle = angleMeter.getAngle()
+                Log.d(TAG, "dispatchTakePictureIntent angleMeter.getAngle ->${airCapture.cameraAngle.toString()}")
+                airCapture.decibel = soundMeter.deriveDecibel(forceFormat = true)
+                Log.d(TAG, "dispatchTakePictureIntent soundMeter.deriveDecibel db->${airCapture.decibel.toString()}")
+            } catch (ex: Exception) {
+                Log.e(TAG, "dispatchTakePictureIntent Meter Exception ${ex.stackTrace}")
+            }
+
+            // transform AirCapture data class to json
             val jsonCapture = Gson().toJson(airCapture)
             Log.d(TAG, "dispatchTakePictureIntent onActivityResult $jsonCapture")
-
+            // format AirCapture name & write json file
             Log.d(TAG, "dispatchTakePictureIntent onActivityResult fileDir->$context.filesDir()")
             File(context?.filesDir,"aircapture.json").printWriter().use { out ->
                 out.println("$jsonCapture")
             }
-            var name = "AIR-"+timeStamp+".json"
+            var name = "AIR-"+airCapture.timestamp+"." + DEFAULT_DATAFILE_EXT
             File(storageDir,name).printWriter().use { out ->
                 out.println("$jsonCapture")
             }
@@ -311,24 +342,16 @@ class HomeFragment : Fragment() {
     private fun createImageFile(): File {
         var context = getContext()
         // Create an image file name
-//        val timeStamp: String = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())
-//        val storageDir: File? = context?.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
-        timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())
-        imagePath = Environment.DIRECTORY_PICTURES
-//        imagePath = Environment.DIRECTORY_DCIM
-        imageName = "AIR-"+timeStamp+".jpg"
-        storageDir = context?.getExternalFilesDir(imagePath)!!
+        airCapture.timestamp = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())
+        airCapture.imagePath = Environment.DIRECTORY_PICTURES
+        airCapture.imageName = "AIR-"+airCapture.timestamp+".jpg"
+        storageDir = context?.getExternalFilesDir(airCapture.imagePath)!!
         Log.d(TAG, "createImageFile storageDir->${storageDir.toString()}")
 
-        val imageFile = File(storageDir,imageName)
+        val imageFile = File(storageDir,airCapture.imageName)
         currentPhotoPath = imageFile.absolutePath
         return imageFile
 
-//        val dir = File(
-//            Environment.getExternalStoragePublicDirectory(
-//                Environment.DIRECTORY_DCIM
-//            ), "Camera"
-//        )
 //        return File.createTempFile(
 //            "JPEG_${timeStamp}_", /* prefix */
 //            ".jpg", /* suffix */
