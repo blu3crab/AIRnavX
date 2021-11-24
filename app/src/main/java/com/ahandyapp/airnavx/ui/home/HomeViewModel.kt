@@ -7,7 +7,17 @@ import androidx.lifecycle.ViewModel
 class HomeViewModel : ViewModel() {
 
     private val _text = MutableLiveData<String>().apply {
-        value = "This is home Fragment"
+        value = "Image Capture Preview"
     }
-    val text: LiveData<String> = _text
+    var text: LiveData<String> = _text
+
+    private val _decibel = MutableLiveData<String>().apply {
+        value = "--- dB"
+    }
+    val decibel: LiveData<String> = _decibel
+
+    private val _angle = MutableLiveData<String>().apply {
+        value = "--- degrees"
+    }
+    val angle: LiveData<String> = _angle
 }
