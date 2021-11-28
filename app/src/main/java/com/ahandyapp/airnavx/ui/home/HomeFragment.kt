@@ -2,7 +2,6 @@ package com.ahandyapp.airnavx.ui.home
 
 import android.app.Activity.RESULT_CANCELED
 import android.app.Activity.RESULT_OK
-import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.graphics.Bitmap
 import android.media.ThumbnailUtils
@@ -28,8 +27,6 @@ import com.ahandyapp.airnavx.ui.sense.AngleMeter
 import com.ahandyapp.airnavx.ui.sense.SoundMeter
 import com.google.gson.Gson
 import java.io.File
-import java.io.FileNotFoundException
-import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.*
 import android.graphics.BitmapFactory
@@ -50,6 +47,9 @@ class HomeFragment : Fragment() {
 
     // property is only valid between onCreateView and onDestroyView.
     private val binding get() = _binding!!
+
+    // test thumb only image capture
+    private val THUMBNAIL_ONLY = false
 
     //////////////////
     // angle & location meters
@@ -72,8 +72,7 @@ class HomeFragment : Fragment() {
     lateinit var currentPhotoPath: String
     lateinit var storageDir: File
 
-    // photo thumb
-    private lateinit var imageViewPreview: ImageView       // thumb photo display
+    private lateinit var imageViewPreview: ImageView       // preview photo display
     private lateinit var photoFile: File           // photo file
     private lateinit var photoUri: Uri              // photo URI
 
@@ -149,11 +148,16 @@ class HomeFragment : Fragment() {
             DEFAULT_STRING,
             DEFAULT_STRING,
             DEFAULT_STRING,
+            DEFAULT_INT,
+            DEFAULT_INT,
             DEFAULT_DOUBLE,
             DEFAULT_INT,
             DEFAULT_INT,
             DEFAULT_INT,
             DEFAULT_FLOAT_ARRAY,
+            DEFAULT_DOUBLE,
+            DEFAULT_INT,
+            DEFAULT_INT,
             DEFAULT_FLOAT,
             DEFAULT_FLOAT,
             DEFAULT_FLOAT
@@ -162,24 +166,10 @@ class HomeFragment : Fragment() {
     }
 
     private fun dispatchTakePictureIntent() {
-        val THUMBNAIL_ONLY = false
-        try {
-            // start angle meter
-            angleMeter.start()
-            Log.d(TAG, "dispatchTakePictureIntent angleMeter started.")
-            // start sound meter
-            this.context?.let { soundMeter.start(it) }
-            Log.d(TAG, "dispatchTakePictureIntent soundMeter started.")
+        // start/exercise angle & sound meters
+        val startExerciseMeters = startExerciseMeters(angleMeter, soundMeter, airCapture)
+        Log.d(TAG, "dispatchTakePictureIntent startExerciseMeters ${startExerciseMeters}")
 
-            // exercise meters
-            airCapture.cameraAngle = angleMeter.getAngle()
-            Log.d(TAG,"dispatchTakePictureIntent angleMeter.getAngle ->${airCapture.cameraAngle.toString()}"           )
-            airCapture.decibel = soundMeter.deriveDecibel(forceFormat = true)
-            Log.d(TAG,"dispatchTakePictureIntent soundMeter.deriveDecibel db->${airCapture.decibel.toString()}")
-
-        } catch (ex: Exception) {
-            Log.e(TAG, "dispatchTakePictureIntent Meter Exception ${ex.stackTrace}")
-        }
         if (!THUMBNAIL_ONLY) {
             // for full image capture, supply created image file URI
             val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
@@ -197,22 +187,6 @@ class HomeFragment : Fragment() {
                     takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri)
                     startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE)
                 }
-//                    photoFile = createImageFile()
-//                } catch (ex: IOException) {
-//                    // Error occurred while creating the File
-//                    Log.e(TAG, "dispatchTakePictureIntent IOException ${ex.stackTrace}")
-//                    null
-//                }
-//                // Continue only if the File was successfully created
-//                photoFile?.also {
-//                    photoUri = FileProvider.getUriForFile(
-//                        requireContext(),
-//                        "com.ahandyapp.airnavx",
-//                        it
-//                    )
-//                    takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri)
-//                    startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE)
-//                }
             } catch (ex: Exception) {
                 Toast.makeText(this.context, "NO camera launch...", Toast.LENGTH_SHORT).show()
                 Log.e(TAG, "dispatchTakePictureIntent -> NO camera launch Exception ${ex.stackTrace}...")
@@ -235,54 +209,59 @@ class HomeFragment : Fragment() {
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
             Toast.makeText(this.context, "camera image captured...", Toast.LENGTH_SHORT).show()
             Log.d(TAG, "dispatchTakePictureIntent onActivityResult camera image captured...")
-            // for thumbnail only, NO image file - thumbnail in data
-            // if (data != null) {
-            data?.let {
-                // extra will contain thumbnail image if image capture not in play
-                data.extras?.let {
-                    val extraPhotoUri: Uri = data.extras?.get(MediaStore.EXTRA_OUTPUT) as Uri
-                    Log.d(TAG,"dispatchTakePictureIntent onActivityResult thumb URI $extraPhotoUri")
+            var imageBitmap: Bitmap? = null
+            if (!THUMBNAIL_ONLY) {
+                // generate thumbnail from file uri if not available as thumbnail in data
+                // photo file is file EXTRA_OUTPUT location of actual camera image
+                Log.d(TAG, "dispatchTakePictureIntent onActivityResult generate thumbnail...")
+                val uri = Uri.fromFile(photoFile)
+                try {
+                    imageBitmap = MediaStore.Images.Media.getBitmap(
+                        activity?.applicationContext?.contentResolver,
+                        uri
+                    )
+                    if (imageBitmap != null) {
+                        // update image length & width prior to thumbnail extraction
+                        airCapture.imageWidth = imageBitmap!!.width
+                        airCapture.imageHeight = imageBitmap!!.height
+                        Log.d(TAG,"dispatchTakePictureIntent onActivityResult width ${airCapture.imageWidth} X height ${airCapture.imageHeight}")
 
-                    var thumbBitmap = data.extras?.get("data") as Bitmap
-                    imageViewPreview.setImageBitmap(thumbBitmap)
-                } ?: run {
-                    Log.d(TAG, "dispatchTakePictureIntent onActivityResult generate thumbnail...")
-                    // generate thumbnail from file uri if not available as thumbnail
-                    // photo file is file EXTRA_OUTPUT location of actual camera image
-                    val uri = Uri.fromFile(photoFile)
-                    var imageBitmap: Bitmap?
-                    try {
-                        imageBitmap = MediaStore.Images.Media.getBitmap(
-                            activity?.applicationContext?.contentResolver,
-                            uri
-                        )
-                        // TODO: extractThumbnail(imageBitmap): Bitmap
-                        var thumbBitmap = extractThumbnail(imageBitmap, 5)
-
-                        // TODO: rotateBitmap(imageBitmap, rotationDegrees): Bitmap
-                        var sourceBitmap: Bitmap = imageBitmap
-                        thumbBitmap?.let {
-                            sourceBitmap = thumbBitmap as Bitmap
-                        }
-                        var bMapRotate = rotateBitmap(sourceBitmap, 90F)
-
-                        imageViewPreview.setImageBitmap(bMapRotate)
-
-                    } catch (e: FileNotFoundException) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace()
-                    } catch (e: IOException) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace()
+                        // extract thumbnail at scale factor
+                        imageBitmap = extractThumbnail(imageBitmap!!, 5)
                     }
+                } catch (ex: Exception) {
+                    Log.e(TAG, "dispatchTakePictureIntent createImageFile Exception ${ex.stackTrace}")
                 }
-            } ?: run {
-                Log.e(TAG, "dispatchTakePictureIntent onActivityResult data NULL.")
-            }
+           } else {
+               data?.let {
+                   // extra will contain thumbnail image if image capture not in play
+                   data.extras?.let {
+                       val extraPhotoUri: Uri = data.extras?.get(MediaStore.EXTRA_OUTPUT) as Uri
+                       Log.d(TAG, "dispatchTakePictureIntent onActivityResult thumb URI $extraPhotoUri")
 
+                       imageBitmap = data.extras?.get("data") as Bitmap
+                   } ?: run {
+                       Log.e(TAG, "dispatchTakePictureIntent onActivityResult data.extras NULL.")
+                   }
+               } ?: run {
+                   Log.e(TAG, "dispatchTakePictureIntent onActivityResult data NULL.")
+               }
+            }
             // TODO: extractEXIF(photoFile): Boolean
             val exifExtracted = extractExif(photoFile, airCapture)
             Log.d(TAG, "dispatchTakePictureIntent onActivityResult exifExtracted ${exifExtracted}")
+
+            // TODO: rotateBitmap(imageBitmap, rotationDegrees): Bitmap
+            if (imageBitmap != null) {
+                var sourceBitmap: Bitmap = imageBitmap as Bitmap
+                imageBitmap?.let {
+                    sourceBitmap = imageBitmap as Bitmap
+                }
+//                    var bMapRotate = rotateBitmap(sourceBitmap, 90F)
+                var bMapRotate = rotateBitmap(sourceBitmap, airCapture.exifRotation.toFloat())
+
+                imageViewPreview.setImageBitmap(bMapRotate)
+            }
 
             // TODO: captureMeters(airCapture): Boolean
             val metersCaptured = captureMeters(airCapture)
@@ -312,7 +291,28 @@ class HomeFragment : Fragment() {
         }
     }
 
-    @Throws(IOException::class)
+    private fun startExerciseMeters(angleMeter: AngleMeter, soundMeter: SoundMeter, airCapture: AirCapture): Boolean {
+        try {
+            // start angle meter
+            angleMeter.start()
+            Log.d(TAG, "dispatchTakePictureIntent angleMeter started.")
+            // start sound meter
+            this.context?.let { soundMeter.start(it) }
+            Log.d(TAG, "dispatchTakePictureIntent soundMeter started.")
+
+            // exercise meters
+            airCapture.cameraAngle = angleMeter.getAngle()
+            Log.d(TAG, "dispatchTakePictureIntent angleMeter.getAngle ->${airCapture.cameraAngle.toString()}")
+            airCapture.decibel = soundMeter.deriveDecibel(forceFormat = true)
+            Log.d(TAG, "dispatchTakePictureIntent soundMeter.deriveDecibel db->${airCapture.decibel.toString()}")
+
+        } catch (ex: Exception) {
+            Log.e(TAG, "dispatchTakePictureIntent Meter Exception ${ex.stackTrace}")
+            return false
+        }
+        return true;
+    }
+
     private fun createImageFile(): File? {
         var imageFile: File? = null
         try {
@@ -350,8 +350,12 @@ class HomeFragment : Fragment() {
             width,
             height
         )
-        thumbBitmap?.let { Log.d(TAG, "genThumbnail $thumbBitmap at scale factor $scaleFactor") }
-            .run { Log.e(TAG, "genThumbnail NULL at scale factor $scaleFactor") }
+        if (thumbBitmap != null) {
+            Log.d(TAG, "extractThumbnail source image width $imageBitmap.width x height $imageBitmap.height")
+            Log.d(TAG, "extractThumbnail $thumbBitmap at scale factor $scaleFactor")
+        } else {
+            Log.e(TAG, "extractThumbnail NULL (at scale factor $scaleFactor)")
+        }
         return thumbBitmap
         // Bitmap resized = ThumbnailUtils.extractThumbnail(sourceBitmap, width, height);
         //imageBitmap = ThumbnailUtils.extractThumbnail()
@@ -370,10 +374,11 @@ class HomeFragment : Fragment() {
         return source
     }
 
-    private fun rotateBitmap(sourceBitmap: Bitmap, RotationDegrees: Float): Bitmap {
+    private fun rotateBitmap(sourceBitmap: Bitmap, rotationDegrees: Float): Bitmap {
+        Log.i(TAG,"rotateBitmap $rotationDegrees")
         var rotatedBitmap: Bitmap? = null
         val mat = Matrix()
-        mat.postRotate(RotationDegrees)
+        mat.postRotate(rotationDegrees)
         rotatedBitmap = Bitmap.createBitmap(
             sourceBitmap,
             0,
@@ -388,35 +393,58 @@ class HomeFragment : Fragment() {
 
     private fun extractExif(photoFile: File, airCapture: AirCapture): Boolean {
         // TODO: extractEXIF(photoFile): Boolean
+        // orientation index
+        // rotation degrees
+        // width
+        // length
         try {
             // extract EXIF attributes from photoFile
-            var rotate = 0
+            var rotation = 0
 
             val exif = ExifInterface(photoFile.getAbsolutePath())
-//            exif.getAltitude()
-//            exif.
+
+            // orientation
             val orientation: Int = exif.getAttributeInt(
                 ExifInterface.TAG_ORIENTATION,
                 ExifInterface.ORIENTATION_NORMAL
             )
 
             when (orientation) {
-                ExifInterface.ORIENTATION_ROTATE_270 -> rotate = 270
-                ExifInterface.ORIENTATION_ROTATE_180 -> rotate = 180
-                ExifInterface.ORIENTATION_ROTATE_90 -> rotate = 90
+                ExifInterface.ORIENTATION_ROTATE_270 -> rotation = 270
+                ExifInterface.ORIENTATION_ROTATE_180 -> rotation = 180
+                ExifInterface.ORIENTATION_ROTATE_90 -> rotation = 90
             }
 
-            Log.i(TAG,"dispatchTakePictureIntent onActivityResult Exif orientation: $orientation")
-            Log.i(TAG, "dispatchTakePictureIntent onActivityResult Rotate value: $rotate")
+            Log.i(TAG,"dispatchTakePictureIntent onActivityResult EXIF orientation: $orientation")
+            Log.i(TAG, "dispatchTakePictureIntent onActivityResult EXIF Rotate value: $rotation")
 
+            // lat-lon
             var latlong: FloatArray = floatArrayOf(0.0F, 0.0F)
             exif.getLatLong(latlong)
-            Log.d(TAG, "dispatchTakePictureIntent EXIF ->${latlong[0]} , ${latlong[1]}")
+            Log.i(TAG, "dispatchTakePictureIntent EXIF ->${latlong[0]} , ${latlong[1]}")
+            // altitude
+            val altitude = exif.getAltitude(0.0)
+            Log.i(TAG, "dispatchTakePictureIntent EXIF altitude $altitude")
+            // width
+            val width: Int = exif.getAttributeInt(
+                ExifInterface.TAG_IMAGE_WIDTH,
+                ExifInterface.ORIENTATION_NORMAL
+            )
+            Log.i(TAG,"dispatchTakePictureIntent onActivityResult EXIF width: $width")
+            // length
+            val length: Int = exif.getAttributeInt(
+                ExifInterface.TAG_IMAGE_LENGTH,
+                ExifInterface.ORIENTATION_NORMAL
+            )
+            Log.i(TAG,"dispatchTakePictureIntent onActivityResult EXIF length: $length")
 
             // update airCapture data
             airCapture.exifOrientation = orientation
-            airCapture.exifRotation = rotate
+            airCapture.exifRotation = rotation
             airCapture.exifLatLon = latlong
+            airCapture.exifAltitude = altitude
+            airCapture.exifLength = length
+            airCapture.exifWidth = width
 
         } catch (ex: Exception) {
             Log.e(TAG, "dispatchTakePictureIntent Meter Exception ${ex.stackTrace}")
