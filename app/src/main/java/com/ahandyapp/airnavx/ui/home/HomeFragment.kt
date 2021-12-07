@@ -72,13 +72,16 @@ class HomeFragment : Fragment() {
     lateinit var currentPhotoPath: String
     lateinit var storageDir: File
 
-    private lateinit var imageViewPreview: ImageView       // preview photo display
     private lateinit var photoFile: File           // photo file
     private lateinit var photoUri: Uri              // photo URI
 
+    // TODO: migrate preview view to model
+    private lateinit var imageViewPreview: ImageView       // preview image display
+    private lateinit var imageViewThumb: ImageView          // thumb grid display
+
     // TODO: full, preview, thumb image collections
     val PREVIEW_SCALE_FACTOR = 5
-    val THUMB_SCALE_FACTOR = 8
+    val THUMB_SCALE_FACTOR = 6
     private var airCaptureBitmap: Bitmap? = null
     private var previewBitmap: Bitmap? = null
     private var thumbBitmap: Bitmap? = null
@@ -123,9 +126,13 @@ class HomeFragment : Fragment() {
             Log.d(TAG, "buttonCamera.setOnClickListener launching camera...")
             dispatchTakePictureIntent()
         }
-        val imageViewIdString = "imageViewPreview"
-        val imageViewId = resources.getIdentifier(imageViewIdString, "id", packageName)
-        imageViewPreview = root.findViewById(imageViewId) as ImageView
+        val previewViewIdString = "imageViewPreview"
+        val previewViewId = resources.getIdentifier(previewViewIdString, "id", packageName)
+        imageViewPreview = root.findViewById(previewViewId) as ImageView
+
+        val thumbViewIdString = "imageViewGrid1"
+        val thumbViewId = resources.getIdentifier(thumbViewIdString, "id", packageName)
+        imageViewThumb = root.findViewById(thumbViewId) as ImageView
 
         //////////////////
         // angle meter one-time init
@@ -235,6 +242,8 @@ class HomeFragment : Fragment() {
 
                         // extract thumbnail at scale factor
                         previewBitmap = extractThumbnail(airCaptureBitmap!!, PREVIEW_SCALE_FACTOR)
+                        // extract thumbnail at scale factor
+                        thumbBitmap = extractThumbnail(airCaptureBitmap!!, THUMB_SCALE_FACTOR)
                     }
                 } catch (ex: Exception) {
                     Log.e(TAG, "dispatchTakePictureIntent createImageFile Exception ${ex.stackTrace}")
@@ -260,16 +269,21 @@ class HomeFragment : Fragment() {
 
             // rotateBitmap(imageBitmap, rotationDegrees): Bitmap
             if (previewBitmap != null) {
-                var sourceBitmap: Bitmap = previewBitmap as Bitmap
-//                imageBitmap?.let {
-//                    sourceBitmap = imageBitmap as Bitmap
-//                }
-//                    var bMapRotate = rotateBitmap(sourceBitmap, 90F)
-//                var bMapRotate = rotateBitmap(sourceBitmap, airCapture.exifRotation.toFloat())
-                previewBitmap = rotateBitmap(sourceBitmap, airCapture.exifRotation.toFloat())
-
-//                imageViewPreview.setImageBitmap(bMapRotate)
+                // rotate bitmap
+//                var sourceBitmap: Bitmap = previewBitmap as Bitmap
+//                previewBitmap = rotateBitmap(sourceBitmap, airCapture.exifRotation.toFloat())
+                previewBitmap = rotateBitmap(previewBitmap!!, airCapture.exifRotation.toFloat())
+                // TODO: migrate preview view to model
                 imageViewPreview.setImageBitmap(previewBitmap)
+            }
+            // rotateBitmap(imageBitmap, rotationDegrees): Bitmap
+            if (thumbBitmap != null) {
+                // rotate bitmap
+//                var sourceBitmap: Bitmap = previewBitmap as Bitmap
+//                previewBitmap = rotateBitmap(sourceBitmap, airCapture.exifRotation.toFloat())
+                thumbBitmap = rotateBitmap(thumbBitmap!!, airCapture.exifRotation.toFloat())
+                // TODO: migrate preview view to model
+                imageViewThumb.setImageBitmap(thumbBitmap)
             }
 
             // captureMeters(airCapture): Boolean
