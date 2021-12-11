@@ -77,36 +77,13 @@
         app:layout_constraintEnd_toEndOf="parent"
         />
 
-    <GridLayout
+    <GridView
         android:id="@+id/gridView"
-        android:layout_width="match_parent"
-        android:layout_height="40dp"
-        android:numColumns="3"
-        app:layout_constraintTop_toBottomOf="@+id/text_decibel">
-        app:layout_constraintBottom_toBottomOf="parent">
-        app:layout_constraintStart_toStartOf="parent"
+        android:layout_width="324dp"
+        android:layout_height="223dp"
+        android:numColumns="2"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        <ImageView
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:layout_columnWeight="1"
-            android:layout_rowWeight="1"
-            android:src="@drawable/baseline_flight_takeoff_24"
-            />
-        <ImageView
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:layout_columnWeight="1"
-            android:layout_rowWeight="1"
-            android:src="@drawable/baseline_flight_takeoff_24"
-            />
-        <ImageView
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:layout_columnWeight="1"
-            android:layout_rowWeight="1"
-            android:src="@drawable/baseline_flight_takeoff_24"
-            />
-
-    </GridLayout>
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/text_decibel" />
 </androidx.constraintlayout.widget.ConstraintLayout>

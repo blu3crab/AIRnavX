@@ -13,10 +13,6 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
-import android.widget.ImageView
-import android.widget.TextView
-import android.widget.Toast
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
@@ -33,6 +29,9 @@ import android.graphics.BitmapFactory
 import android.graphics.Matrix
 
 import android.media.ExifInterface
+import android.widget.*
+import com.ahandyapp.airnavx.R
+import com.ahandyapp.airnavx.ui.grid.GridViewAdapter
 
 
 class HomeFragment : Fragment() {
@@ -67,6 +66,12 @@ class HomeFragment : Fragment() {
     val DEFAULT_FLOAT_ARRAY: FloatArray = floatArrayOf(0.0F, 0.0F)
     val DEFAULT_FLOAT = 0.0F
 
+//    val DEFAULT_HEIGHT = 128
+//    //val DEFAULT_WIDTH = DEFAULT_HEIGHT * .75
+//    val DEFAULT_WIDTH = 96
+    val DEFAULT_WIDTH = 160     // trunc(324 / 2)
+    val DEFAULT_HEIGHT = 223    // 223)
+
     // image capture
     val REQUEST_IMAGE_CAPTURE = 1001
     lateinit var currentPhotoPath: String
@@ -86,6 +91,20 @@ class HomeFragment : Fragment() {
     private var previewBitmap: Bitmap? = null
     private var thumbBitmap: Bitmap? = null
 
+    // TODO: gridview
+    lateinit var gridView: GridView
+
+    private var gridBitmapArray = ArrayList<Bitmap>()
+
+    private var gridLabelArray = arrayOf("thumb1", "thumb2", "thumb3", "thumb4")
+
+//    private var gridImages = intArrayOf(
+//        R.drawable.baseline_flight_takeoff_24,
+//        R.drawable.baseline_flight_takeoff_24,
+//        R.drawable.baseline_flight_takeoff_24,
+//        R.drawable.baseline_flight_takeoff_24)
+
+    ///////////////////////////////////////////////////////////////////////////
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -130,16 +149,50 @@ class HomeFragment : Fragment() {
         val previewViewId = resources.getIdentifier(previewViewIdString, "id", packageName)
         imageViewPreview = root.findViewById(previewViewId) as ImageView
 
-        val thumbViewIdString = "imageViewGrid1"
-        val thumbViewId = resources.getIdentifier(thumbViewIdString, "id", packageName)
-        imageViewThumb = root.findViewById(thumbViewId) as ImageView
+//        val thumbViewIdString = "imageViewGrid1"
+//        val thumbViewId = resources.getIdentifier(thumbViewIdString, "id", packageName)
+//        imageViewThumb = root.findViewById(thumbViewId) as ImageView
+        // TODO: gridview
+        gridView = root.findViewById(R.id.gridView)
+
+        val bitmap1 = createBlankBitmap(DEFAULT_WIDTH,DEFAULT_HEIGHT)
+
+        if (bitmap1 != null) {
+            gridBitmapArray.add(bitmap1)
+            gridBitmapArray.add(bitmap1)
+            gridBitmapArray.add(bitmap1)
+            gridBitmapArray.add(bitmap1)
+        }
+
+//        val gridViewAdapter = GridViewAdapter(this.requireContext(), gridLabelArray, gridBitmapArray)
+//        gridView.adapter = gridViewAdapter
+//        gridView.onItemClickListener = AdapterView.OnItemClickListener { _, _, position, _ ->
+//            Toast.makeText(this.context, "Touch at " + gridLabelArray[+position], Toast.LENGTH_SHORT).show()
+//        }
+        updateGridViewAdapter(gridView, gridLabelArray, gridBitmapArray)
 
         //////////////////
         // angle meter one-time init
         angleMeter.create(requireActivity())
         //////////////////
-
         return root
+    }
+
+    private fun createBlankBitmap(width: Int, height: Int): Bitmap {
+        val conf = Bitmap.Config.ARGB_8888 // see other conf types
+        val bitmap1 = Bitmap.createBitmap(width, height, conf) // creates a MUTABLE bitmap
+        return bitmap1
+    }
+    private fun updateGridViewAdapter(
+        gridView: GridView,
+        gridLabelArray: Array<String>,
+        gridBitmapArray: ArrayList<Bitmap>) {
+
+        val gridViewAdapter = GridViewAdapter(this.requireContext(), gridLabelArray, gridBitmapArray)
+        gridView.adapter = gridViewAdapter
+        gridView.onItemClickListener = AdapterView.OnItemClickListener { _, _, position, _ ->
+            Toast.makeText(this.context, "Touch at " + gridLabelArray[+position], Toast.LENGTH_SHORT).show()
+        }
     }
 
     override fun onDestroyView() {
@@ -282,8 +335,11 @@ class HomeFragment : Fragment() {
 //                var sourceBitmap: Bitmap = previewBitmap as Bitmap
 //                previewBitmap = rotateBitmap(sourceBitmap, airCapture.exifRotation.toFloat())
                 thumbBitmap = rotateBitmap(thumbBitmap!!, airCapture.exifRotation.toFloat())
-                // TODO: migrate preview view to model
-                imageViewThumb.setImageBitmap(thumbBitmap)
+//                // TODO: migrate preview view to model
+//                imageViewThumb.setImageBitmap(thumbBitmap)
+                // TODO: assign thumb to gridview
+                gridBitmapArray.add(0, thumbBitmap!!)
+                updateGridViewAdapter(gridView, gridLabelArray, gridBitmapArray)
             }
 
             // captureMeters(airCapture): Boolean
