@@ -13,8 +13,9 @@ import java.util.ArrayList
 
 internal class GridViewAdapter(
     private val context: Context,
-    private val numbersInWords: Array<String>,
+//    private val numbersInWords: Array<String>,
 //    private val numberImage: IntArray
+    private val numbersInWords: ArrayList<String>,
     private val gridBitmapArray: ArrayList<Bitmap>
 ) :
     BaseAdapter() {

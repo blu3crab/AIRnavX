@@ -92,11 +92,15 @@ class HomeFragment : Fragment() {
     private var thumbBitmap: Bitmap? = null
 
     // TODO: gridview
-    lateinit var gridView: GridView
+    private lateinit var gridView: GridView
+    private lateinit var blankBitmap: Bitmap
+
+    private var gridCount = 0
 
     private var gridBitmapArray = ArrayList<Bitmap>()
 
-    private var gridLabelArray = arrayOf("thumb1", "thumb2", "thumb3", "thumb4")
+    private var gridLabelArray = ArrayList<String>()
+//    private var gridLabelArray = arrayOf("thumb1", "thumb2", "thumb3", "thumb4")
 
 //    private var gridImages = intArrayOf(
 //        R.drawable.baseline_flight_takeoff_24,
@@ -155,13 +159,12 @@ class HomeFragment : Fragment() {
         // TODO: gridview
         gridView = root.findViewById(R.id.gridView)
 
-        val bitmap1 = createBlankBitmap(DEFAULT_WIDTH,DEFAULT_HEIGHT)
+       blankBitmap = createBlankBitmap(DEFAULT_WIDTH,DEFAULT_HEIGHT)
 
-        if (bitmap1 != null) {
-            gridBitmapArray.add(bitmap1)
-            gridBitmapArray.add(bitmap1)
-            gridBitmapArray.add(bitmap1)
-            gridBitmapArray.add(bitmap1)
+        if (blankBitmap != null) {
+            gridBitmapArray.add(blankBitmap)
+            ++gridCount
+            gridLabelArray.add("thumb$gridCount")
         }
 
 //        val gridViewAdapter = GridViewAdapter(this.requireContext(), gridLabelArray, gridBitmapArray)
@@ -185,13 +188,14 @@ class HomeFragment : Fragment() {
     }
     private fun updateGridViewAdapter(
         gridView: GridView,
-        gridLabelArray: Array<String>,
+        gridLabelArray: ArrayList<String>,
         gridBitmapArray: ArrayList<Bitmap>) {
 
         val gridViewAdapter = GridViewAdapter(this.requireContext(), gridLabelArray, gridBitmapArray)
         gridView.adapter = gridViewAdapter
         gridView.onItemClickListener = AdapterView.OnItemClickListener { _, _, position, _ ->
             Toast.makeText(this.context, "Touch at " + gridLabelArray[+position], Toast.LENGTH_SHORT).show()
+            imageViewPreview.setImageBitmap(gridBitmapArray[position])
         }
     }
 
@@ -338,6 +342,10 @@ class HomeFragment : Fragment() {
 //                // TODO: migrate preview view to model
 //                imageViewThumb.setImageBitmap(thumbBitmap)
                 // TODO: assign thumb to gridview
+                ++gridCount
+                gridLabelArray.add("thumb$gridCount")
+
+                gridBitmapArray.add(blankBitmap!!)
                 gridBitmapArray.add(0, thumbBitmap!!)
                 updateGridViewAdapter(gridView, gridLabelArray, gridBitmapArray)
             }
