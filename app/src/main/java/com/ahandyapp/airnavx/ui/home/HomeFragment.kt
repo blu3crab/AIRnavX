@@ -29,6 +29,7 @@ import android.graphics.BitmapFactory
 import android.graphics.Matrix
 
 import android.media.ExifInterface
+import android.view.MotionEvent
 import android.widget.*
 import com.ahandyapp.airnavx.R
 import com.ahandyapp.airnavx.ui.grid.GridViewAdapter
@@ -58,19 +59,20 @@ class HomeFragment : Fragment() {
     // air capture
     lateinit var airCapture: AirCapture
 
-    // data type defaults
-    val DEFAULT_DATAFILE_EXT = "json"
-    val DEFAULT_STRING = "nada"
-    val DEFAULT_DOUBLE = 0.0
-    val DEFAULT_INT = 0
-    val DEFAULT_FLOAT_ARRAY: FloatArray = floatArrayOf(0.0F, 0.0F)
-    val DEFAULT_FLOAT = 0.0F
-
-//    val DEFAULT_HEIGHT = 128
-//    //val DEFAULT_WIDTH = DEFAULT_HEIGHT * .75
-//    val DEFAULT_WIDTH = 96
-    val DEFAULT_WIDTH = 160     // trunc(324 / 2)
-    val DEFAULT_HEIGHT = 223    // 223)
+//    // data type defaults
+//    val DEFAULT_DATAFILE_EXT = "json"
+//    val DEFAULT_STRING = "nada"
+//    val DEFAULT_DOUBLE = 0.0
+//    val DEFAULT_INT = 0
+//    val DEFAULT_FLOAT_ARRAY: FloatArray = floatArrayOf(0.0F, 0.0F)
+//    val DEFAULT_FLOAT = 0.0F
+//
+//    //<GridView
+//    //android:id="@+id/gridView"
+//    //android:layout_width="324dp"
+//    //android:layout_height="223dp"
+//    val DEFAULT_WIDTH = 160     // trunc(324 / 2) for 2 column gird
+//    val DEFAULT_HEIGHT = 223    // 223
 
     // image capture
     val REQUEST_IMAGE_CAPTURE = 1001
@@ -151,11 +153,14 @@ class HomeFragment : Fragment() {
         imageViewPreview = root.findViewById(previewViewId) as ImageView
 
         // TODO: onclick listener
-
+        imageViewPreview.setOnTouchListener { v, event ->
+            decodeTouchAction(event)
+            true
+        }
         // establish grid view, initialize gridViewAdapter
         gridView = root.findViewById(R.id.gridView)
 
-        blankBitmap = createBlankBitmap(DEFAULT_WIDTH,DEFAULT_HEIGHT)
+        blankBitmap = createBlankBitmap(homeViewModel.DEFAULT_BLANK_GRID_WIDTH,homeViewModel.DEFAULT_BLANK_GRID_HEIGHT)
 
         if (blankBitmap != null) {
             fullBitmapArray.add(blankBitmap)
@@ -330,24 +335,65 @@ class HomeFragment : Fragment() {
         }
     }
 
+    // TODO: onclick listener
+    fun decodeTouchAction(event: MotionEvent) {
+        val action = event.action
+        var pDownX=0
+        var pDownY=0
+        var pUpX=0
+        var pUpY=0
+        var pMoveX=0
+        var pMoveY=0
+
+        when(action){
+
+            MotionEvent.ACTION_DOWN -> {
+                pDownX= event.x.toInt()
+                pDownY= event.y.toInt()
+                Log.d(TAG, "decodeTouchAction DOWN event at $pDownX, $pDownY...")
+            }
+
+            MotionEvent.ACTION_MOVE -> {
+                pMoveX= event.x.toInt()
+                pMoveY= event.y.toInt()
+                Log.d(TAG, "decodeTouchAction MOVE event at $pMoveX, $pMoveY...")
+            }
+
+            MotionEvent.ACTION_UP -> {
+                pUpX= event.x.toInt()
+                pUpY= event.y.toInt()
+                Log.d(TAG, "decodeTouchAction UP event at $pUpX, $pUpY...")
+            }
+
+            MotionEvent.ACTION_CANCEL -> {
+                Log.d(TAG, "decodeTouchAction CANCEL event...")
+            }
+
+            else ->{
+                Log.d(TAG, "imageViewPreview.setOnClickListener UNKNOWN event...")
+            }
+        }
+        true
+
+    }
     fun initAirCapture(): AirCapture {
         val airCapture = AirCapture(
-            DEFAULT_STRING,
-            DEFAULT_STRING,
-            DEFAULT_STRING,
-            DEFAULT_INT,
-            DEFAULT_INT,
-            DEFAULT_DOUBLE,
-            DEFAULT_INT,
-            DEFAULT_INT,
-            DEFAULT_INT,
-            DEFAULT_FLOAT_ARRAY,
-            DEFAULT_DOUBLE,
-            DEFAULT_INT,
-            DEFAULT_INT,
-            DEFAULT_FLOAT,
-            DEFAULT_FLOAT,
-            DEFAULT_FLOAT
+            homeViewModel.DEFAULT_STRING,
+            homeViewModel.DEFAULT_STRING,
+            homeViewModel.DEFAULT_STRING,
+            homeViewModel.DEFAULT_INT,
+            homeViewModel.DEFAULT_INT,
+            homeViewModel.DEFAULT_DOUBLE,
+            homeViewModel.DEFAULT_INT,
+            homeViewModel.DEFAULT_INT,
+            homeViewModel.DEFAULT_INT,
+            homeViewModel.DEFAULT_FLOAT_ARRAY,
+            homeViewModel.DEFAULT_DOUBLE,
+            homeViewModel.DEFAULT_INT,
+            homeViewModel.DEFAULT_INT,
+            homeViewModel.DEFAULT_FLOAT,
+            homeViewModel.DEFAULT_FLOAT,
+            homeViewModel.DEFAULT_FLOAT
         )
         return airCapture
     }
@@ -478,10 +524,6 @@ class HomeFragment : Fragment() {
 
     private fun extractExif(photoFile: File, airCapture: AirCapture): Boolean {
         // TODO: extractEXIF(photoFile): Boolean
-        // orientation index
-        // rotation degrees
-        // width
-        // length
         try {
             // extract EXIF attributes from photoFile
             var rotation = 0
@@ -564,7 +606,7 @@ class HomeFragment : Fragment() {
             File(context?.filesDir, "aircapture.json").printWriter().use { out ->
                 out.println("$jsonCapture")
             }
-            var name = "AIR-" + airCapture.timestamp + "." + DEFAULT_DATAFILE_EXT
+            var name = "AIR-" + airCapture.timestamp + "." + homeViewModel.DEFAULT_DATAFILE_EXT
             File(storageDir, name).printWriter().use { out ->
                 out.println("$jsonCapture")
             }
