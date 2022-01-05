@@ -58,23 +58,7 @@ class HomeFragment : Fragment() {
 
     // air capture
     lateinit var airCapture: AirCapture
-    lateinit var airCaptureEmpty: AirCapture
-
-
-//    // data type defaults
-//    val DEFAULT_DATAFILE_EXT = "json"
-//    val DEFAULT_STRING = "nada"
-//    val DEFAULT_DOUBLE = 0.0
-//    val DEFAULT_INT = 0
-//    val DEFAULT_FLOAT_ARRAY: FloatArray = floatArrayOf(0.0F, 0.0F)
-//    val DEFAULT_FLOAT = 0.0F
-//
-//    //<GridView
-//    //android:id="@+id/gridView"
-//    //android:layout_width="324dp"
-//    //android:layout_height="223dp"
-//    val DEFAULT_WIDTH = 160     // trunc(324 / 2) for 2 column gird
-//    val DEFAULT_HEIGHT = 223    // 223
+//    lateinit var airCaptureEmpty: AirCapture
 
     // image capture
     val REQUEST_IMAGE_CAPTURE = 1001
@@ -86,30 +70,28 @@ class HomeFragment : Fragment() {
 
     // TODO: migrate preview view to model
     private lateinit var imageViewPreview: ImageView       // preview image display
-//    private lateinit var imageViewThumb: ImageView          // thumb grid display
 
     // TODO: full, preview, thumb image collections
-    val PREVIEW_SCALE_FACTOR = 5
-    val THUMB_SCALE_FACTOR = 6
+//    val PREVIEW_SCALE_FACTOR = 5
+//    val THUMB_SCALE_FACTOR = 6
+//    val THUMB_SCALE_FACTOR = 5
     private var airCaptureBitmap: Bitmap? = null
-    private var previewBitmap: Bitmap? = null
+//    private var previewBitmap: Bitmap? = null
     private var thumbBitmap: Bitmap? = null
 
     // TODO: gridview
     private lateinit var gridView: GridView
     private lateinit var blankBitmap: Bitmap
 
-    private var gridCount = 0
-
-    private var gridBitmapArray = ArrayList<Bitmap>()
-
-    private var gridLabelArray = ArrayList<String>()
-
-    private var gridPosition = 0
-
-    private var fullBitmapArray = ArrayList<Bitmap>()
-    private var airCaptureArray = ArrayList<AirCapture>()
-
+//    private var gridCount = 0
+//    private var gridPosition = 0
+//
+//    private var gridBitmapArray = ArrayList<Bitmap>()
+//    private var gridLabelArray = ArrayList<String>()
+//
+//    private var fullBitmapArray = ArrayList<Bitmap>()
+//    private var airCaptureArray = ArrayList<AirCapture>()
+//
     ///////////////////////////////////////////////////////////////////////////
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -155,7 +137,7 @@ class HomeFragment : Fragment() {
         val previewViewId = resources.getIdentifier(previewViewIdString, "id", packageName)
         imageViewPreview = root.findViewById(previewViewId) as ImageView
 
-        // TODO: onclick listener
+        // TODO: onclick listener actions - launch sizer frag?
         imageViewPreview.setOnTouchListener { v, event ->
             decodeTouchAction(event)
             true
@@ -164,16 +146,17 @@ class HomeFragment : Fragment() {
         gridView = root.findViewById(R.id.gridView)
 
         blankBitmap = createBlankBitmap(homeViewModel.DEFAULT_BLANK_GRID_WIDTH,homeViewModel.DEFAULT_BLANK_GRID_HEIGHT)
-        airCaptureEmpty = initAirCapture();
-
+        airCapture = initAirCapture();
+        // TODO: gridview init fun v
         if (blankBitmap != null) {
-            gridBitmapArray.add(blankBitmap)
-            ++gridCount
-            gridLabelArray.add("thumb$gridCount")
-            fullBitmapArray.add(blankBitmap)
-            airCaptureArray.add(airCaptureEmpty)
+            homeViewModel.gridBitmapArray.add(blankBitmap)
+            ++homeViewModel.gridCount
+            homeViewModel.gridLabelArray.add("thumb${homeViewModel.gridCount.toString()}")
+            homeViewModel.fullBitmapArray.add(blankBitmap)
+            homeViewModel.airCaptureArray.add(airCapture)
         }
-        updateGridViewAdapter(gridView, gridLabelArray, gridBitmapArray)
+        updateGridViewAdapter(gridView, homeViewModel.gridLabelArray, homeViewModel.gridBitmapArray)
+        // TODO: gridview init fun ^
 
         //////////////////
         // angle meter one-time init
@@ -207,7 +190,6 @@ class HomeFragment : Fragment() {
             val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
             try {
                 // create the photo File
-//                try {
                 val imageFile = createImageFile()
                 imageFile?.let {
                     photoFile = imageFile
@@ -241,7 +223,6 @@ class HomeFragment : Fragment() {
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
             Toast.makeText(this.context, "camera image captured...", Toast.LENGTH_SHORT).show()
             Log.d(TAG, "dispatchTakePictureIntent onActivityResult camera image captured...")
-//            var imageBitmap: Bitmap? = null
             if (!THUMBNAIL_ONLY) {
                 // generate thumbnail from file uri if not available as thumbnail in data
                 // photo file is file EXTRA_OUTPUT location of actual camera image
@@ -265,67 +246,56 @@ class HomeFragment : Fragment() {
                         Log.d(TAG, "dispatchTakePictureIntent onActivityResult exifExtracted ${exifExtracted}")
 
                         // extract thumbnail at scale factor
-                        previewBitmap = extractThumbnail(airCaptureBitmap!!, PREVIEW_SCALE_FACTOR)
+//                        previewBitmap = extractThumbnail(airCaptureBitmap!!, PREVIEW_SCALE_FACTOR)
                         // extract thumbnail at scale factor
-                        thumbBitmap = extractThumbnail(airCaptureBitmap!!, THUMB_SCALE_FACTOR)
+//                        thumbBitmap = extractThumbnail(airCaptureBitmap!!, THUMB_SCALE_FACTOR)
+                        thumbBitmap = extractThumbnail(airCaptureBitmap!!, homeViewModel.THUMB_SCALE_FACTOR)
 
                         // rotateBitmap(imageBitmap, rotationDegrees): Bitmap
-                        if (previewBitmap != null && thumbBitmap != null) {
-                            // rotate bitmap
-                            previewBitmap = rotateBitmap(previewBitmap!!, airCapture.exifRotation.toFloat())
-                            // TODO: migrate preview view to model
-                            imageViewPreview.setImageBitmap(previewBitmap)
-//                        }
-//                        // rotateBitmap(imageBitmap, rotationDegrees): Bitmap
-//                        if (thumbBitmap != null) {
-                            // rotate thumb bitmap
-                            thumbBitmap = rotateBitmap(thumbBitmap!!, airCapture.exifRotation.toFloat())
-                            // insert thumb in grid view
-                            ++gridCount
-                            gridLabelArray.add("thumb$gridCount")
-
-                            gridBitmapArray.add(blankBitmap!!)
-                            gridBitmapArray.add(0, thumbBitmap!!)
-                            updateGridViewAdapter(gridView, gridLabelArray, gridBitmapArray)
-
-                            // rotate full bitmap
-                            var fullBitmap = rotateBitmap(airCaptureBitmap!!, airCapture.exifRotation.toFloat())
-                            // add blank then insert full bitmap into array
-//                            fullBitmapArray.add(blankBitmap!!)
-                            fullBitmapArray.add(0, fullBitmap!!)
-
+                        if (thumbBitmap != null) {
+//                            if (previewBitmap != null && thumbBitmap != null) {
                             // captureMeters(airCapture): Boolean
                             val metersCaptured = captureMeters(airCapture)
                             Log.d(TAG,"dispatchTakePictureIntent onActivityResult metersCaptured ${metersCaptured}")
 
-//                            airCaptureArray.add(airCaptureEmpty)
-                            airCaptureArray.add(0, airCapture)
+//                             rotate bitmap
+//                            previewBitmap = rotateBitmap(previewBitmap!!, airCapture.exifRotation.toFloat())
+//                            // TODO: migrate preview view to model
+                            // rotate thumb bitmap
+                            thumbBitmap = rotateBitmap(thumbBitmap!!, airCapture.exifRotation.toFloat())
+                            imageViewPreview.setImageBitmap(thumbBitmap)
+//                            // rotate thumb bitmap
+//                            thumbBitmap = rotateBitmap(thumbBitmap!!, airCapture.exifRotation.toFloat())
+
+                            // TODO: gridview update fun v
+                            // insert thumb in grid view
+                            ++homeViewModel.gridCount
+                            homeViewModel.gridLabelArray.add("thumb${homeViewModel.gridCount.toString()}")
+                            homeViewModel.gridBitmapArray.add(0, thumbBitmap!!)
+                            updateGridViewAdapter(gridView, homeViewModel.gridLabelArray, homeViewModel.gridBitmapArray)
+
+                            // rotate full bitmap
+                            var fullBitmap = rotateBitmap(airCaptureBitmap!!, airCapture.exifRotation.toFloat())
+                            // insert full bitmap into array
+                            homeViewModel.fullBitmapArray.add(0, fullBitmap!!)
+//                            // captureMeters(airCapture): Boolean
+//                            val metersCaptured = captureMeters(airCapture)
+//                            Log.d(TAG,"dispatchTakePictureIntent onActivityResult metersCaptured ${metersCaptured}")
+//
+                            homeViewModel.airCaptureArray.add(0, airCapture)
+                            // TODO: gridview update fun ^
+
                             // recordCapture(airCapture): Boolean
                             val captureRecorded = recordCapture(airCapture)
                             Log.d(TAG,"dispatchTakePictureIntent onActivityResult captureRecorded ${captureRecorded}")
 
-                            // TODO: refreshViewModel(airCapture): Boolean
-                            // update viewModel
-                            textViewPreview.text = airCapture.timestamp
-                            textViewDecibel.text = airCapture.decibel.toString() + " dB"
-                            textViewAngle.text = airCapture.cameraAngle.toString() + " degrees"
+                            val refreshResult = refreshViewModel(airCapture)
+                            Log.d(TAG,"dispatchTakePictureIntent onActivityResult refreshViewModel $refreshResult")
+//                            // update viewModel
+//                            textViewPreview.text = airCapture.timestamp
+//                            textViewDecibel.text = airCapture.decibel.toString() + " dB"
+//                            textViewAngle.text = airCapture.cameraAngle.toString() + " degrees"
                         }
-
-//                        // captureMeters(airCapture): Boolean
-//                        val metersCaptured = captureMeters(airCapture)
-//                        Log.d(TAG,"dispatchTakePictureIntent onActivityResult metersCaptured ${metersCaptured}")
-
-//                        // TODO: refreshViewModel(airCapture): Boolean
-//                        // update viewModel
-//                        textViewPreview.text = airCapture.timestamp
-//                        textViewDecibel.text = airCapture.decibel.toString() + " dB"
-//                        textViewAngle.text = airCapture.cameraAngle.toString() + " degrees"
-//
-//
-//                        // recordCapture(airCapture): Boolean
-//                        val captureRecorded = recordCapture(airCapture)
-//                        Log.d(TAG,"dispatchTakePictureIntent onActivityResult captureRecorded ${captureRecorded}")
-
                     }
                 } catch (ex: Exception) {
                     Log.e(TAG, "dispatchTakePictureIntent createImageFile Exception ${ex.stackTrace}")
@@ -337,7 +307,7 @@ class HomeFragment : Fragment() {
                        val extraPhotoUri: Uri = data.extras?.get(MediaStore.EXTRA_OUTPUT) as Uri
                        Log.d(TAG, "dispatchTakePictureIntent onActivityResult thumb URI $extraPhotoUri")
 
-                       previewBitmap = data.extras?.get("data") as Bitmap
+                       thumbBitmap = data.extras?.get("data") as Bitmap
                    } ?: run {
                        Log.e(TAG, "dispatchTakePictureIntent onActivityResult data.extras NULL.")
                    }
@@ -345,52 +315,6 @@ class HomeFragment : Fragment() {
                    Log.e(TAG, "dispatchTakePictureIntent onActivityResult data NULL.")
                }
            }
-//            /////////////////////////////////////
-//            // extractEXIF(photoFile): Boolean
-//            val exifExtracted = extractExif(photoFile, airCapture)
-//            Log.d(TAG, "dispatchTakePictureIntent onActivityResult exifExtracted ${exifExtracted}")
-//
-//            // rotateBitmap(imageBitmap, rotationDegrees): Bitmap
-//            if (previewBitmap != null) {
-//                // rotate bitmap
-//                previewBitmap = rotateBitmap(previewBitmap!!, airCapture.exifRotation.toFloat())
-//                // TODO: migrate preview view to model
-//                imageViewPreview.setImageBitmap(previewBitmap)
-//            }
-//            // rotateBitmap(imageBitmap, rotationDegrees): Bitmap
-//            if (thumbBitmap != null) {
-//                // rotate thumb bitmap
-//                thumbBitmap = rotateBitmap(thumbBitmap!!, airCapture.exifRotation.toFloat())
-//                // insert thumb in grid view
-//                ++gridCount
-//                gridLabelArray.add("thumb$gridCount")
-//
-//                gridBitmapArray.add(blankBitmap!!)
-//                gridBitmapArray.add(0, thumbBitmap!!)
-//                updateGridViewAdapter(gridView, gridLabelArray, gridBitmapArray)
-//
-//                // rotate full bitmap
-//                var fullBitmap = rotateBitmap(airCaptureBitmap!!, airCapture.exifRotation.toFloat())
-//                // ad blank then insert full bitmap into array
-//                fullBitmapArray.add(blankBitmap!!)
-//                fullBitmapArray.add(0, fullBitmap!!)
-//            }
-//
-//            // captureMeters(airCapture): Boolean
-//            val metersCaptured = captureMeters(airCapture)
-//            Log.d(TAG,"dispatchTakePictureIntent onActivityResult metersCaptured ${metersCaptured}")
-//
-//            // TODO: refreshViewModel(airCapture): Boolean
-//            // update viewModel
-//            textViewPreview.text = airCapture.timestamp
-//            textViewDecibel.text = airCapture.decibel.toString() + " dB"
-//            textViewAngle.text = airCapture.cameraAngle.toString() + " degrees"
-//
-//
-//            // recordCapture(airCapture): Boolean
-//            val captureRecorded = recordCapture(airCapture)
-//            Log.d(TAG,"dispatchTakePictureIntent onActivityResult captureRecorded ${captureRecorded}")
-
             // loop dispatch until cancelled
             Log.d(TAG, "dispatchTakePictureIntent onActivityResult launching camera...")
             dispatchTakePictureIntent()
@@ -402,6 +326,15 @@ class HomeFragment : Fragment() {
             // stop sound meter
             soundMeter.stop()
         }
+    }
+
+    fun refreshViewModel(airCapture: AirCapture): Boolean {
+        // update viewModel
+        textViewPreview.text = airCapture.timestamp
+        textViewDecibel.text = airCapture.decibel.toString() + " dB"
+        textViewAngle.text = airCapture.cameraAngle.toString() + " degrees"
+        Log.d(TAG,"refreshViewModel $textViewPreview.text $textViewDecibel.text $textViewAngle.text")
+        return true
     }
 
     // TODO: onclick listener
@@ -445,6 +378,7 @@ class HomeFragment : Fragment() {
         true
 
     }
+    // TODO: refactor to AirCapture model
     fun initAirCapture(): AirCapture {
         val airCapture = AirCapture(
             homeViewModel.DEFAULT_STRING,
@@ -472,22 +406,26 @@ class HomeFragment : Fragment() {
         val bitmap1 = Bitmap.createBitmap(width, height, conf) // creates a MUTABLE bitmap
         return bitmap1
     }
+    // TODO: untangle listener from viewmodel updates
     private fun updateGridViewAdapter(
         gridView: GridView,
         gridLabelArray: ArrayList<String>,
         gridBitmapArray: ArrayList<Bitmap>) {
 
-        gridPosition = 0
+        homeViewModel.gridPosition = 0
 
         val gridViewAdapter = GridViewAdapter(this.requireContext(), gridLabelArray, gridBitmapArray)
         gridView.adapter = gridViewAdapter
         gridView.onItemClickListener = AdapterView.OnItemClickListener { _, _, position, _ ->
             Toast.makeText(this.context, "Touch at " + gridLabelArray[+position], Toast.LENGTH_SHORT).show()
-            // TODO: fun stageThumbPick(position: Int): Boolean?
-            gridPosition = position
-            imageViewPreview.setImageBitmap(gridBitmapArray[gridPosition])
+            // TODO: gridview position selection fun
+            homeViewModel.gridPosition = position
+            imageViewPreview.setImageBitmap(gridBitmapArray[homeViewModel.gridPosition])
             // test full bitmap
             //imageViewPreview.setImageBitmap(fullBitmapArray[gridPosition])
+            // sync AirCapture to thumb selection
+            airCapture = homeViewModel.airCaptureArray[homeViewModel.gridPosition]
+            refreshViewModel(airCapture)
         }
     }
 
@@ -562,16 +500,6 @@ class HomeFragment : Fragment() {
         // Bitmap resized = ThumbnailUtils.extractThumbnail(BitmapFactory.decodeFile(file.getPath()), width, height);
 
         //imageBitmap = cropAndScale(imageBitmap, 768)
-    }
-    private fun cropAndScale(source: Bitmap, scale: Int): Bitmap? {
-        var source = source
-        val factor = if (source.height <= source.width) source.height else source.width
-        val longer = if (source.height >= source.width) source.height else source.width
-        val x = if (source.height >= source.width) 0 else (longer - factor) / 2
-        val y = if (source.height <= source.width) 0 else (longer - factor) / 2
-        source = Bitmap.createBitmap(source, x, y, factor, factor)
-        source = Bitmap.createScaledBitmap(source, scale, scale, false)
-        return source
     }
 
     private fun rotateBitmap(sourceBitmap: Bitmap, rotationDegrees: Float): Bitmap {
@@ -665,6 +593,7 @@ class HomeFragment : Fragment() {
     }
 
     private fun recordCapture(airCapture: AirCapture): Boolean {
+        // TODO: refactor to AirCapture model
         // TODO: recordCapture(airCapture) -> write yourself!
         try {
             // transform AirCapture data class to json
