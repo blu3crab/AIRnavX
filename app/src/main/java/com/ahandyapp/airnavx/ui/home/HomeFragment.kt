@@ -58,6 +58,8 @@ class HomeFragment : Fragment() {
 
     // air capture
     lateinit var airCapture: AirCapture
+    lateinit var airCaptureEmpty: AirCapture
+
 
 //    // data type defaults
 //    val DEFAULT_DATAFILE_EXT = "json"
@@ -106,6 +108,7 @@ class HomeFragment : Fragment() {
     private var gridPosition = 0
 
     private var fullBitmapArray = ArrayList<Bitmap>()
+    private var airCaptureArray = ArrayList<AirCapture>()
 
     ///////////////////////////////////////////////////////////////////////////
     override fun onCreateView(
@@ -161,12 +164,14 @@ class HomeFragment : Fragment() {
         gridView = root.findViewById(R.id.gridView)
 
         blankBitmap = createBlankBitmap(homeViewModel.DEFAULT_BLANK_GRID_WIDTH,homeViewModel.DEFAULT_BLANK_GRID_HEIGHT)
+        airCaptureEmpty = initAirCapture();
 
         if (blankBitmap != null) {
-            fullBitmapArray.add(blankBitmap)
             gridBitmapArray.add(blankBitmap)
             ++gridCount
             gridLabelArray.add("thumb$gridCount")
+            fullBitmapArray.add(blankBitmap)
+            airCaptureArray.add(airCaptureEmpty)
         }
         updateGridViewAdapter(gridView, gridLabelArray, gridBitmapArray)
 
@@ -254,10 +259,73 @@ class HomeFragment : Fragment() {
                         airCapture.imageHeight = airCaptureBitmap!!.height
                         Log.d(TAG,"dispatchTakePictureIntent onActivityResult width ${airCapture.imageWidth} X height ${airCapture.imageHeight}")
 
+                        /////////////////////////////////////
+                        // extractEXIF(photoFile): Boolean
+                        val exifExtracted = extractExif(photoFile, airCapture)
+                        Log.d(TAG, "dispatchTakePictureIntent onActivityResult exifExtracted ${exifExtracted}")
+
                         // extract thumbnail at scale factor
                         previewBitmap = extractThumbnail(airCaptureBitmap!!, PREVIEW_SCALE_FACTOR)
                         // extract thumbnail at scale factor
                         thumbBitmap = extractThumbnail(airCaptureBitmap!!, THUMB_SCALE_FACTOR)
+
+                        // rotateBitmap(imageBitmap, rotationDegrees): Bitmap
+                        if (previewBitmap != null && thumbBitmap != null) {
+                            // rotate bitmap
+                            previewBitmap = rotateBitmap(previewBitmap!!, airCapture.exifRotation.toFloat())
+                            // TODO: migrate preview view to model
+                            imageViewPreview.setImageBitmap(previewBitmap)
+//                        }
+//                        // rotateBitmap(imageBitmap, rotationDegrees): Bitmap
+//                        if (thumbBitmap != null) {
+                            // rotate thumb bitmap
+                            thumbBitmap = rotateBitmap(thumbBitmap!!, airCapture.exifRotation.toFloat())
+                            // insert thumb in grid view
+                            ++gridCount
+                            gridLabelArray.add("thumb$gridCount")
+
+                            gridBitmapArray.add(blankBitmap!!)
+                            gridBitmapArray.add(0, thumbBitmap!!)
+                            updateGridViewAdapter(gridView, gridLabelArray, gridBitmapArray)
+
+                            // rotate full bitmap
+                            var fullBitmap = rotateBitmap(airCaptureBitmap!!, airCapture.exifRotation.toFloat())
+                            // add blank then insert full bitmap into array
+//                            fullBitmapArray.add(blankBitmap!!)
+                            fullBitmapArray.add(0, fullBitmap!!)
+
+                            // captureMeters(airCapture): Boolean
+                            val metersCaptured = captureMeters(airCapture)
+                            Log.d(TAG,"dispatchTakePictureIntent onActivityResult metersCaptured ${metersCaptured}")
+
+//                            airCaptureArray.add(airCaptureEmpty)
+                            airCaptureArray.add(0, airCapture)
+                            // recordCapture(airCapture): Boolean
+                            val captureRecorded = recordCapture(airCapture)
+                            Log.d(TAG,"dispatchTakePictureIntent onActivityResult captureRecorded ${captureRecorded}")
+
+                            // TODO: refreshViewModel(airCapture): Boolean
+                            // update viewModel
+                            textViewPreview.text = airCapture.timestamp
+                            textViewDecibel.text = airCapture.decibel.toString() + " dB"
+                            textViewAngle.text = airCapture.cameraAngle.toString() + " degrees"
+                        }
+
+//                        // captureMeters(airCapture): Boolean
+//                        val metersCaptured = captureMeters(airCapture)
+//                        Log.d(TAG,"dispatchTakePictureIntent onActivityResult metersCaptured ${metersCaptured}")
+
+//                        // TODO: refreshViewModel(airCapture): Boolean
+//                        // update viewModel
+//                        textViewPreview.text = airCapture.timestamp
+//                        textViewDecibel.text = airCapture.decibel.toString() + " dB"
+//                        textViewAngle.text = airCapture.cameraAngle.toString() + " degrees"
+//
+//
+//                        // recordCapture(airCapture): Boolean
+//                        val captureRecorded = recordCapture(airCapture)
+//                        Log.d(TAG,"dispatchTakePictureIntent onActivityResult captureRecorded ${captureRecorded}")
+
                     }
                 } catch (ex: Exception) {
                     Log.e(TAG, "dispatchTakePictureIntent createImageFile Exception ${ex.stackTrace}")
@@ -276,51 +344,52 @@ class HomeFragment : Fragment() {
                } ?: run {
                    Log.e(TAG, "dispatchTakePictureIntent onActivityResult data NULL.")
                }
-            }
-            // extractEXIF(photoFile): Boolean
-            val exifExtracted = extractExif(photoFile, airCapture)
-            Log.d(TAG, "dispatchTakePictureIntent onActivityResult exifExtracted ${exifExtracted}")
-
-            // rotateBitmap(imageBitmap, rotationDegrees): Bitmap
-            if (previewBitmap != null) {
-                // rotate bitmap
-                previewBitmap = rotateBitmap(previewBitmap!!, airCapture.exifRotation.toFloat())
-                // TODO: migrate preview view to model
-                imageViewPreview.setImageBitmap(previewBitmap)
-            }
-            // rotateBitmap(imageBitmap, rotationDegrees): Bitmap
-            if (thumbBitmap != null) {
-                // rotate thumb bitmap
-                thumbBitmap = rotateBitmap(thumbBitmap!!, airCapture.exifRotation.toFloat())
-                // insert thumb in grid view
-                ++gridCount
-                gridLabelArray.add("thumb$gridCount")
-
-                gridBitmapArray.add(blankBitmap!!)
-                gridBitmapArray.add(0, thumbBitmap!!)
-                updateGridViewAdapter(gridView, gridLabelArray, gridBitmapArray)
-
-                // rotate full bitmap
-                var fullBitmap = rotateBitmap(airCaptureBitmap!!, airCapture.exifRotation.toFloat())
-                // ad blank then insert full bitmap into array
-                fullBitmapArray.add(blankBitmap!!)
-                fullBitmapArray.add(0, fullBitmap!!)
-            }
-
-            // captureMeters(airCapture): Boolean
-            val metersCaptured = captureMeters(airCapture)
-            Log.d(TAG,"dispatchTakePictureIntent onActivityResult metersCaptured ${metersCaptured}")
-
-            // TODO: refreshViewModel(airCapture): Boolean
-            // update viewModel
-            textViewPreview.text = airCapture.timestamp
-            textViewDecibel.text = airCapture.decibel.toString() + " dB"
-            textViewAngle.text = airCapture.cameraAngle.toString() + " degrees"
-
-
-            // recordCapture(airCapture): Boolean
-            val captureRecorded = recordCapture(airCapture)
-            Log.d(TAG,"dispatchTakePictureIntent onActivityResult captureRecorded ${captureRecorded}")
+           }
+//            /////////////////////////////////////
+//            // extractEXIF(photoFile): Boolean
+//            val exifExtracted = extractExif(photoFile, airCapture)
+//            Log.d(TAG, "dispatchTakePictureIntent onActivityResult exifExtracted ${exifExtracted}")
+//
+//            // rotateBitmap(imageBitmap, rotationDegrees): Bitmap
+//            if (previewBitmap != null) {
+//                // rotate bitmap
+//                previewBitmap = rotateBitmap(previewBitmap!!, airCapture.exifRotation.toFloat())
+//                // TODO: migrate preview view to model
+//                imageViewPreview.setImageBitmap(previewBitmap)
+//            }
+//            // rotateBitmap(imageBitmap, rotationDegrees): Bitmap
+//            if (thumbBitmap != null) {
+//                // rotate thumb bitmap
+//                thumbBitmap = rotateBitmap(thumbBitmap!!, airCapture.exifRotation.toFloat())
+//                // insert thumb in grid view
+//                ++gridCount
+//                gridLabelArray.add("thumb$gridCount")
+//
+//                gridBitmapArray.add(blankBitmap!!)
+//                gridBitmapArray.add(0, thumbBitmap!!)
+//                updateGridViewAdapter(gridView, gridLabelArray, gridBitmapArray)
+//
+//                // rotate full bitmap
+//                var fullBitmap = rotateBitmap(airCaptureBitmap!!, airCapture.exifRotation.toFloat())
+//                // ad blank then insert full bitmap into array
+//                fullBitmapArray.add(blankBitmap!!)
+//                fullBitmapArray.add(0, fullBitmap!!)
+//            }
+//
+//            // captureMeters(airCapture): Boolean
+//            val metersCaptured = captureMeters(airCapture)
+//            Log.d(TAG,"dispatchTakePictureIntent onActivityResult metersCaptured ${metersCaptured}")
+//
+//            // TODO: refreshViewModel(airCapture): Boolean
+//            // update viewModel
+//            textViewPreview.text = airCapture.timestamp
+//            textViewDecibel.text = airCapture.decibel.toString() + " dB"
+//            textViewAngle.text = airCapture.cameraAngle.toString() + " degrees"
+//
+//
+//            // recordCapture(airCapture): Boolean
+//            val captureRecorded = recordCapture(airCapture)
+//            Log.d(TAG,"dispatchTakePictureIntent onActivityResult captureRecorded ${captureRecorded}")
 
             // loop dispatch until cancelled
             Log.d(TAG, "dispatchTakePictureIntent onActivityResult launching camera...")
@@ -596,7 +665,7 @@ class HomeFragment : Fragment() {
     }
 
     private fun recordCapture(airCapture: AirCapture): Boolean {
-        // TODO: recordCapture(airCapture): Boolean
+        // TODO: recordCapture(airCapture) -> write yourself!
         try {
             // transform AirCapture data class to json
             val jsonCapture = Gson().toJson(airCapture)
