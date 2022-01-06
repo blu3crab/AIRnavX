@@ -9,8 +9,10 @@ import java.util.ArrayList
 
 class HomeViewModel : ViewModel() {
 
+    ///////////////////////////////////////////////////////////////////////////
     // AirCapture defaults
     val DEFAULT_DATAFILE_EXT = "json"
+    val DEFAULT_IMAGEFILE_EXT = "jpg"
     val DEFAULT_STRING = "nada"
     val DEFAULT_DOUBLE = 0.0
     val DEFAULT_INT = 0
@@ -26,6 +28,21 @@ class HomeViewModel : ViewModel() {
 
     val THUMB_SCALE_FACTOR = 5
 
+    enum class AirFileType {
+        IMAGE,
+        DATA
+    }
+    ///////////////////////////////////////////////////////////////////////////
+    // gridView
+    var gridCount = 0
+    var gridPosition = 0
+
+    var gridBitmapArray = ArrayList<Bitmap>()
+    var gridLabelArray = ArrayList<String>()
+
+    var fullBitmapArray = ArrayList<Bitmap>()
+    var airCaptureArray = ArrayList<AirCapture>()
+    ///////////////////////////////////////////////////////////////////////////
     // live data
     private val _text = MutableLiveData<String>().apply {
         value = "Image Capture Preview"
@@ -41,15 +58,5 @@ class HomeViewModel : ViewModel() {
         value = "--- degrees"
     }
     val angle: LiveData<String> = _angle
-
-    // gridView
-    var gridCount = 0
-    var gridPosition = 0
-
-    var gridBitmapArray = ArrayList<Bitmap>()
-    var gridLabelArray = ArrayList<String>()
-
-    var fullBitmapArray = ArrayList<Bitmap>()
-    var airCaptureArray = ArrayList<AirCapture>()
-
+    ///////////////////////////////////////////////////////////////////////////
 }

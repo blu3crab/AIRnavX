@@ -38,46 +38,50 @@ import com.ahandyapp.airnavx.ui.grid.GridViewAdapter
 class HomeFragment : Fragment() {
 
     private val TAG = "HomeFragment"
+    // test thumb only image capture
+    private val TEST_THUMBNAIL_ONLY = false
 
+    // view model
     private lateinit var homeViewModel: HomeViewModel
     private var _binding: FragmentHomeBinding? = null
+    // view elements
     private lateinit var textViewPreview: TextView
     private lateinit var textViewDecibel: TextView
     private lateinit var textViewAngle: TextView
+    private lateinit var imageViewPreview: ImageView       // preview image display
+    private lateinit var gridView: GridView
 
     // property is only valid between onCreateView and onDestroyView.
     private val binding get() = _binding!!
 
-    // test thumb only image capture
-    private val THUMBNAIL_ONLY = false
-
     //////////////////
-    // angle & location meters
+    // angle & sound meters
     private var angleMeter = AngleMeter()
     private var soundMeter = SoundMeter()
 
-    // air capture
-    //lateinit var airCapture: AirCapture
-
-    // image capture
+    // image capture ->
+    //      dispatchTakePictureIntent - create image capture file & timestamp
+    //      onActivityResult - pipeline image capture data stream
     val REQUEST_IMAGE_CAPTURE = 1001
-    lateinit var currentPhotoPath: String
-    lateinit var storageDir: File
+    private lateinit var captureFile: File          // capture file
+    private var captureTimestamp: String = "nada"   // capture file creation timestamp
 
-    private lateinit var photoFile: File           // photo file
-    private lateinit var photoUri: Uri              // photo URI
+    // TODO: to viewmodel
+//    lateinit var storageDir: File
 
-    private var timestamp: String = "nada"
+    //    lateinit var currentPhotoPath: String
+    //    private lateinit var photoUri: Uri              // photo URI
+
     // TODO: migrate preview view to model
-    private lateinit var imageViewPreview: ImageView       // preview image display
+//    private lateinit var imageViewPreview: ImageView       // preview image display
 
     // TODO: full, thumb image collections
-    private var airCaptureBitmap: Bitmap? = null
-    private var thumbBitmap: Bitmap? = null
+//    private var airCaptureBitmap: Bitmap? = null
+//    private var thumbBitmap: Bitmap? = null
 
     // TODO: gridview
-    private lateinit var gridView: GridView
-    private lateinit var blankBitmap: Bitmap
+//    private lateinit var gridView: GridView
+//    private lateinit var blankBitmap: Bitmap
 
     ///////////////////////////////////////////////////////////////////////////
     override fun onCreateView(
@@ -91,17 +95,15 @@ class HomeFragment : Fragment() {
         _binding = FragmentHomeBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
-        //val textViewPreview: TextView = binding.textPreview
+        // live data
         textViewPreview = binding.textPreview
         homeViewModel.text.observe(viewLifecycleOwner, Observer {
             textViewPreview.text = it
         })
-        //val textViewDecibel: TextView = binding.textDecibel
         textViewDecibel = binding.textDecibel
         homeViewModel.decibel.observe(viewLifecycleOwner, Observer {
             textViewDecibel.text = it
         })
-        //val textViewAngle: TextView = binding.textAngle
         textViewAngle = binding.textAngle
         homeViewModel.angle.observe(viewLifecycleOwner, Observer {
             textViewAngle.text = it
@@ -112,10 +114,8 @@ class HomeFragment : Fragment() {
         val packageName = this.context?.getPackageName()
         val buttonCameraId = resources.getIdentifier(buttonCameraIdString, "id", packageName)
         val buttonCamera = root.findViewById(buttonCameraId) as Button
-        // set on-click listener
+        // set camera button on-click listener
         buttonCamera.setOnClickListener {
-//            // init AirCapture data class
-//            airCapture = initAirCapture();
             Toast.makeText(this.context, "launching camera...", Toast.LENGTH_SHORT).show()
             Log.d(TAG, "buttonCamera.setOnClickListener launching camera...")
             dispatchTakePictureIntent()
@@ -124,7 +124,7 @@ class HomeFragment : Fragment() {
         val previewViewId = resources.getIdentifier(previewViewIdString, "id", packageName)
         imageViewPreview = root.findViewById(previewViewId) as ImageView
 
-        // TODO: onclick listener actions - launch sizer frag?
+        // TODO: preview onclick listener actions - launch sizer frag?
         imageViewPreview.setOnTouchListener { v, event ->
             decodeTouchAction(event)
             true
@@ -132,7 +132,7 @@ class HomeFragment : Fragment() {
         // establish grid view, initialize gridViewAdapter
         gridView = root.findViewById(R.id.gridView)
 
-        blankBitmap = createBlankBitmap(homeViewModel.DEFAULT_BLANK_GRID_WIDTH,homeViewModel.DEFAULT_BLANK_GRID_HEIGHT)
+        var blankBitmap = createBlankBitmap(homeViewModel.DEFAULT_BLANK_GRID_WIDTH,homeViewModel.DEFAULT_BLANK_GRID_HEIGHT)
         val airCapture = createAirCapture();
         // TODO: gridview init fun v
         if (blankBitmap != null) {
@@ -149,6 +149,13 @@ class HomeFragment : Fragment() {
         // angle meter one-time init
         angleMeter.create(requireActivity())
         //////////////////
+
+//        var context = getContext()
+//        if (context != null) {
+//            storageDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)!!
+//            Log.d(TAG, "onCreateView storageDir->${storageDir.toString()}")
+//        }
+
         return root
     }
 
@@ -173,26 +180,32 @@ class HomeFragment : Fragment() {
         val startMeters = startMeters(angleMeter, soundMeter)
         Log.d(TAG, "dispatchTakePictureIntent startExerciseMeters ${startMeters}")
 
-        if (!THUMBNAIL_ONLY) {
+        if (!TEST_THUMBNAIL_ONLY) {
             // for full image capture, supply created image file URI
             val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
             try {
                 // create the photo File
-                timestamp = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())
-                val imageFile = createImageFile(timestamp)
+                captureTimestamp = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())
+//                val imageName = "AIR-" + captureTimestamp + ".jpg"
+                val imageName = getAirFilename(HomeViewModel.AirFileType.IMAGE, captureTimestamp)
+//                val imagePath = Environment.DIRECTORY_PICTURES
+                val storageDir = context?.getExternalFilesDir(Environment.DIRECTORY_PICTURES)!!
+                val imageFile = createImageFile(storageDir, imageName)
+
                 imageFile?.let {
-                    photoFile = imageFile
-                    photoUri = FileProvider.getUriForFile(
+                    captureFile = imageFile
+                    var photoUri = FileProvider.getUriForFile(
                         requireContext(),
                         "com.ahandyapp.airnavx",
-                        photoFile
+                        captureFile
                     )
+
                     takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri)
                     startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE)
                 }
             } catch (ex: Exception) {
                 Toast.makeText(this.context, "NO camera launch...", Toast.LENGTH_SHORT).show()
-                Log.e(TAG, "dispatchTakePictureIntent -> NO camera launch Exception ${ex.stackTrace}...")
+                Log.e(TAG, "dispatchTakePictureIntent -> NO camera launch Exception ${ex.message}...")
             }
         } else {  // THUMBNAIL_ONLY
             // for thumbnail only, do NOT supply image file URI
@@ -212,13 +225,14 @@ class HomeFragment : Fragment() {
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
             Toast.makeText(this.context, "camera image captured...", Toast.LENGTH_SHORT).show()
             Log.d(TAG, "dispatchTakePictureIntent onActivityResult camera image captured...")
-            if (!THUMBNAIL_ONLY) {
+            if (!TEST_THUMBNAIL_ONLY) {
                 // generate thumbnail from file uri if not available as thumbnail in data
                 // photo file is file EXTRA_OUTPUT location of actual camera image
                 Log.d(TAG, "dispatchTakePictureIntent onActivityResult generate thumbnail...")
-                val uri = Uri.fromFile(photoFile)
+                val uri = Uri.fromFile(captureFile)
+                val currentPhotoPath = captureFile.absolutePath
                 try {
-                    airCaptureBitmap = MediaStore.Images.Media.getBitmap(
+                    var airCaptureBitmap = MediaStore.Images.Media.getBitmap(
                         activity?.applicationContext?.contentResolver,
                         uri
                     )
@@ -228,9 +242,11 @@ class HomeFragment : Fragment() {
                         var airCapture = createAirCapture()
                         // capture image attributes
 //                        airCapture.timestamp = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())
-                        airCapture.timestamp = timestamp
+                        airCapture.timestamp = captureTimestamp
                         airCapture.imagePath = Environment.DIRECTORY_PICTURES
-                        airCapture.imageName = "AIR-" + airCapture.timestamp + ".jpg"
+//                        airCapture.imageName = "AIR-" + airCapture.timestamp + ".jpg"
+                        airCapture.imageName = getAirFilename(HomeViewModel.AirFileType.IMAGE, captureTimestamp)
+
                         // update image length & width prior to thumbnail extraction
                         airCapture.imageWidth = airCaptureBitmap!!.width
                         airCapture.imageHeight = airCaptureBitmap!!.height
@@ -238,11 +254,11 @@ class HomeFragment : Fragment() {
 
                         /////////////////////////////////////
                         // extractEXIF(photoFile): Boolean
-                        val exifExtracted = extractExif(photoFile, airCapture)
+                        val exifExtracted = extractExif(captureFile, airCapture)
                         Log.d(TAG, "dispatchTakePictureIntent onActivityResult exifExtracted ${exifExtracted}")
 
                         // extract thumbnail at scale factor
-                        thumbBitmap = extractThumbnail(airCaptureBitmap!!, homeViewModel.THUMB_SCALE_FACTOR)
+                        var thumbBitmap = extractThumbnail(currentPhotoPath, airCaptureBitmap!!, homeViewModel.THUMB_SCALE_FACTOR)
 
                         // rotateBitmap(imageBitmap, rotationDegrees): Bitmap
                         if (thumbBitmap != null) {
@@ -269,7 +285,8 @@ class HomeFragment : Fragment() {
                             // TODO: gridview update fun ^
 
                             // recordCapture(airCapture): Boolean
-                            val captureRecorded = recordCapture(airCapture)
+                            val storageDir = context?.getExternalFilesDir(Environment.DIRECTORY_PICTURES)!!
+                            val captureRecorded = recordAirCapture(storageDir, airCapture)
                             Log.d(TAG,"dispatchTakePictureIntent onActivityResult captureRecorded ${captureRecorded}")
 
                             // refresh viewmodel
@@ -287,7 +304,7 @@ class HomeFragment : Fragment() {
                        val extraPhotoUri: Uri = data.extras?.get(MediaStore.EXTRA_OUTPUT) as Uri
                        Log.d(TAG, "dispatchTakePictureIntent onActivityResult thumb URI $extraPhotoUri")
 
-                       thumbBitmap = data.extras?.get("data") as Bitmap
+                       var thumbBitmap = data.extras?.get("data") as Bitmap
                    } ?: run {
                        Log.e(TAG, "dispatchTakePictureIntent onActivityResult data.extras NULL.")
                    }
@@ -306,6 +323,17 @@ class HomeFragment : Fragment() {
             // stop sound meter
             soundMeter.stop()
         }
+    }
+
+    fun getAirFilename(type: HomeViewModel.AirFileType, captureTimestamp : String): String {
+        var airFilename = homeViewModel.DEFAULT_STRING
+        if (type == HomeViewModel.AirFileType.IMAGE) {
+            airFilename = "AIR-" + captureTimestamp + "." + homeViewModel.DEFAULT_IMAGEFILE_EXT
+        }
+        else if (type == HomeViewModel.AirFileType.DATA) {
+            airFilename = "AIR-" + captureTimestamp + "." + homeViewModel.DEFAULT_DATAFILE_EXT
+        }
+        return airFilename
     }
 
     fun refreshViewModel(airCapture: AirCapture): Boolean {
@@ -412,7 +440,6 @@ class HomeFragment : Fragment() {
     }
 
     private fun startMeters(angleMeter: AngleMeter, soundMeter: SoundMeter): Boolean {
-//        private fun startExerciseMeters(angleMeter: AngleMeter, soundMeter: SoundMeter, airCapture: AirCapture): Boolean {
         try {
             // start angle meter
             angleMeter.start()
@@ -422,12 +449,8 @@ class HomeFragment : Fragment() {
             Log.d(TAG, "dispatchTakePictureIntent soundMeter started.")
 
             // exercise meters
-//            airCapture.cameraAngle = angleMeter.getAngle()
-//            airCapture.decibel = soundMeter.deriveDecibel(forceFormat = true)
             val cameraAngle = angleMeter.getAngle()
             Log.d(TAG, "startMeters angleMeter.getAngle ->$cameraAngle")
-//            airCapture.decibel = soundMeter.deriveDecibel(forceFormat = true)
-//            Log.d(TAG, "dispatchTakePictureIntent soundMeter.deriveDecibel db->${airCapture.decibel.toString()}")
             val decibel = soundMeter.deriveDecibel(forceFormat = true)
             Log.d(TAG, "startMeters soundMeter.deriveDecibel db->$decibel")
 
@@ -438,46 +461,28 @@ class HomeFragment : Fragment() {
         return true;
     }
 
-    private fun createImageFile(timestamp: String): File? {
-//        private fun createImageFile(): File? {
+    private fun createImageFile(storageDir: File, imageName: String): File? {
+//        private fun createImageFile(timestamp: String): File? {
+        // TODO: local vars for storageDir, currentPhotoPath
         var imageFile: File? = null
         try {
-            var context = getContext()
-//            // capture image attributes
-//            airCapture.timestamp = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())
-//            airCapture.imagePath = Environment.DIRECTORY_PICTURES
-//            airCapture.imageName = "AIR-" + airCapture.timestamp + ".jpg"
-//            storageDir = context?.getExternalFilesDir(airCapture.imagePath)!!
+//            var context = getContext()
+//            val imagePath = Environment.DIRECTORY_PICTURES
+//            val imageName = "AIR-" + timestamp + ".jpg"
+//            val storageDir = context?.getExternalFilesDir(imagePath)!!
 //            Log.d(TAG, "createImageFile storageDir->${storageDir.toString()}")
-//            // create file
-//            imageFile = File(storageDir, airCapture.imageName)
-            // capture image attributes
-            //val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())
-            val imagePath = Environment.DIRECTORY_PICTURES
-            val imageName = "AIR-" + timestamp + ".jpg"
-            storageDir = context?.getExternalFilesDir(imagePath)!!
-            Log.d(TAG, "createImageFile storageDir->${storageDir.toString()}")
             // create file
             imageFile = File(storageDir, imageName)
+            Log.d(TAG, "createImageFile storageDir->${storageDir.toString()}, name->$imageName")
 
-            currentPhotoPath = imageFile.absolutePath
+//            currentPhotoPath = imageFile.absolutePath
         } catch (ex: Exception) {
-            Log.e(TAG, "dispatchTakePictureIntent createImageFile Exception ${ex.stackTrace}")
+            Log.e(TAG, "createImageFile Exception ${ex.stackTrace}")
         }
         return imageFile
-
-//        return File.createTempFile(
-//            "JPEG_${timeStamp}_", /* prefix */
-//            ".jpg", /* suffix */
-//            storageDir /* directory */
-//        ).apply {
-//            // Save a file: path for use with ACTION_VIEW intents
-//            currentPhotoPath = absolutePath
-//            Log.d(TAG, "createImageFile imagePath->$currentPhotoPath")
-//        }
     }
 
-    private fun extractThumbnail(imageBitmap: Bitmap, scaleFactor: Int): Bitmap {
+    private fun extractThumbnail(currentPhotoPath: String, imageBitmap: Bitmap, scaleFactor: Int): Bitmap {
         val width = (imageBitmap.width)?.div(scaleFactor)
         val height = (imageBitmap.height)?.div(scaleFactor)
         val thumbBitmap = ThumbnailUtils.extractThumbnail(
@@ -492,11 +497,6 @@ class HomeFragment : Fragment() {
             Log.e(TAG, "extractThumbnail NULL (at scale factor $scaleFactor)")
         }
         return thumbBitmap
-        // Bitmap resized = ThumbnailUtils.extractThumbnail(sourceBitmap, width, height);
-        //imageBitmap = ThumbnailUtils.extractThumbnail()
-        // Bitmap resized = ThumbnailUtils.extractThumbnail(BitmapFactory.decodeFile(file.getPath()), width, height);
-
-        //imageBitmap = cropAndScale(imageBitmap, 768)
     }
 
     private fun rotateBitmap(sourceBitmap: Bitmap, rotationDegrees: Float): Bitmap {
@@ -589,24 +589,27 @@ class HomeFragment : Fragment() {
         return true
     }
 
-    private fun recordCapture(airCapture: AirCapture): Boolean {
+    private fun recordAirCapture(storageDir: File, airCapture: AirCapture): Boolean {
         // TODO: refactor to AirCapture model
         // TODO: recordCapture(airCapture) -> write yourself!
         try {
             // transform AirCapture data class to json
             val jsonCapture = Gson().toJson(airCapture)
-            Log.d(TAG, "dispatchTakePictureIntent onActivityResult $jsonCapture")
+            Log.d(TAG, "recordAirCapture $jsonCapture")
             // format AirCapture name & write json file
-            Log.d(TAG, "dispatchTakePictureIntent onActivityResult fileDir->$context.filesDir()")
-            File(context?.filesDir, "aircapture.json").printWriter().use { out ->
-                out.println("$jsonCapture")
-            }
-            var name = "AIR-" + airCapture.timestamp + "." + homeViewModel.DEFAULT_DATAFILE_EXT
+//            Log.d(TAG, "recordAirCapture fileDir...->$context.filesDir()")
+//            File(context?.filesDir, "aircapture.json").printWriter().use { out ->
+//                out.println("$jsonCapture")
+//            }
+//            var name = "AIR-" + airCapture.timestamp + "." + homeViewModel.DEFAULT_DATAFILE_EXT
+            var name = getAirFilename(HomeViewModel.AirFileType.DATA, captureTimestamp)
+
+            Log.d(TAG, "recordAirCapture storageDir->$storageDir")
             File(storageDir, name).printWriter().use { out ->
                 out.println("$jsonCapture")
             }
         } catch (ex: Exception) {
-            Log.e(TAG, "dispatchTakePictureIntent onActivityResult recordCapture Exception ${ex.stackTrace}")
+            Log.e(TAG, "recordAirCapture Exception ${ex.stackTrace}")
             return false
         }
         return true
