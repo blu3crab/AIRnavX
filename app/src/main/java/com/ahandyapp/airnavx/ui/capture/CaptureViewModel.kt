@@ -1,4 +1,4 @@
-package com.ahandyapp.airnavx.ui.home
+package com.ahandyapp.airnavx.ui.capture
 
 import android.graphics.Bitmap
 import androidx.lifecycle.LiveData
@@ -7,7 +7,7 @@ import androidx.lifecycle.ViewModel
 import com.ahandyapp.airnavx.model.AirCapture
 import java.util.ArrayList
 
-class HomeViewModel : ViewModel() {
+class CaptureViewModel : ViewModel() {
 
     ///////////////////////////////////////////////////////////////////////////
     // AirCapture enums, constants, defaults

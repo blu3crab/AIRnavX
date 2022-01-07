@@ -17,10 +17,7 @@ import androidx.navigation.ui.setupWithNavController
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import androidx.core.content.ContentProviderCompat.requireContext
-import androidx.core.content.ContextCompat
 import com.ahandyapp.airnavx.databinding.ActivityMainBinding
-import kotlin.system.exitProcess
 
 class MainActivity : AppCompatActivity() {
 
@@ -53,7 +50,7 @@ class MainActivity : AppCompatActivity() {
             setOf(
                 // TODO: Sense fragment? sense fragment has top arrow nav to home
                 // TODO: gallery & slideshow frags have top menu hamburger
-                R.id.nav_home, R.id.nav_gallery, R.id.nav_slideshow
+                R.id.nav_capture, R.id.nav_gallery, R.id.nav_slideshow
             ), drawerLayout
         )
         setupActionBarWithNavController(navController, appBarConfiguration)
