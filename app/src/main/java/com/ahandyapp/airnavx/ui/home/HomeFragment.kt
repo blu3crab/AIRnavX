@@ -66,23 +66,6 @@ class HomeFragment : Fragment() {
     private lateinit var captureFile: File          // capture file
     private var captureTimestamp: String = "nada"   // capture file creation timestamp
 
-    // TODO: to viewmodel
-//    lateinit var storageDir: File
-
-    //    lateinit var currentPhotoPath: String
-    //    private lateinit var photoUri: Uri              // photo URI
-
-    // TODO: migrate preview view to model
-//    private lateinit var imageViewPreview: ImageView       // preview image display
-
-    // TODO: full, thumb image collections
-//    private var airCaptureBitmap: Bitmap? = null
-//    private var thumbBitmap: Bitmap? = null
-
-    // TODO: gridview
-//    private lateinit var gridView: GridView
-//    private lateinit var blankBitmap: Bitmap
-
     ///////////////////////////////////////////////////////////////////////////
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -149,13 +132,6 @@ class HomeFragment : Fragment() {
         // angle meter one-time init
         angleMeter.create(requireActivity())
         //////////////////
-
-//        var context = getContext()
-//        if (context != null) {
-//            storageDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)!!
-//            Log.d(TAG, "onCreateView storageDir->${storageDir.toString()}")
-//        }
-
         return root
     }
 
@@ -186,9 +162,7 @@ class HomeFragment : Fragment() {
             try {
                 // create the photo File
                 captureTimestamp = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())
-//                val imageName = "AIR-" + captureTimestamp + ".jpg"
                 val imageName = getAirFilename(HomeViewModel.AirFileType.IMAGE, captureTimestamp)
-//                val imagePath = Environment.DIRECTORY_PICTURES
                 val storageDir = context?.getExternalFilesDir(Environment.DIRECTORY_PICTURES)!!
                 val imageFile = createImageFile(storageDir, imageName)
 
@@ -236,15 +210,12 @@ class HomeFragment : Fragment() {
                         activity?.applicationContext?.contentResolver,
                         uri
                     )
-                    // TODO: retain full bitmap set
                     if (airCaptureBitmap != null) {
                         // create initialized aircapture object
                         var airCapture = createAirCapture()
                         // capture image attributes
-//                        airCapture.timestamp = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())
                         airCapture.timestamp = captureTimestamp
                         airCapture.imagePath = Environment.DIRECTORY_PICTURES
-//                        airCapture.imageName = "AIR-" + airCapture.timestamp + ".jpg"
                         airCapture.imageName = getAirFilename(HomeViewModel.AirFileType.IMAGE, captureTimestamp)
 
                         // update image length & width prior to thumbnail extraction
@@ -386,35 +357,12 @@ class HomeFragment : Fragment() {
         true
 
     }
-    // TODO: refactor to AirCapture model
-    fun createAirCapture(): AirCapture {
-        val airCapture = AirCapture(
-            homeViewModel.DEFAULT_STRING,
-            homeViewModel.DEFAULT_STRING,
-            homeViewModel.DEFAULT_STRING,
-            homeViewModel.DEFAULT_INT,
-            homeViewModel.DEFAULT_INT,
-            homeViewModel.DEFAULT_DOUBLE,
-            homeViewModel.DEFAULT_INT,
-            homeViewModel.DEFAULT_INT,
-            homeViewModel.DEFAULT_INT,
-            homeViewModel.DEFAULT_FLOAT_ARRAY,
-            homeViewModel.DEFAULT_DOUBLE,
-            homeViewModel.DEFAULT_INT,
-            homeViewModel.DEFAULT_INT,
-            homeViewModel.DEFAULT_FLOAT,
-            homeViewModel.DEFAULT_FLOAT,
-            homeViewModel.DEFAULT_FLOAT
-        )
-        return airCapture
-    }
-
     private fun createBlankBitmap(width: Int, height: Int): Bitmap {
         val conf = Bitmap.Config.ARGB_8888 // see other conf types
         val bitmap1 = Bitmap.createBitmap(width, height, conf) // creates a MUTABLE bitmap
         return bitmap1
     }
-    // TODO: untangle listener from viewmodel updates
+    // TODO: untangle listener viewmodel updates?
     private fun updateGridViewAdapter(
         gridView: GridView,
         gridLabelArray: ArrayList<String>,
@@ -426,12 +374,10 @@ class HomeFragment : Fragment() {
         gridView.adapter = gridViewAdapter
         gridView.onItemClickListener = AdapterView.OnItemClickListener { _, _, position, _ ->
             Toast.makeText(this.context, "Touch at " + gridLabelArray[+position], Toast.LENGTH_SHORT).show()
-            // TODO: gridview position selection fun
             homeViewModel.gridPosition = position
             imageViewPreview.setImageBitmap(gridBitmapArray[homeViewModel.gridPosition])
             // test full bitmap
             //imageViewPreview.setImageBitmap(fullBitmapArray[gridPosition])
-            // TODO: always the latest dB - WRONG!
             // sync AirCapture to thumb selection
             val airCapture = homeViewModel.airCaptureArray[homeViewModel.gridPosition]
             Log.d(TAG,"updateGridViewAdapter soundMeter.deriveDecibel db->${airCapture.decibel.toString()}")
@@ -462,20 +408,11 @@ class HomeFragment : Fragment() {
     }
 
     private fun createImageFile(storageDir: File, imageName: String): File? {
-//        private fun createImageFile(timestamp: String): File? {
-        // TODO: local vars for storageDir, currentPhotoPath
         var imageFile: File? = null
         try {
-//            var context = getContext()
-//            val imagePath = Environment.DIRECTORY_PICTURES
-//            val imageName = "AIR-" + timestamp + ".jpg"
-//            val storageDir = context?.getExternalFilesDir(imagePath)!!
-//            Log.d(TAG, "createImageFile storageDir->${storageDir.toString()}")
             // create file
             imageFile = File(storageDir, imageName)
             Log.d(TAG, "createImageFile storageDir->${storageDir.toString()}, name->$imageName")
-
-//            currentPhotoPath = imageFile.absolutePath
         } catch (ex: Exception) {
             Log.e(TAG, "createImageFile Exception ${ex.stackTrace}")
         }
@@ -575,7 +512,7 @@ class HomeFragment : Fragment() {
     }
 
     private fun captureMeters(airCapture: AirCapture): Boolean {
-        // TODO: captureMeters(airCapture): Boolean
+        // capture Meters in airCapture
         try {
             // capture meters
             airCapture.cameraAngle = angleMeter.getAngle()
@@ -589,22 +526,39 @@ class HomeFragment : Fragment() {
         return true
     }
 
+    // TODO: refactor to AirCapture model
+    fun createAirCapture(): AirCapture {
+        val airCapture = AirCapture(
+            homeViewModel.DEFAULT_STRING,
+            homeViewModel.DEFAULT_STRING,
+            homeViewModel.DEFAULT_STRING,
+            homeViewModel.DEFAULT_INT,
+            homeViewModel.DEFAULT_INT,
+            homeViewModel.DEFAULT_DOUBLE,
+            homeViewModel.DEFAULT_INT,
+            homeViewModel.DEFAULT_INT,
+            homeViewModel.DEFAULT_INT,
+            homeViewModel.DEFAULT_FLOAT_ARRAY,
+            homeViewModel.DEFAULT_DOUBLE,
+            homeViewModel.DEFAULT_INT,
+            homeViewModel.DEFAULT_INT,
+            homeViewModel.DEFAULT_FLOAT,
+            homeViewModel.DEFAULT_FLOAT,
+            homeViewModel.DEFAULT_FLOAT
+        )
+        return airCapture
+    }
+
     private fun recordAirCapture(storageDir: File, airCapture: AirCapture): Boolean {
-        // TODO: refactor to AirCapture model
-        // TODO: recordCapture(airCapture) -> write yourself!
+        // TODO: refactor to AirCapture model-> write yourself!
         try {
             // transform AirCapture data class to json
             val jsonCapture = Gson().toJson(airCapture)
             Log.d(TAG, "recordAirCapture $jsonCapture")
-            // format AirCapture name & write json file
-//            Log.d(TAG, "recordAirCapture fileDir...->$context.filesDir()")
-//            File(context?.filesDir, "aircapture.json").printWriter().use { out ->
-//                out.println("$jsonCapture")
-//            }
-//            var name = "AIR-" + airCapture.timestamp + "." + homeViewModel.DEFAULT_DATAFILE_EXT
-            var name = getAirFilename(HomeViewModel.AirFileType.DATA, captureTimestamp)
 
-            Log.d(TAG, "recordAirCapture storageDir->$storageDir")
+            // format AirCapture name & write json file
+            var name = getAirFilename(HomeViewModel.AirFileType.DATA, captureTimestamp)
+            Log.d(TAG, "recordAirCapture storageDir->$storageDir, name->$name")
             File(storageDir, name).printWriter().use { out ->
                 out.println("$jsonCapture")
             }

@@ -10,7 +10,11 @@ import java.util.ArrayList
 class HomeViewModel : ViewModel() {
 
     ///////////////////////////////////////////////////////////////////////////
-    // AirCapture defaults
+    // AirCapture enums, constants, defaults
+    enum class AirFileType {
+        IMAGE,
+        DATA
+    }
     val DEFAULT_DATAFILE_EXT = "json"
     val DEFAULT_IMAGEFILE_EXT = "jpg"
     val DEFAULT_STRING = "nada"
@@ -28,10 +32,6 @@ class HomeViewModel : ViewModel() {
 
     val THUMB_SCALE_FACTOR = 5
 
-    enum class AirFileType {
-        IMAGE,
-        DATA
-    }
     ///////////////////////////////////////////////////////////////////////////
     // gridView
     var gridCount = 0
