@@ -9,9 +9,9 @@
             android:icon="@drawable/ic_menu_camera"
             android:title="@string/menu_capture" />
         <item
-            android:id="@+id/nav_slideshow"
+            android:id="@+id/nav_inspect"
             android:icon="@drawable/baseline_flight_takeoff_24"
-            android:title="@string/menu_slideshow" />
+            android:title="@string/menu_inspect" />
         <item
             android:id="@+id/nav_gallery"
             android:icon="@drawable/ic_menu_gallery"

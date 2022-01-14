@@ -30,6 +30,7 @@ import android.graphics.Matrix
 import android.media.ExifInterface
 import android.view.MotionEvent
 import android.widget.*
+import androidx.fragment.app.activityViewModels
 import com.ahandyapp.airnavx.R
 import com.ahandyapp.airnavx.databinding.FragmentCaptureBinding
 import com.ahandyapp.airnavx.ui.grid.GridViewAdapter
@@ -42,6 +43,7 @@ class CaptureFragment : Fragment() {
     private val TEST_THUMBNAIL_ONLY = false
 
     // view model
+//    private lateinit var captureViewModel: CaptureViewModel
     private lateinit var captureViewModel: CaptureViewModel
     private var _binding: FragmentCaptureBinding? = null
     // view elements
@@ -72,8 +74,12 @@ class CaptureFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        captureViewModel =
-            ViewModelProvider(this).get(CaptureViewModel::class.java)
+//        captureViewModel = ViewModelProvider(this).get(CaptureViewModel::class.java)
+//        captureViewModel: CaptureViewModel by activityViewModels()
+        val viewModel: CaptureViewModel by activityViewModels()
+        captureViewModel = viewModel
+
+        // TODO: persist viewmodel across evictions
 
         _binding = FragmentCaptureBinding.inflate(inflater, container, false)
         val root: View = binding.root
@@ -112,26 +118,59 @@ class CaptureFragment : Fragment() {
             decodeTouchAction(event)
             true
         }
+
         // establish grid view, initialize gridViewAdapter
         gridView = root.findViewById(R.id.gridView)
 
-        var blankBitmap = createBlankBitmap(captureViewModel.DEFAULT_BLANK_GRID_WIDTH,captureViewModel.DEFAULT_BLANK_GRID_HEIGHT)
-        val airCapture = createAirCapture();
-        // TODO: gridview init fun v
-        if (blankBitmap != null) {
-            captureViewModel.gridBitmapArray.add(blankBitmap)
-            ++captureViewModel.gridCount
-            captureViewModel.gridLabelArray.add("thumb${captureViewModel.gridCount.toString()}")
-            captureViewModel.fullBitmapArray.add(blankBitmap)
-            captureViewModel.airCaptureArray.add(airCapture)
-        }
-        updateGridViewAdapter(gridView, captureViewModel.gridLabelArray, captureViewModel.gridBitmapArray)
-        // TODO: gridview init fun ^
+        if (captureViewModel.gridCount == 0) {
+            Log.d(TAG, "onCreateView EMPTY captureViewModel $captureViewModel")
 
-        //////////////////
-        // angle meter one-time init
-        angleMeter.create(requireActivity())
-        //////////////////
+            var blankBitmap = createBlankBitmap(
+                captureViewModel.DEFAULT_BLANK_GRID_WIDTH,
+                captureViewModel.DEFAULT_BLANK_GRID_HEIGHT
+            )
+            val airCapture = createAirCapture();
+            // TODO: gridview init fun v
+            if (blankBitmap != null) {
+                captureViewModel.gridBitmapArray.add(blankBitmap)
+                ++captureViewModel.gridCount
+                captureViewModel.gridLabelArray.add("thumb${captureViewModel.gridCount.toString()}")
+                captureViewModel.fullBitmapArray.add(blankBitmap)
+                captureViewModel.airCaptureArray.add(airCapture)
+            }
+            updateGridViewAdapter(
+                gridView,
+                captureViewModel.gridLabelArray,
+                captureViewModel.gridBitmapArray
+            )
+            // TODO: gridview init fun ^
+            //////////////////
+            // angle meter one-time init
+            angleMeter.create(requireActivity())
+            //////////////////
+        }
+        else {
+            // re-establish view elements
+            Log.d(TAG, "onCreateView DEFINED captureViewModel $captureViewModel")
+            // grid view
+            updateGridViewAdapter(
+                gridView,
+                captureViewModel.gridLabelArray,
+                captureViewModel.gridBitmapArray
+            )
+            // show selected grid thumb in preview
+            imageViewPreview.setImageBitmap(captureViewModel.gridBitmapArray[captureViewModel.gridPosition])
+            // restore aircapture data
+            //var airCapture = createAirCapture()
+            var airCapture = captureViewModel.airCaptureArray[captureViewModel.gridPosition]
+            // refresh viewmodel
+            Log.d(TAG, "onCreateView refreshComplete $airCapture")
+            val refreshComplete = refreshViewModel(airCapture)
+            Log.d(TAG, "onCreateView refreshComplete $refreshComplete")
+            Log.d(TAG,"onCreateView refreshComplete ${textViewPreview.text} ${textViewDecibel.text} ${textViewAngle.text}")
+
+
+        }
         return root
     }
 
@@ -312,7 +351,7 @@ class CaptureFragment : Fragment() {
         textViewPreview.text = airCapture.timestamp
         textViewDecibel.text = airCapture.decibel.toString() + " dB"
         textViewAngle.text = airCapture.cameraAngle.toString() + " degrees"
-        Log.d(TAG,"refreshViewModel $textViewPreview.text $textViewDecibel.text $textViewAngle.text")
+        Log.d(TAG,"refreshViewModel ${textViewPreview.text} ${textViewDecibel.text} ${textViewAngle.text}")
         return true
     }
 

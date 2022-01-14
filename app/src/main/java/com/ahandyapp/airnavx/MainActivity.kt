@@ -48,9 +48,11 @@ class MainActivity : AppCompatActivity() {
         // menu should be considered as top level destinations.
         appBarConfiguration = AppBarConfiguration(
             setOf(
-                // TODO: Sense fragment? sense fragment has top arrow nav to home
-                // TODO: gallery & slideshow frags have top menu hamburger
-                R.id.nav_capture, R.id.nav_gallery, R.id.nav_slideshow
+                // Sense & Inspect -> top arrow nav to Capture
+                // Gallery -> top menu hamburger
+                R.id.nav_capture, R.id.nav_gallery
+                //R.id.nav_capture, R.id.nav_gallery, R.id.nav_inspect
+                //R.id.nav_capture, R.id.nav_inspect, R.id.nav_gallery, R.id.nav_sense
             ), drawerLayout
         )
         setupActionBarWithNavController(navController, appBarConfiguration)
