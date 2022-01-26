@@ -98,9 +98,9 @@ class CaptureFragment : Fragment() {
             textViewAngle.text = it
         })
 
+        val packageName = this.context?.getPackageName()
         // get reference to button
         val buttonCameraIdString = "button_camera"
-        val packageName = this.context?.getPackageName()
         val buttonCameraId = resources.getIdentifier(buttonCameraIdString, "id", packageName)
         val buttonCamera = root.findViewById(buttonCameraId) as Button
         // set camera button on-click listener

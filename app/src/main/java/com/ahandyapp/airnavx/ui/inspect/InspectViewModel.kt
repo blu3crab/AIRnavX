@@ -6,8 +6,13 @@ import androidx.lifecycle.ViewModel
 
 class InspectViewModel : ViewModel() {
 
+    enum class ZoomDirection(val direction: Int) {
+        IN(-1),
+        OUT(1)
+    }
+
     private val _text = MutableLiveData<String>().apply {
-        value = "Inspect Fragment"
+        value = "Tap on object, size shape."
     }
     val text: LiveData<String> = _text
 }
