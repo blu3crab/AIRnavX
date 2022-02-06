@@ -14,8 +14,7 @@ import androidx.lifecycle.ViewModelProvider
 import com.ahandyapp.airnavx.databinding.FragmentInspectBinding
 import com.ahandyapp.airnavx.ui.capture.CaptureViewModel
 import android.view.MotionEvent
-
-
+import kotlin.math.roundToInt
 
 
 class InspectFragment : Fragment() {
@@ -62,9 +61,9 @@ class InspectFragment : Fragment() {
         val packageName = this.context?.getPackageName()
 
         // establish inspect imageview
-        val fullViewIdString = "imageview_inspect"
-        val fullViewId = resources.getIdentifier(fullViewIdString, "id", packageName)
-        imageViewInspect = root.findViewById(fullViewId) as ImageView
+        val inspectViewIdString = "imageview_inspect"
+        val inspectViewId = resources.getIdentifier(inspectViewIdString, "id", packageName)
+        imageViewInspect = root.findViewById(inspectViewId) as ImageView
 
         // reference capture viewmodel
         Log.d(TAG, "onCreateView captureViewModel access...")
@@ -77,6 +76,8 @@ class InspectFragment : Fragment() {
         Log.d(TAG, "onCreateView captureViewModel grid position ${captureViewModel.gridPosition}")
         inspectBitmap = captureViewModel.fullBitmapArray[captureViewModel.gridPosition]        
         imageViewInspect.setImageBitmap(captureViewModel.fullBitmapArray[captureViewModel.gridPosition])
+        Log.d(TAG, "onCreateView inspectBitmap w/h ${inspectBitmap.width}/${inspectBitmap.height}")
+        Log.d(TAG, "onCreateView imageViewInspect w/h ${imageViewInspect.width}/${imageViewInspect.height}")
 
         // establish inspect image gesture detector
         val gestureDetector = GestureDetector(activity, object : GestureDetector.SimpleOnGestureListener() {
@@ -93,9 +94,12 @@ class InspectFragment : Fragment() {
             }
 
             override fun onLongPress(e: MotionEvent?) {
-                val x = e?.x
-                val y = e?.y
+                var x = e?.x?.roundToInt()
+                var y = e?.y?.roundToInt()
                 Log.i("TAG", "onCreateView onLongPress: x $x, y $y")
+//                if (x != null && y != null) {
+//                    centerZoomBitmap(x, y)
+//                }
             }
 
             override fun onDoubleTap(e: MotionEvent?): Boolean {
@@ -136,9 +140,23 @@ class InspectFragment : Fragment() {
         return root
     }
 
+    private fun centerZoomBitmap(centerX: Int, centerY: Int) {
+        zoomCenterX = centerX
+        zoomCenterY = centerY
+
+        val width = 512
+        val height = 512
+        zoomUpperLeftX = zoomCenterX - width / 2
+        zoomUpperLeftY = zoomCenterY - height / 2
+        zoomBitmap = Bitmap.createBitmap(inspectBitmap, zoomUpperLeftX, zoomUpperLeftY, width, height)
+        imageViewInspect.setImageBitmap(zoomBitmap)
+        Log.d(TAG, "centerZoomBitmap zoomBitmap w/h ${zoomBitmap.width}/${zoomBitmap.height}")
+        Log.d(TAG, "onCreateView imageViewInspect w/h ${imageViewInspect.width}/${imageViewInspect.height}")
+    }
     private fun inspectZoomOnTap(zoomDirection: Int) {
 
         zoomBitmap = createZoomBitmap(inspectBitmap, zoomDirection)
+        Log.d(TAG, "inspectZoomOnTap zoomBitmap w/h ${zoomBitmap.width}/${zoomBitmap.height}")
 //        if (zoomFactor == 0) {
 //            zoomBitmap = createZoomBitmap(inspectBitmap, zoomDirection)
 //        }
@@ -146,12 +164,15 @@ class InspectFragment : Fragment() {
 //            zoomBitmap = createZoomBitmap(zoomBitmap, zoomDirection)
 //        }
         imageViewInspect.setImageBitmap(zoomBitmap)
+        Log.d(TAG, "inspectZoomOnTap zoomBitmap w/h ${zoomBitmap.width}/${zoomBitmap.height}")
+        Log.d(TAG, "onCreateView imageViewInspect w/h ${imageViewInspect.width}/${imageViewInspect.height}")
+
     }
 
     private fun createZoomBitmap(imageBitmap: Bitmap, zoomDirection: Int) : Bitmap {
 //        private var zoomCenterX = 0
 //        private var zoomCenterY = 0
-
+        // TODO: move to init phase
         zoomCenterX = imageBitmap.width / 2
         zoomCenterY = imageBitmap.height / 2
 

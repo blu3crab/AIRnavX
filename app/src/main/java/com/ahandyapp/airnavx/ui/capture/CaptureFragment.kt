@@ -401,7 +401,7 @@ class CaptureFragment : Fragment() {
         val bitmap1 = Bitmap.createBitmap(width, height, conf) // creates a MUTABLE bitmap
         return bitmap1
     }
-    // TODO: untangle listener viewmodel updates?
+
     private fun updateGridViewAdapter(
         gridView: GridView,
         gridLabelArray: ArrayList<String>,
