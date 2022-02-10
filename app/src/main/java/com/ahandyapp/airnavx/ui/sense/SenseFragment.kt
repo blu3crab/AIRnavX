@@ -98,10 +98,10 @@ class SenseFragment : Fragment() {
             }
         })
 
-        //////////////////
-        // angle meter one-time init
-        angleMeter.create(requireActivity())
-        //////////////////
+//        //////////////////
+//        // angle meter one-time init
+//        angleMeter.create(requireActivity())
+//        //////////////////
 
         return root
     }
@@ -118,9 +118,8 @@ class SenseFragment : Fragment() {
     override fun onResume() {
         super.onResume()
 
-        // TODO: why not location permission required?
         // start angle meter
-        angleMeter.start()
+        angleMeter.start(requireActivity())
         Log.d(TAG, "onResume angleMeter started.")
 
         if (isPermissionAudioGranted()) {
@@ -128,7 +127,6 @@ class SenseFragment : Fragment() {
             this.context?.let { soundMeter.start(it) }
             Log.d(TAG, "onResume soundMeter started.")
         }
-
         // start timer
         timerOn = true
         timer.start()

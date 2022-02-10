@@ -34,6 +34,7 @@ import androidx.fragment.app.activityViewModels
 import com.ahandyapp.airnavx.R
 import com.ahandyapp.airnavx.databinding.FragmentCaptureBinding
 import com.ahandyapp.airnavx.ui.grid.GridViewAdapter
+import java.io.IOException
 
 
 class CaptureFragment : Fragment() {
@@ -68,19 +69,16 @@ class CaptureFragment : Fragment() {
     private lateinit var captureFile: File          // capture file
     private var captureTimestamp: String = "nada"   // capture file creation timestamp
 
-    ///////////////////////////////////////////////////////////////////////////
+    /////////////////////////////life-cycle////////////////////////////////////
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-//        captureViewModel = ViewModelProvider(this).get(CaptureViewModel::class.java)
-//        captureViewModel: CaptureViewModel by activityViewModels()
+        // get activity level view model
         val viewModel: CaptureViewModel by activityViewModels()
         captureViewModel = viewModel
-
-        // TODO: persist viewmodel across evictions
-
+        // binding
         _binding = FragmentCaptureBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
@@ -113,63 +111,23 @@ class CaptureFragment : Fragment() {
         val previewViewId = resources.getIdentifier(previewViewIdString, "id", packageName)
         imageViewPreview = root.findViewById(previewViewId) as ImageView
 
-        // TODO: preview onclick listener actions - launch sizer frag?
-        imageViewPreview.setOnTouchListener { v, event ->
-            decodeTouchAction(event)
-            true
-        }
-
-        // establish grid view, initialize gridViewAdapter
+        // establish grid view
         gridView = root.findViewById(R.id.gridView)
 
+        // if grid empty
         if (captureViewModel.gridCount == 0) {
             Log.d(TAG, "onCreateView EMPTY captureViewModel $captureViewModel")
 
-            var blankBitmap = createBlankBitmap(
-                captureViewModel.DEFAULT_BLANK_GRID_WIDTH,
-                captureViewModel.DEFAULT_BLANK_GRID_HEIGHT
-            )
-            val airCapture = createAirCapture();
-            // TODO: gridview init fun v
-            if (blankBitmap != null) {
-                captureViewModel.gridBitmapArray.add(blankBitmap)
-                ++captureViewModel.gridCount
-                captureViewModel.gridLabelArray.add("thumb${captureViewModel.gridCount.toString()}")
-                captureViewModel.fullBitmapArray.add(blankBitmap)
-                captureViewModel.airCaptureArray.add(airCapture)
+            // if unable to restore captureViewModel from previous session
+            if (!fetchViewModel()) {
+                // create empty view model
+                createEmptyViewModel()
             }
-            updateGridViewAdapter(
-                gridView,
-                captureViewModel.gridLabelArray,
-                captureViewModel.gridBitmapArray
-            )
-            // TODO: gridview init fun ^
-            //////////////////
-            // angle meter one-time init
-            angleMeter.create(requireActivity())
-            //////////////////
         }
         else {
             // re-establish view elements
             Log.d(TAG, "onCreateView DEFINED captureViewModel $captureViewModel")
-            // grid view
-            updateGridViewAdapter(
-                gridView,
-                captureViewModel.gridLabelArray,
-                captureViewModel.gridBitmapArray
-            )
-            // show selected grid thumb in preview
-            imageViewPreview.setImageBitmap(captureViewModel.gridBitmapArray[captureViewModel.gridPosition])
-            // restore aircapture data
-            //var airCapture = createAirCapture()
-            var airCapture = captureViewModel.airCaptureArray[captureViewModel.gridPosition]
-            // refresh viewmodel
-            Log.d(TAG, "onCreateView refreshComplete $airCapture")
-            val refreshComplete = refreshViewModel(airCapture)
-            Log.d(TAG, "onCreateView refreshComplete $refreshComplete")
-            Log.d(TAG,"onCreateView refreshComplete ${textViewPreview.text} ${textViewDecibel.text} ${textViewAngle.text}")
-
-
+            restoreViewModel()
         }
         return root
     }
@@ -191,7 +149,6 @@ class CaptureFragment : Fragment() {
 
     private fun dispatchTakePictureIntent() {
         // start/exercise angle & sound meters
-//        val startExerciseMeters = startExerciseMeters(angleMeter, soundMeter, airCapture)
         val startMeters = startMeters(angleMeter, soundMeter)
         Log.d(TAG, "dispatchTakePictureIntent startExerciseMeters ${startMeters}")
 
@@ -334,72 +291,148 @@ class CaptureFragment : Fragment() {
             soundMeter.stop()
         }
     }
+    /////////////////////////////life-cycle////////////////////////////////////
 
-    fun getAirFilename(type: CaptureViewModel.AirFileType, captureTimestamp : String): String {
-        var airFilename = captureViewModel.DEFAULT_STRING
-        if (type == CaptureViewModel.AirFileType.IMAGE) {
-            airFilename = "AIR-" + captureTimestamp + "." + captureViewModel.DEFAULT_IMAGEFILE_EXT
+    /////////////////////////////view model helpers////////////////////////////
+    private fun createEmptyViewModel(): Boolean {
+        // create empty bitmap to seed grid
+        var blankBitmap = createBlankBitmap(
+            captureViewModel.DEFAULT_BLANK_GRID_WIDTH,
+            captureViewModel.DEFAULT_BLANK_GRID_HEIGHT
+        )
+        // initialize AirCapture to seed grid
+        val airCapture = createAirCapture();
+        // initialize view
+        if (blankBitmap != null) {
+            captureViewModel.gridBitmapArray.add(blankBitmap)
+            ++captureViewModel.gridCount
+            captureViewModel.gridLabelArray.add("thumb${captureViewModel.gridCount.toString()}")
+            captureViewModel.fullBitmapArray.add(blankBitmap)
+            captureViewModel.airCaptureArray.add(airCapture)
         }
-        else if (type == CaptureViewModel.AirFileType.DATA) {
-            airFilename = "AIR-" + captureTimestamp + "." + captureViewModel.DEFAULT_DATAFILE_EXT
-        }
-        return airFilename
-    }
+        // initialize gridViewAdapter
+        updateGridViewAdapter(
+            gridView,
+            captureViewModel.gridLabelArray,
+            captureViewModel.gridBitmapArray
+        )
 
-    fun refreshViewModel(airCapture: AirCapture): Boolean {
-        // update viewModel
-        textViewPreview.text = airCapture.timestamp
-        textViewDecibel.text = airCapture.decibel.toString() + " dB"
-        textViewAngle.text = airCapture.cameraAngle.toString() + " degrees"
-        Log.d(TAG,"refreshViewModel ${textViewPreview.text} ${textViewDecibel.text} ${textViewAngle.text}")
         return true
     }
 
-    // TODO: onclick listener
-    fun decodeTouchAction(event: MotionEvent) {
-        val action = event.action
-        var pDownX=0
-        var pDownY=0
-        var pUpX=0
-        var pUpY=0
-        var pMoveX=0
-        var pMoveY=0
+    private fun restoreViewModel(): Boolean {
+        // grid view
+        updateGridViewAdapter(
+            gridView,
+            captureViewModel.gridLabelArray,
+            captureViewModel.gridBitmapArray
+        )
+        // show selected grid thumb in preview
+        imageViewPreview.setImageBitmap(captureViewModel.gridBitmapArray[captureViewModel.gridPosition])
+        // restore aircapture data
+        var airCapture = captureViewModel.airCaptureArray[captureViewModel.gridPosition]
+        // refresh viewmodel
+        Log.d(TAG, "restoreViewModel refreshComplete $airCapture")
+        val refreshComplete = refreshViewModel(airCapture)
+        Log.d(TAG, "restoreViewModel refreshComplete $refreshComplete")
+        Log.d(TAG,"restoreViewModel refreshComplete ${textViewPreview.text} ${textViewDecibel.text} ${textViewAngle.text}")
 
-        when(action){
+        return true
+    }
 
-            MotionEvent.ACTION_DOWN -> {
-                pDownX= event.x.toInt()
-                pDownY= event.y.toInt()
-                Log.d(TAG, "decodeTouchAction DOWN event at $pDownX, $pDownY...")
-            }
+    private fun fetchViewModel(): Boolean {
+        // get jpg file list by descending time
+        val storageDir = context?.getExternalFilesDir(Environment.DIRECTORY_PICTURES)!!
+        Log.d(TAG, "fetchViewModel storageDir ${storageDir.toString()}")
+        val files = storageDir.listFiles()
+        for (file in files) {
+            val name = file.name
+            Log.d(TAG, "fetchViewModel listFiles file name $name")
+        }
+        // for each name
+        File(storageDir.toString()).walk().filter { file-> hasRequiredSuffix(file) }.forEach {
+            //println(it)
+            //val name = it.name    // full name w/ ext jpg
+            val name = it.nameWithoutExtension
+            val ext = it.extension
+            Log.d(TAG, "fetchViewModel walk file name $name ext $ext")
+            val airCaptureName = name + "." + captureViewModel.DEFAULT_DATAFILE_EXT
+            val airCapturePath = storageDir.toString() + "/" + airCaptureName
+            Log.d(TAG, "fetchViewModel airCaptureName $airCaptureName check...")
+            val airCaptureFile = File(airCapturePath)
+            //   if name.json exists
+            if (airCaptureFile.exists()) {
+                Log.d(TAG, "fetchViewModel airCaptureName $airCaptureName exists...")
+                // TODO: add to file pair collection in time order (alpha)
 
-            MotionEvent.ACTION_MOVE -> {
-                pMoveX= event.x.toInt()
-                pMoveY= event.y.toInt()
-                Log.d(TAG, "decodeTouchAction MOVE event at $pMoveX, $pMoveY...")
-            }
+                val airImageName = name + "." + captureViewModel.DEFAULT_IMAGEFILE_EXT
+                val airImagePath = storageDir.toString() + "/" + airImageName
+                Log.d(TAG, "fetchViewModel airImageName $airImageName...")
+                val airImageFile = File(airImagePath)
 
-            MotionEvent.ACTION_UP -> {
-                pUpX= event.x.toInt()
-                pUpY= event.y.toInt()
-                Log.d(TAG, "decodeTouchAction UP event at $pUpX, $pUpY...")
-            }
+                //   extract aircapture (read json)
+                var jsonString: String = "nada"
+                try {
+                    jsonString = airCaptureFile.bufferedReader().use { it.readText() }
+                } catch (ioException: IOException) {
+                    ioException.printStackTrace()
+                } finally {
+                    airCaptureFile.bufferedReader().close()
+                }
+                Log.d(TAG, "fetchViewModel airCapture json $jsonString...")
+                var airCapture = Gson().fromJson(jsonString, AirCapture::class.java)
+                Log.d(TAG, "fetchViewModel AirCapture $airCapture")
 
-            MotionEvent.ACTION_CANCEL -> {
-                Log.d(TAG, "decodeTouchAction CANCEL event...")
-            }
+                //   extract thumb
+                val uri = Uri.fromFile(airImageFile)
+                var airImageBitmap = MediaStore.Images.Media.getBitmap(
+                    activity?.applicationContext?.contentResolver,
+                    uri
+                )
+                if (airImageBitmap != null) {
+                    // extract thumbnail at scale factor
+                    var thumbBitmap = extractThumbnail(airImagePath, airImageBitmap!!, captureViewModel.THUMB_SCALE_FACTOR)
 
-            else ->{
-                Log.d(TAG, "imageViewPreview.setOnClickListener UNKNOWN event...")
+                    // rotateBitmap(imageBitmap, rotationDegrees): Bitmap
+                    if (thumbBitmap != null) {
+                        // rotate thumb bitmap
+                        thumbBitmap = rotateBitmap(thumbBitmap!!, airCapture.exifRotation.toFloat())
+                        imageViewPreview.setImageBitmap(thumbBitmap)
+                        // TODO: gridview update fun v
+                        // insert thumb in grid view
+                        ++captureViewModel.gridCount
+                        captureViewModel.gridLabelArray.add("thumb${captureViewModel.gridCount.toString()}")
+                        captureViewModel.gridBitmapArray.add(0, thumbBitmap!!)
+                        updateGridViewAdapter(gridView, captureViewModel.gridLabelArray, captureViewModel.gridBitmapArray)
+
+                        // rotate full bitmap
+                        var fullBitmap = rotateBitmap(airImageBitmap!!, airCapture.exifRotation.toFloat())
+                        // insert full bitmap into array
+                        captureViewModel.fullBitmapArray.add(0, fullBitmap!!)
+                        captureViewModel.airCaptureArray.add(0, airCapture)
+                        // TODO: gridview update fun ^
+
+                    }
+
+                }
             }
         }
-        true
-
+        // for each name
+        //   if name.json exists
+        //   get name.json
+        //   extract aircapture (read json)
+        //   extract thumb
+        //   if first image
+        //      set preview image for first image
+        //      set position
+        //   update view model
+        //     assign grid view & associated element
+        return false
     }
-    private fun createBlankBitmap(width: Int, height: Int): Bitmap {
-        val conf = Bitmap.Config.ARGB_8888 // see other conf types
-        val bitmap1 = Bitmap.createBitmap(width, height, conf) // creates a MUTABLE bitmap
-        return bitmap1
+
+    private fun hasRequiredSuffix(file: File): Boolean {
+        val requiredSuffixes = listOf(captureViewModel.DEFAULT_IMAGEFILE_EXT)
+        return requiredSuffixes.contains(file.extension)
     }
 
     private fun updateGridViewAdapter(
@@ -421,29 +454,26 @@ class CaptureFragment : Fragment() {
             val airCapture = captureViewModel.airCaptureArray[captureViewModel.gridPosition]
             Log.d(TAG,"updateGridViewAdapter soundMeter.deriveDecibel db->${airCapture.decibel.toString()}")
             refreshViewModel(airCapture)
+            // TODO: invalidate view text
+            //captureViewModel.apply {  }
         }
     }
 
-    private fun startMeters(angleMeter: AngleMeter, soundMeter: SoundMeter): Boolean {
-        try {
-            // start angle meter
-            angleMeter.start()
-            Log.d(TAG, "dispatchTakePictureIntent angleMeter started.")
-            // start sound meter
-            this.context?.let { soundMeter.start(it) }
-            Log.d(TAG, "dispatchTakePictureIntent soundMeter started.")
+    fun refreshViewModel(airCapture: AirCapture): Boolean {
+        // update viewModel
+        textViewPreview.text = airCapture.timestamp
+        textViewDecibel.text = airCapture.decibel.toString() + " dB"
+        textViewAngle.text = airCapture.cameraAngle.toString() + " degrees"
+        Log.d(TAG,"refreshViewModel ${textViewPreview.text} ${textViewDecibel.text} ${textViewAngle.text}")
+        return true
+    }
+    /////////////////////////////view model helpers////////////////////////////
 
-            // exercise meters
-            val cameraAngle = angleMeter.getAngle()
-            Log.d(TAG, "startMeters angleMeter.getAngle ->$cameraAngle")
-            val decibel = soundMeter.deriveDecibel(forceFormat = true)
-            Log.d(TAG, "startMeters soundMeter.deriveDecibel db->$decibel")
-
-        } catch (ex: Exception) {
-            Log.e(TAG, "dispatchTakePictureIntent Meter Exception ${ex.stackTrace}")
-            return false
-        }
-        return true;
+    /////////////////////////////image manipulation////////////////////////////
+    private fun createBlankBitmap(width: Int, height: Int): Bitmap {
+        val conf = Bitmap.Config.ARGB_8888 // see other conf types
+        val bitmap1 = Bitmap.createBitmap(width, height, conf) // creates a MUTABLE bitmap
+        return bitmap1
     }
 
     private fun createImageFile(storageDir: File, imageName: String): File? {
@@ -550,21 +580,19 @@ class CaptureFragment : Fragment() {
         return true
     }
 
-    private fun captureMeters(airCapture: AirCapture): Boolean {
-        // capture Meters in airCapture
-        try {
-            // capture meters
-            airCapture.cameraAngle = angleMeter.getAngle()
-            Log.d(TAG,"captureMeters angleMeter.getAngle ->${airCapture.cameraAngle.toString()}")
-            airCapture.decibel = soundMeter.deriveDecibel(forceFormat = true)
-            Log.d(TAG,"captureMeters soundMeter.deriveDecibel db->${airCapture.decibel.toString()}")
-        } catch (ex: Exception) {
-            Log.e(TAG, "captureMeters captureMeters Exception ${ex.stackTrace}")
-            return false
+    fun getAirFilename(type: CaptureViewModel.AirFileType, captureTimestamp : String): String {
+        var airFilename = captureViewModel.DEFAULT_STRING
+        if (type == CaptureViewModel.AirFileType.IMAGE) {
+            airFilename = "AIR-" + captureTimestamp + "." + captureViewModel.DEFAULT_IMAGEFILE_EXT
         }
-        return true
+        else if (type == CaptureViewModel.AirFileType.DATA) {
+            airFilename = "AIR-" + captureTimestamp + "." + captureViewModel.DEFAULT_DATAFILE_EXT
+        }
+        return airFilename
     }
+    /////////////////////////////image manipulation////////////////////////////
 
+    /////////////////////////////AirCapture handlers///////////////////////////
     // TODO: refactor to AirCapture model
     fun createAirCapture(): AirCapture {
         val airCapture = AirCapture(
@@ -607,5 +635,45 @@ class CaptureFragment : Fragment() {
         }
         return true
     }
+    /////////////////////////////AirCapture handlers///////////////////////////
+
+    /////////////////////////////meter handlers////////////////////////////////
+    private fun startMeters(angleMeter: AngleMeter, soundMeter: SoundMeter): Boolean {
+        try {
+            // start angle meter
+            angleMeter.start(requireActivity())
+            Log.d(TAG, "dispatchTakePictureIntent angleMeter started.")
+            // start sound meter
+            this.context?.let { soundMeter.start(it) }
+            Log.d(TAG, "dispatchTakePictureIntent soundMeter started.")
+
+            // exercise meters
+            val cameraAngle = angleMeter.getAngle()
+            Log.d(TAG, "startMeters angleMeter.getAngle ->$cameraAngle")
+            val decibel = soundMeter.deriveDecibel(forceFormat = true)
+            Log.d(TAG, "startMeters soundMeter.deriveDecibel db->$decibel")
+
+        } catch (ex: Exception) {
+            Log.e(TAG, "dispatchTakePictureIntent Meter Exception ${ex.stackTrace}")
+            return false
+        }
+        return true;
+    }
+
+    private fun captureMeters(airCapture: AirCapture): Boolean {
+        // capture Meters in airCapture
+        try {
+            // capture meters
+            airCapture.cameraAngle = angleMeter.getAngle()
+            Log.d(TAG,"captureMeters angleMeter.getAngle ->${airCapture.cameraAngle.toString()}")
+            airCapture.decibel = soundMeter.deriveDecibel(forceFormat = true)
+            Log.d(TAG,"captureMeters soundMeter.deriveDecibel db->${airCapture.decibel.toString()}")
+        } catch (ex: Exception) {
+            Log.e(TAG, "captureMeters captureMeters Exception ${ex.stackTrace}")
+            return false
+        }
+        return true
+    }
+    /////////////////////////////meter handlers////////////////////////////////
 
 }

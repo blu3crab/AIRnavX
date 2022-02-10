@@ -20,6 +20,7 @@ class AngleMeter: SensorEventListener {
     //////////////////
     // sensor listener
     private lateinit var sensorManager: SensorManager
+//    private var sensorManager: SensorManager? = null
     private val accelerometerReading = FloatArray(3)
     private val magnetometerReading = FloatArray(3)
 
@@ -27,14 +28,19 @@ class AngleMeter: SensorEventListener {
     private val orientationAngles = FloatArray(3)
     private val orientationDegrees = FloatArray(3)
 
-    //////////////////
-    // get sensor manager service
-    fun create(activity: FragmentActivity) {
-        sensorManager = activity?.getSystemService(Context.SENSOR_SERVICE) as SensorManager
-    }
+//    //////////////////
+//    // get sensor manager service
+//    fun create(activity: FragmentActivity) {
+//        sensorManager = activity?.getSystemService(Context.SENSOR_SERVICE) as SensorManager
+//    }
     //////////////////
     // start sensor listener
-    fun start() {
+    //fun start() {
+    fun start(activity: FragmentActivity) {
+//        if (sensorManager == null) {
+            sensorManager = activity?.getSystemService(Context.SENSOR_SERVICE) as SensorManager
+            Log.d(TAG, "start get sensorManager service $sensorManager")
+//        }
         // get updates from the accelerometer and magnetometer at a constant rate.
         // https://developer.android.com/guide/topics/sensors/sensors_position
         // https://developer.android.com/reference/android/hardware/SensorEventListener
