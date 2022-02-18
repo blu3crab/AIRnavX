@@ -31,17 +31,17 @@ class InspectFragment : Fragment() {
 
     private lateinit var imageViewInspect: ImageView
     private lateinit var textViewInspect: TextView
-    
+
+    private lateinit var captureBitmap: Bitmap
     private lateinit var inspectBitmap: Bitmap
 
-    private lateinit var zoomBitmap: Bitmap
     private var zoomCenterX = 0
     private var zoomCenterY = 0
     private var zoomUpperLeftX = 0
     private var zoomUpperLeftY = 0
-    private var zoomDeltaPixelX = 256
-    private var zoomDeltaPixelY = 256
-    private var zoomFactor = 0
+    private var zoomDeltaPixelX = 0
+    private var zoomDeltaPixelY = 0
+    private var dimRatio = 0.0
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -74,10 +74,29 @@ class InspectFragment : Fragment() {
 
         // set inspect image to selected capture thumb
         Log.d(TAG, "onCreateView captureViewModel grid position ${captureViewModel.gridPosition}")
-        inspectBitmap = captureViewModel.fullBitmapArray[captureViewModel.gridPosition]        
-        imageViewInspect.setImageBitmap(captureViewModel.fullBitmapArray[captureViewModel.gridPosition])
+        captureBitmap = captureViewModel.fullBitmapArray[captureViewModel.gridPosition]
+        inspectBitmap = captureBitmap
+//        imageViewInspect.setImageBitmap(captureViewModel.fullBitmapArray[captureViewModel.gridPosition])
+        imageViewInspect.setImageBitmap(inspectBitmap)
         Log.d(TAG, "onCreateView inspectBitmap w/h ${inspectBitmap.width}/${inspectBitmap.height}")
         Log.d(TAG, "onCreateView imageViewInspect w/h ${imageViewInspect.width}/${imageViewInspect.height}")
+
+        // set image attributes
+        zoomCenterX = inspectBitmap.width / 2
+        zoomCenterY = inspectBitmap.height / 2
+        Log.d(TAG, "onCreateView center X/Y $zoomCenterX/$zoomCenterY")
+
+        if (inspectBitmap.width < inspectBitmap.height) {
+            dimRatio = (inspectBitmap.width.toFloat() / inspectBitmap.height.toFloat()).toDouble()
+            zoomDeltaPixelX = (dimRatio * 256).toInt()
+            zoomDeltaPixelY = 256
+        }
+        else if (inspectBitmap.width > inspectBitmap.height) {
+            dimRatio = (inspectBitmap.height.toFloat() / inspectBitmap.width.toFloat()).toDouble()
+            zoomDeltaPixelX = 256
+            zoomDeltaPixelY = (dimRatio * 256).toInt()
+        }
+        Log.d(TAG, "onCreateView ratio $dimRatio X/Y $zoomDeltaPixelX/$zoomDeltaPixelY")
 
         // establish inspect image gesture detector
         val gestureDetector = GestureDetector(activity, object : GestureDetector.SimpleOnGestureListener() {
@@ -140,6 +159,50 @@ class InspectFragment : Fragment() {
         return root
     }
 
+    private fun inspectZoomOnTap(zoomDirection: Int) {
+
+        inspectBitmap = zoomOnBitmap(inspectBitmap, zoomDirection)
+        Log.d(TAG, "inspectZoomOnTap inspectBitmap w/h ${inspectBitmap.width}/${inspectBitmap.height}")
+
+        imageViewInspect.setImageBitmap(inspectBitmap)
+        Log.d(TAG, "inspectZoomOnTap captureBitmap w/h ${inspectBitmap.width}/${inspectBitmap.height}")
+        Log.d(TAG, "inspectZoomOnTap imageViewInspect w/h ${imageViewInspect.width}/${imageViewInspect.height}")
+
+    }
+
+    private fun zoomOnBitmap(imageBitmap: Bitmap, zoomDirection: Int) : Bitmap {
+        Log.d(TAG, "zoomOnBitmap imageBitmap w/h ${imageBitmap.width}/${imageBitmap.height}")
+        Log.d(TAG, "zoomOnBitmap imageBitmap zoom direction $zoomDirection")
+        zoomCenterX = imageBitmap.width / 2
+        zoomCenterY = imageBitmap.height / 2
+        Log.d(TAG, "zoomOnBitmap center X/Y $zoomCenterX/$zoomCenterY")
+        // determine width/height, upper left & create zoom bitmap
+        val width = imageBitmap.width + (zoomDirection * zoomDeltaPixelX)
+        val height = imageBitmap.height + (zoomDirection * zoomDeltaPixelY)
+        zoomUpperLeftX = zoomCenterX - width / 2
+        zoomUpperLeftY = zoomCenterY - height / 2
+        Log.d(TAG, "zoomOnBitmap next w/h $width/$height upper left X/Y $zoomUpperLeftX/$zoomUpperLeftY")
+        zoomCenterX = width / 2
+        zoomCenterY = height / 2
+        Log.d(TAG, "zoomOnBitmap next center left X/Y $zoomCenterX/$zoomCenterY")
+
+        var zoomBitmap = imageBitmap
+        if (zoomDirection == InspectViewModel.ZoomDirection.OUT.ordinal) {
+            zoomBitmap = captureBitmap
+            zoomCenterX = captureBitmap.width / 2
+            zoomCenterY = captureBitmap.height / 2
+            zoomUpperLeftX = zoomCenterX - (width / 2)
+            zoomUpperLeftY = zoomCenterY - (height / 2)
+        }
+        try {
+            zoomBitmap = Bitmap.createBitmap(imageBitmap, zoomUpperLeftX, zoomUpperLeftY, width, height)
+        } catch (ex: Exception) {
+            Log.e(TAG, "inspectZoomOnTap Exception ${ex.message}")
+        }
+//        return Bitmap.createBitmap(imageBitmap, zoomUpperLeftX, zoomUpperLeftY, width, height)
+        return zoomBitmap
+    }
+
     private fun centerZoomBitmap(centerX: Int, centerY: Int) {
         zoomCenterX = centerX
         zoomCenterY = centerY
@@ -148,49 +211,27 @@ class InspectFragment : Fragment() {
         val height = 512
         zoomUpperLeftX = zoomCenterX - width / 2
         zoomUpperLeftY = zoomCenterY - height / 2
-        zoomBitmap = Bitmap.createBitmap(inspectBitmap, zoomUpperLeftX, zoomUpperLeftY, width, height)
-        imageViewInspect.setImageBitmap(zoomBitmap)
-        Log.d(TAG, "centerZoomBitmap zoomBitmap w/h ${zoomBitmap.width}/${zoomBitmap.height}")
+        inspectBitmap = Bitmap.createBitmap(inspectBitmap, zoomUpperLeftX, zoomUpperLeftY, width, height)
+        imageViewInspect.setImageBitmap(inspectBitmap)
+        Log.d(TAG, "centerZoomBitmap zoomBitmap w/h ${inspectBitmap.width}/${inspectBitmap.height}")
         Log.d(TAG, "onCreateView imageViewInspect w/h ${imageViewInspect.width}/${imageViewInspect.height}")
     }
-    private fun inspectZoomOnTap(zoomDirection: Int) {
-
-        zoomBitmap = createZoomBitmap(inspectBitmap, zoomDirection)
-        Log.d(TAG, "inspectZoomOnTap zoomBitmap w/h ${zoomBitmap.width}/${zoomBitmap.height}")
-//        if (zoomFactor == 0) {
-//            zoomBitmap = createZoomBitmap(inspectBitmap, zoomDirection)
-//        }
-//        else {
-//            zoomBitmap = createZoomBitmap(zoomBitmap, zoomDirection)
-//        }
-        imageViewInspect.setImageBitmap(zoomBitmap)
-        Log.d(TAG, "inspectZoomOnTap zoomBitmap w/h ${zoomBitmap.width}/${zoomBitmap.height}")
-        Log.d(TAG, "onCreateView imageViewInspect w/h ${imageViewInspect.width}/${imageViewInspect.height}")
-
+    /////////////////////////lifecycle///////////////////////////
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 
-    private fun createZoomBitmap(imageBitmap: Bitmap, zoomDirection: Int) : Bitmap {
-//        private var zoomCenterX = 0
-//        private var zoomCenterY = 0
-        // TODO: move to init phase
-        zoomCenterX = imageBitmap.width / 2
-        zoomCenterY = imageBitmap.height / 2
-
-        if (zoomDirection == InspectViewModel.ZoomDirection.IN.direction) {
-            ++zoomFactor
-        }
-        else if (zoomDirection == InspectViewModel.ZoomDirection.OUT.direction &&
-                zoomFactor > 0) {
-            --zoomFactor
-        }
-        // determine width/height, upper left & create zoom bitmap
-        val width = imageBitmap.width - (zoomFactor * zoomDeltaPixelX)
-        val height = imageBitmap.height - (zoomFactor * zoomDeltaPixelY)
-        zoomUpperLeftX = zoomCenterX - width / 2
-        zoomUpperLeftY = zoomCenterY - height / 2
-        val zoomBitmap = Bitmap.createBitmap(imageBitmap, zoomUpperLeftX, zoomUpperLeftY, width, height)
-        return zoomBitmap
+    override fun onResume() {
+        super.onResume()
+        Log.d(TAG, "onResume...")
     }
+
+    override fun onPause() {
+        super.onPause()
+        Log.d(TAG, "onPause...")
+    }
+    /////////////////////////unused///////////////////////////
     private fun scaleImage(imageBitmap: Bitmap, scaleFactor: Int): Bitmap {
 //        val width = (imageBitmap.width)?.div(scaleFactor)
 //        val height = (imageBitmap.height)?.div(scaleFactor)
@@ -210,22 +251,6 @@ class InspectFragment : Fragment() {
         return thumbBitmap
     }
 
-    /////////////////////////lifecycle///////////////////////////
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
-    }
-
-    override fun onResume() {
-        super.onResume()
-        Log.d(TAG, "onResume...")
-    }
-
-    override fun onPause() {
-        super.onPause()
-        Log.d(TAG, "onPause...")
-    }
-    /////////////////////////unused///////////////////////////
     // TODO: pinch/zoom? onclick listener
     fun decodeTouchAction(event: MotionEvent) {
         val action = event.action
