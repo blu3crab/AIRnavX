@@ -14,6 +14,7 @@ import androidx.lifecycle.ViewModelProvider
 import com.ahandyapp.airnavx.databinding.FragmentInspectBinding
 import com.ahandyapp.airnavx.ui.capture.CaptureViewModel
 import android.view.MotionEvent
+import java.lang.Integer.min
 import kotlin.math.roundToInt
 
 
@@ -32,15 +33,20 @@ class InspectFragment : Fragment() {
     private lateinit var imageViewInspect: ImageView
     private lateinit var textViewInspect: TextView
 
-    private lateinit var captureBitmap: Bitmap
-    private lateinit var inspectBitmap: Bitmap
+    private lateinit var captureBitmap: Bitmap      // original capture bitmap
+    private lateinit var referenceBitmap: Bitmap    // current reference bitmap
+    private lateinit var inspectBitmap: Bitmap      // inspect view image bitmap
 
-    private var zoomCenterX = 0
-    private var zoomCenterY = 0
-    private var zoomUpperLeftX = 0
-    private var zoomUpperLeftY = 0
+    private var referenceCenterX = 0
+    private var referenceCenterY = 0
+    private var referenceUpperLeftX = 0
+    private var referenceUpperLeftY = 0
+
+    private var zoomCount = 0
     private var zoomDeltaPixelX = 0
     private var zoomDeltaPixelY = 0
+    private var zoomDeltaBase = 256
+    private var zoomDeltaStep = 8
     private var dimRatio = 0.0
 
     override fun onCreateView(
@@ -75,26 +81,31 @@ class InspectFragment : Fragment() {
         // set inspect image to selected capture thumb
         Log.d(TAG, "onCreateView captureViewModel grid position ${captureViewModel.gridPosition}")
         captureBitmap = captureViewModel.fullBitmapArray[captureViewModel.gridPosition]
+        referenceBitmap = captureBitmap
         inspectBitmap = captureBitmap
 //        imageViewInspect.setImageBitmap(captureViewModel.fullBitmapArray[captureViewModel.gridPosition])
-        imageViewInspect.setImageBitmap(inspectBitmap)
-        Log.d(TAG, "onCreateView inspectBitmap w/h ${inspectBitmap.width}/${inspectBitmap.height}")
+        imageViewInspect.setImageBitmap(captureBitmap)
+        Log.d(TAG, "onCreateView captureBitmap w/h ${captureBitmap.width}/${captureBitmap.height}")
         Log.d(TAG, "onCreateView imageViewInspect w/h ${imageViewInspect.width}/${imageViewInspect.height}")
 
+        // TODO: image attri data object
         // set image attributes
-        zoomCenterX = inspectBitmap.width / 2
-        zoomCenterY = inspectBitmap.height / 2
-        Log.d(TAG, "onCreateView center X/Y $zoomCenterX/$zoomCenterY")
+        referenceUpperLeftX = 0
+        referenceUpperLeftY = 0
+        zoomCount = 0
+        referenceCenterX = captureBitmap.width / 2
+        referenceCenterY = captureBitmap.height / 2
+        Log.d(TAG, "onCreateView center X/Y $referenceCenterX/$referenceCenterY")
 
-        if (inspectBitmap.width < inspectBitmap.height) {
-            dimRatio = (inspectBitmap.width.toFloat() / inspectBitmap.height.toFloat()).toDouble()
-            zoomDeltaPixelX = (dimRatio * 256).toInt()
-            zoomDeltaPixelY = 256
+        if (captureBitmap.width < captureBitmap.height) {
+            dimRatio = (captureBitmap.width.toFloat() / captureBitmap.height.toFloat()).toDouble()
+            zoomDeltaPixelX = (dimRatio * zoomDeltaBase).toInt()
+            zoomDeltaPixelY = zoomDeltaBase
         }
-        else if (inspectBitmap.width > inspectBitmap.height) {
-            dimRatio = (inspectBitmap.height.toFloat() / inspectBitmap.width.toFloat()).toDouble()
-            zoomDeltaPixelX = 256
-            zoomDeltaPixelY = (dimRatio * 256).toInt()
+        else if (captureBitmap.width > captureBitmap.height) {
+            dimRatio = (captureBitmap.height.toFloat() / captureBitmap.width.toFloat()).toDouble()
+            zoomDeltaPixelX = zoomDeltaBase
+            zoomDeltaPixelY = (dimRatio * zoomDeltaBase).toInt()
         }
         Log.d(TAG, "onCreateView ratio $dimRatio X/Y $zoomDeltaPixelX/$zoomDeltaPixelY")
 
@@ -107,7 +118,8 @@ class InspectFragment : Fragment() {
             }
 
             override fun onSingleTapConfirmed(e: MotionEvent?): Boolean {
-                Log.i("TAG", "onCreateView onSingleTapConfirmed: ")
+                ++zoomCount
+                Log.i("TAG", "onCreateView onSingleTapConfirmed ZOOM IN zoomCount $zoomCount")
                 inspectZoomOnTap(InspectViewModel.ZoomDirection.IN.direction)
                 return true
             }
@@ -116,14 +128,20 @@ class InspectFragment : Fragment() {
                 var x = e?.x?.roundToInt()
                 var y = e?.y?.roundToInt()
                 Log.i("TAG", "onCreateView onLongPress: x $x, y $y")
-//                if (x != null && y != null) {
-//                    centerZoomBitmap(x, y)
-//                }
+                if (x != null && y != null) {
+                    centerZoomBitmap(x, y)
+                }
             }
 
             override fun onDoubleTap(e: MotionEvent?): Boolean {
-                Log.i("TAG", "onCreateView onDoubleTap: ")
-                inspectZoomOnTap(InspectViewModel.ZoomDirection.OUT.direction)
+                if (zoomCount > 0) {
+                    --zoomCount
+                    Log.i("TAG", "onCreateView onDoubleTap zoomCount $zoomCount")
+                    inspectZoomOnTap(InspectViewModel.ZoomDirection.OUT.direction)
+                }
+                else {
+                    Log.i("TAG", "onCreateView onDoubleTap NO ZOOM OUT zoomCount $zoomCount")
+                }
                 return true
             }
 
@@ -160,61 +178,185 @@ class InspectFragment : Fragment() {
     }
 
     private fun inspectZoomOnTap(zoomDirection: Int) {
+        Log.d(TAG, "inspectZoomOnTap imageViewInspect w/h ${imageViewInspect.width}/${imageViewInspect.height}")
 
-        inspectBitmap = zoomOnBitmap(inspectBitmap, zoomDirection)
+//        Log.d(TAG, "inspectZoomOnTap captureBitmap w/h ${captureBitmap.width}/${captureBitmap.height}")
+//        inspectBitmap = zoomOnBitmap(captureBitmap, zoomDirection)
+        Log.d(TAG, "inspectZoomOnTap referenceBitmap w/h ${referenceBitmap.width}/${referenceBitmap.height}")
+        inspectBitmap = zoomOnBitmap(referenceBitmap, zoomDirection)
         Log.d(TAG, "inspectZoomOnTap inspectBitmap w/h ${inspectBitmap.width}/${inspectBitmap.height}")
 
         imageViewInspect.setImageBitmap(inspectBitmap)
-        Log.d(TAG, "inspectZoomOnTap captureBitmap w/h ${inspectBitmap.width}/${inspectBitmap.height}")
-        Log.d(TAG, "inspectZoomOnTap imageViewInspect w/h ${imageViewInspect.width}/${imageViewInspect.height}")
-
     }
 
     private fun zoomOnBitmap(imageBitmap: Bitmap, zoomDirection: Int) : Bitmap {
         Log.d(TAG, "zoomOnBitmap imageBitmap w/h ${imageBitmap.width}/${imageBitmap.height}")
-        Log.d(TAG, "zoomOnBitmap imageBitmap zoom direction $zoomDirection")
-        zoomCenterX = imageBitmap.width / 2
-        zoomCenterY = imageBitmap.height / 2
-        Log.d(TAG, "zoomOnBitmap center X/Y $zoomCenterX/$zoomCenterY")
+        Log.d(TAG, "zoomOnBitmap imageBitmap zoom direction $zoomDirection with zoomCount $zoomCount")
+//        zoomCenterX = imageBitmap.width / 2
+//        zoomCenterY = imageBitmap.height / 2
+//        Log.d(TAG, "zoomOnBitmap center X/Y $zoomCenterX/$zoomCenterY")
         // determine width/height, upper left & create zoom bitmap
-        val width = imageBitmap.width + (zoomDirection * zoomDeltaPixelX)
-        val height = imageBitmap.height + (zoomDirection * zoomDeltaPixelY)
-        zoomUpperLeftX = zoomCenterX - width / 2
-        zoomUpperLeftY = zoomCenterY - height / 2
-        Log.d(TAG, "zoomOnBitmap next w/h $width/$height upper left X/Y $zoomUpperLeftX/$zoomUpperLeftY")
-        zoomCenterX = width / 2
-        zoomCenterY = height / 2
-        Log.d(TAG, "zoomOnBitmap next center left X/Y $zoomCenterX/$zoomCenterY")
+//        zoomUpperLeftX = zoomUpperLeftX + (zoomCount * (zoomDeltaPixelX/2))
+//        zoomUpperLeftY = zoomUpperLeftY + (zoomCount * (zoomDeltaPixelY/2))
+        var zoomUpperLeftX = referenceUpperLeftX + (zoomCount * (zoomDeltaPixelX/2))
+        var zoomUpperLeftY = referenceUpperLeftY + (zoomCount * (zoomDeltaPixelY/2))
+        Log.d(TAG, "zoomOnBitmap upper left X/Y $zoomUpperLeftX/$zoomUpperLeftY")
+        // determine width/height, upper left & create zoom bitmap
+        val width = imageBitmap.width - (zoomCount * zoomDeltaPixelX)
+        val height = imageBitmap.height - (zoomCount * zoomDeltaPixelY)
+        Log.d(TAG, "zoomOnBitmap next w/h $width/$height")
+//        val width = imageBitmap.width + (zoomCount * (zoomDirection * zoomDeltaPixelX))
+//        val height = imageBitmap.height + (zoomCount * (zoomDirection * zoomDeltaPixelY))
+//        zoomCenterX = width / 2
+//        zoomCenterY = height / 2
+//        Log.d(TAG, "zoomOnBitmap next center left X/Y $zoomCenterX/$zoomCenterY")
 
+        // create zoom bitmap
         var zoomBitmap = imageBitmap
-        if (zoomDirection == InspectViewModel.ZoomDirection.OUT.ordinal) {
-            zoomBitmap = captureBitmap
-            zoomCenterX = captureBitmap.width / 2
-            zoomCenterY = captureBitmap.height / 2
-            zoomUpperLeftX = zoomCenterX - (width / 2)
-            zoomUpperLeftY = zoomCenterY - (height / 2)
-        }
+//        if (zoomDirection == InspectViewModel.ZoomDirection.OUT.ordinal) {
+//            zoomBitmap = captureBitmap
+//            zoomCenterX = captureBitmap.width / 2
+//            zoomCenterY = captureBitmap.height / 2
+//            zoomUpperLeftX = zoomCenterX - (width / 2)
+//            zoomUpperLeftY = zoomCenterY - (height / 2)
+//        }
         try {
             zoomBitmap = Bitmap.createBitmap(imageBitmap, zoomUpperLeftX, zoomUpperLeftY, width, height)
         } catch (ex: Exception) {
-            Log.e(TAG, "inspectZoomOnTap Exception ${ex.message}")
+            Log.e(TAG, "zoomOnBitmap Exception ${ex.message}")
         }
-//        return Bitmap.createBitmap(imageBitmap, zoomUpperLeftX, zoomUpperLeftY, width, height)
+//        Log.d(TAG, "zoomOnBitmap zoomDeltaPixel pre-adjust X/Y $zoomDeltaPixelX/$zoomDeltaPixelY")
+//        zoomDeltaBase = zoomDeltaBase + (zoomDirection * zoomDeltaStep)
+//        stepZoomDelta(zoomDeltaBase)
+//        Log.d(TAG, "zoomOnBitmap zoomDeltaPixel post adjust X/Y $zoomDeltaPixelX/$zoomDeltaPixelY")
+
         return zoomBitmap
     }
 
+    // find width, height, upper left, zoomCount based on new center
     private fun centerZoomBitmap(centerX: Int, centerY: Int) {
-        zoomCenterX = centerX
-        zoomCenterY = centerY
+        if (zoomCount > 0 ) {
+            referenceBitmap = inspectBitmap
+        }
+        var imageBitmap = referenceBitmap
+        Log.d(TAG, "centerZoomBitmap captureBitmap w/h ${imageBitmap.width}/${imageBitmap.height}")
+        Log.d(TAG, "centerZoomBitmap imageViewInspect w/h ${imageViewInspect.width}/${imageViewInspect.height}")
+        // translate imageView coords to image bitmap coords
+        var viewBitmapRatioX = (imageBitmap.width.toFloat() / imageViewInspect.width.toFloat()).toDouble()
+        var viewBitmapRatioY = (imageBitmap.height.toFloat() / imageViewInspect.height.toFloat()).toDouble()
+        Log.d(TAG, "centerZoomBitmap ratio x/y $viewBitmapRatioX/$viewBitmapRatioY")
 
-        val width = 512
-        val height = 512
-        zoomUpperLeftX = zoomCenterX - width / 2
-        zoomUpperLeftY = zoomCenterY - height / 2
-        inspectBitmap = Bitmap.createBitmap(inspectBitmap, zoomUpperLeftX, zoomUpperLeftY, width, height)
+        referenceCenterX = (centerX * viewBitmapRatioX).toInt()
+        referenceCenterY = (centerY * viewBitmapRatioY).toInt()
+        Log.d(TAG, "centerZoomBitmap capture center x/y $referenceCenterX/$referenceCenterY")
+
+//        val width = 512
+//        val height = 512
+        // find edge distances based on new center (may be off the edge of image)
+        var leftEdgeDist = referenceCenterX
+        var rightEdgeDist = imageBitmap.width - referenceCenterX
+        var upperEdgeDist = referenceCenterY
+        var lowerEdgeDist = imageBitmap.height - referenceCenterY
+        Log.d(TAG, "centerZoomBitmap dist left/right $leftEdgeDist/$rightEdgeDist, upper/lower $upperEdgeDist/$lowerEdgeDist")
+//        var width = rightEdgeDist + leftEdgeDist
+//        var height = lowerEdgeDist + upperEdgeDist
+//        // find zoomcount to generate width, height
+//        var zoomedWidth = imageBitmap.width - width
+//        var zoomedHeight = imageBitmap.height - height
+//        var zoomCountX = zoomedWidth / zoomDeltaPixelX
+//        var zoomCountY = zoomedHeight / zoomDeltaPixelY
+//        Log.d(TAG, "centerZoomBitmap zoomed width/height $zoomedWidth/$zoomedHeight, zoomCount X/Y $zoomCountX/$zoomCountY")
+////        zoomCount = min(zoomCountX,zoomCountY) + 2
+//        zoomCount = min(zoomCountX,zoomCountY)
+//        Log.d(TAG, "centerZoomBitmap zoomCount $zoomCount")
+//        width = imageBitmap.width - (zoomCount * zoomDeltaPixelX)
+//        height = imageBitmap.height - (zoomCount * zoomDeltaPixelY)
+//        Log.d(TAG, "centerZoomBitmap width/height $width/$height")
+
+        // find centered width height
+        var width = leftEdgeDist + rightEdgeDist
+        var height = upperEdgeDist + lowerEdgeDist
+        Log.d(TAG, "centerZoomBitmap pre-bounds check width/height $width/$height")
+
+        if (width < height && (width/height).toDouble() != dimRatio) {
+            width = (height.toDouble() * dimRatio).toInt()
+            Log.d(TAG, "centerZoomBitmap pre-bounds recalculated WIDTH/height $width/$height")
+        }
+        else if (height > width && (height/width).toDouble() != dimRatio) {
+            height = (width.toDouble() * dimRatio).toInt()
+            Log.d(TAG, "centerZoomBitmap pre-bounds recalculated width/HEIGHT $width/$height")
+        }
+
+        // set upper left
+        referenceUpperLeftX = referenceCenterX - (width / 2)
+        referenceUpperLeftY = referenceCenterY - (height / 2)
+        Log.d(TAG, "centerZoomBitmap pre-bounds check upper left X/Y $referenceUpperLeftX/$referenceUpperLeftY")
+        // adjust for off LEFT edge
+        if (referenceUpperLeftX < 0) {
+            width = width + (referenceUpperLeftX*2) // negative UL X subtracts from width
+            referenceUpperLeftX = 0
+            Log.d(TAG, "centerZoomBitmap off LEFT image edge, adjusted upper left X $referenceUpperLeftX, width $width")
+        }
+        // adjust for off RIGHT edge
+        if (referenceUpperLeftX + width > imageBitmap.width) {
+            val delta = (referenceUpperLeftX + width) - imageBitmap.width
+            width = width - (delta*2)
+            referenceUpperLeftX = referenceCenterX - (width / 2)
+            Log.d(TAG, "centerZoomBitmap off RIGHT image edge, adjusted upper left X $referenceUpperLeftX, width $width")
+        }
+        // adjust for off UPPER edge
+        if (referenceUpperLeftY < 0) {
+            height = height + (referenceUpperLeftY*2) // negative UL X subtracts from width
+            referenceUpperLeftY = 0
+            Log.d(TAG, "centerZoomBitmap off UPPER image edge, adjusted upper left Y $referenceUpperLeftY, height $height")
+        }
+        // adjust for off LOWER edge
+        if (referenceUpperLeftY + height > imageBitmap.height) {
+            val delta = (referenceUpperLeftY + height) - imageBitmap.height
+            height = height - (delta*2)
+            referenceUpperLeftY = referenceCenterY - (height / 2)
+            Log.d(TAG, "centerZoomBitmap off LOWER image edge, adjusted upper left X $referenceUpperLeftY, height $height")
+        }
+        Log.d(TAG, "centerZoomBitmap post-bounds check upper left X/Y $referenceUpperLeftX/$referenceUpperLeftY")
+        Log.d(TAG, "centerZoomBitmap post-bounds width/height $width/$height")
+
+        // create bitmap
+        try {
+            inspectBitmap = Bitmap.createBitmap(imageBitmap, referenceUpperLeftX, referenceUpperLeftY, width, height)
+        } catch (ex: Exception) {
+            Log.e(TAG, "inspectZoomOnTap Exception ${ex.message}")
+            return
+        }
+        // TODO: init reference
+        // reset reference bitmap
+        referenceBitmap = inspectBitmap
+        zoomCount = 0
+        referenceUpperLeftX = 0
+        referenceUpperLeftY = 0
+        referenceCenterX = (width / 2)
+        referenceCenterY = (height / 2)
+
+//        Log.d(TAG, "zoomOnBitmap zoomDeltaPixel pre-adjust X/Y $zoomDeltaPixelX/$zoomDeltaPixelY")
+//        zoomDeltaBase = zoomDeltaBase - (zoomDeltaBase / zoomDeltaStep)
+//        stepZoomDelta(zoomDeltaBase)
+//        Log.d(TAG, "zoomOnBitmap zoomDeltaPixel post adjust X/Y $zoomDeltaPixelX/$zoomDeltaPixelY")
+
         imageViewInspect.setImageBitmap(inspectBitmap)
-        Log.d(TAG, "centerZoomBitmap zoomBitmap w/h ${inspectBitmap.width}/${inspectBitmap.height}")
+        Log.d(TAG, "centerZoomBitmap inspectBitmap w/h ${inspectBitmap.width}/${inspectBitmap.height}")
         Log.d(TAG, "onCreateView imageViewInspect w/h ${imageViewInspect.width}/${imageViewInspect.height}")
+    }
+
+    private fun stepZoomDelta(base: Int) {
+        if (captureBitmap.width < captureBitmap.height) {
+            zoomDeltaPixelX = (dimRatio * zoomDeltaBase).toInt()
+            zoomDeltaPixelY = zoomDeltaBase
+        }
+        else if (captureBitmap.width > captureBitmap.height) {
+            zoomDeltaPixelX = zoomDeltaBase
+            zoomDeltaPixelY = (dimRatio * zoomDeltaBase).toInt()
+        }
+        Log.d(TAG, "onCreateView ratio $dimRatio X/Y $zoomDeltaPixelX/$zoomDeltaPixelY")
+
     }
     /////////////////////////lifecycle///////////////////////////
     override fun onDestroyView() {
