@@ -9,7 +9,6 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.ahandyapp.airnavx.databinding.FragmentInspectBinding
 import com.ahandyapp.airnavx.ui.capture.CaptureViewModel
@@ -54,16 +53,16 @@ class InspectFragment : Fragment() {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         inspectViewModel = ViewModelProvider(this).get(InspectViewModel::class.java)
 
         _binding = FragmentInspectBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
         val textView: TextView = binding.textInspect
-        inspectViewModel.text.observe(viewLifecycleOwner, Observer {
+        inspectViewModel.text.observe(viewLifecycleOwner) {
             textView.text = it
-        })
+        }
 
         val packageName = this.context?.getPackageName()
 
@@ -130,8 +129,8 @@ class InspectFragment : Fragment() {
             }
 
             override fun onLongPress(e: MotionEvent?) {
-                var x = e?.x?.roundToInt()
-                var y = e?.y?.roundToInt()
+                val x = e?.x?.roundToInt()
+                val y = e?.y?.roundToInt()
                 Log.i("TAG", "onCreateView onLongPress: x $x, y $y")
                 if (x != null && y != null) {
                     centerBitmap(x, y)
@@ -194,18 +193,55 @@ class InspectFragment : Fragment() {
         // determine width/height, upper left & create zoom bitmap
         Log.d(TAG, "zoomOnBitmap imageBitmap w/h ${imageBitmap.width}/${imageBitmap.height}")
         Log.d(TAG, "zoomOnBitmap imageBitmap zoom direction $zoomDirection")
+        Log.d(TAG, "zoomOnBitmap imageBitmap imageOrientation $imageOrientation")
 
+        Log.d(TAG, "zoomOnBitmap inspectBitmap w/h ${inspectBitmap.width}/${inspectBitmap.height}")
         if (zoomDirection == InspectViewModel.ZoomDirection.IN) {
+            // set zoomBase & zoomFactor for PORTRAIT
+//            zoomBase = inspectBitmap.width
             zoomBase = inspectBitmap.width
-            var zoomFactor = captureBitmap.width/inspectBitmap.width
-            // shrink base
-//            zoomBase -= (32 * zoomFactor) // too quickly to fine zoom
-//            zoomBase -= (16 * zoomFactor) // too slowly to fine zoom
-            zoomBase -= (24 * zoomFactor)
-            if (zoomBase <= 0) {
+//            var zoomFactor = captureBitmap.width/inspectBitmap.width
+            if (imageOrientation == InspectViewModel.ImageOrientation.LANDSCAPE) {
+                // set zoomBase & zoomFactor for LANDSCAPE
+//                zoomBase = inspectBitmap.height
+                zoomBase = inspectBitmap.height
+//                zoomFactor = captureBitmap.height/inspectBitmap.height
+            }
+            if (zoomBase > 2048) {
+                zoomBase = zoomBase / 2
+            }
+            else if (zoomBase > 1024) {
+                zoomBase = zoomBase / 3
+            }
+            else if (zoomBase > 512) {
+                zoomBase = zoomBase / 4
+            }
+            else if (zoomBase > 256) {
+                zoomBase = zoomBase / 5
+            }
+            else if (zoomBase > 128) {
+                zoomBase = zoomBase / 6
+            }
+            else {
                 zoomBase = 8
             }
-            Log.d(TAG, "zoomOnBitmap zoomBase $zoomBase with zoomFactor $zoomFactor")
+
+//            var zoomBaseTest = zoomBase
+//                // shrink base
+////            zoomBase -= (32 * zoomFactor) // too quickly to fine zoom
+////            zoomBase -= (16 * zoomFactor) // too slowly to fine zoom
+////            zoomBaseTest -= (24 * zoomFactor)
+//            zoomBaseTest -= (24 * zoomFactor)
+////            zoomBase = zoomBaseTest
+//            if (zoomBaseTest <= 0) {
+//                zoomBaseTest = zoomBase - 24
+//                if (zoomBaseTest <= 0) {
+//                    zoomBaseTest = 8
+//                }
+//            }
+//            zoomBase = zoomBaseTest
+//            Log.d(TAG, "zoomOnBitmap zoomBase $zoomBase with zoomFactor $zoomFactor")
+            Log.d(TAG, "zoomOnBitmap zoomBase $zoomBase")
             if (imageOrientation == InspectViewModel.ImageOrientation.PORTRAIT) {
                 // adjust stepX leaving stepY unchanged
                 zoomStepX.add((dimRatioX * zoomBase).toInt())
@@ -262,12 +298,12 @@ class InspectFragment : Fragment() {
         if (zoomStepX.size > 0 ) {
             referenceBitmap = inspectBitmap
         }
-        var imageBitmap = referenceBitmap
+        val imageBitmap = referenceBitmap
         Log.d(TAG, "centerZoomBitmap captureBitmap w/h ${imageBitmap.width}/${imageBitmap.height}")
         Log.d(TAG, "centerZoomBitmap imageViewInspect w/h ${imageViewInspect.width}/${imageViewInspect.height}")
         // translate imageView coords to image bitmap coords
-        var viewBitmapRatioX = (imageBitmap.width.toFloat() / imageViewInspect.width.toFloat()).toDouble()
-        var viewBitmapRatioY = (imageBitmap.height.toFloat() / imageViewInspect.height.toFloat()).toDouble()
+        val viewBitmapRatioX = (imageBitmap.width.toFloat() / imageViewInspect.width.toFloat()).toDouble()
+        val viewBitmapRatioY = (imageBitmap.height.toFloat() / imageViewInspect.height.toFloat()).toDouble()
         Log.d(TAG, "centerZoomBitmap ratio x/y $viewBitmapRatioX/$viewBitmapRatioY")
         // assign reference bitmap center
         referenceCenterX = (centerX * viewBitmapRatioX).toInt()
@@ -282,8 +318,8 @@ class InspectFragment : Fragment() {
             ++referenceCenterY
             Log.d(TAG, "centerZoomBitmap capture adjusted center Y $referenceCenterY")
         }
-        var centerX = referenceCenterX
-        var centerY = referenceCenterY
+        val centerX = referenceCenterX
+        val centerY = referenceCenterY
         // find width height maintaining ratio
         var width = imageBitmap.width
         var height = imageBitmap.height
@@ -327,10 +363,8 @@ class InspectFragment : Fragment() {
             if (lowerRightY > imageBitmap.height) {
                 height = (imageBitmap.height - centerY) * 2
                 upperLeftY = centerY - (height/2)
-//                lowerRightY = imageBitmap.height
                 width = (height.toDouble() * dimRatioX).toInt()
                 upperLeftX = centerX - (width/2)
-//                lowerRightX = centerX + (width/2)
             }
             Log.d(TAG, "centerZoomBitmap off-edge lower left UL X/Y $upperLeftX/$upperLeftY")
             Log.d(TAG, "centerZoomBitmap off-edge lower left width/height $width/$height")
@@ -338,33 +372,26 @@ class InspectFragment : Fragment() {
         else if (upperLeftX < imageBitmap.width && upperLeftY < 0 &&
             lowerRightX > imageBitmap.width && lowerRightY < imageBitmap.height) {
             Log.d(TAG, "centerZoomBitmap off-edge upper right...")
-//            lowerRightX = imageBitmap.width
             width = (imageBitmap.width - centerX) * 2
-//            upperLeftX = centerX - (width / 2)
             height = (width.toDouble() * dimRatioY).toInt()
             upperLeftY = centerY - (height / 2)
             // if upper left Y off-edge
             if (upperLeftY < 0) {
-//                upperLeftY = 0
                 height = centerY * 2
                 width = (height.toDouble() * dimRatioX).toInt()
-//                upperLeftX = centerX - (width/2)
             }
             Log.d(TAG, "centerZoomBitmap off-edge upper right width/height $width/$height")
         }
         else if (upperLeftX < imageBitmap.width && upperLeftY < imageBitmap.height &&
             lowerRightX > imageBitmap.width && lowerRightY > imageBitmap.height) {
             Log.d(TAG, "centerZoomBitmap off-edge lower right...")
-//            lowerRightX = imageBitmap.width
             width = (imageBitmap.width - centerX) * 2
-//            upperLeftX = centerX - (width / 2)
             height = (width.toDouble() * dimRatioY).toInt()
             lowerRightY = centerY + (height / 2)
             // if upper left Y off-edge
             if (lowerRightY > imageBitmap.height) {
                 height = (imageBitmap.height - centerY) * 2
                 width = (height.toDouble() * dimRatioX).toInt()
-//                upperLeftX = centerX - (width/2)
             }
             Log.d(TAG, "centerZoomBitmap off-edge lower right width/height $width/$height")
         }
@@ -446,12 +473,12 @@ class InspectFragment : Fragment() {
     // TODO: pinch/zoom? onclick listener
     fun decodeTouchAction(event: MotionEvent) {
         val action = event.action
-        var pDownX=0
-        var pDownY=0
-        var pUpX=0
-        var pUpY=0
-        var pMoveX=0
-        var pMoveY=0
+        var pDownX: Int
+        var pDownY: Int
+        var pUpX: Int
+        var pUpY: Int
+        var pMoveX: Int
+        var pMoveY: Int
 
         when(action){
 
