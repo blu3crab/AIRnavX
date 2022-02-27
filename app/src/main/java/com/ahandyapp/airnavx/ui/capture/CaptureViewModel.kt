@@ -15,6 +15,7 @@ class CaptureViewModel : ViewModel() {
         IMAGE,
         DATA
     }
+
     val DEFAULT_DATAFILE_EXT = "json"
     val DEFAULT_IMAGEFILE_EXT = "jpg"
     val DEFAULT_STRING = "nada"

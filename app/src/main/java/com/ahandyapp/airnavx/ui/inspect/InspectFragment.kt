@@ -33,6 +33,7 @@ class InspectFragment : Fragment() {
     private lateinit var imageViewInspect: ImageView
     private lateinit var textViewInspect: TextView
 
+    private var imageOrientation = InspectViewModel.ImageOrientation.PORTRAIT
     private lateinit var captureBitmap: Bitmap      // original capture bitmap
     private lateinit var referenceBitmap: Bitmap    // current reference bitmap
     private lateinit var inspectBitmap: Bitmap      // inspect view image bitmap
@@ -91,6 +92,13 @@ class InspectFragment : Fragment() {
         imageViewInspect.setImageBitmap(captureBitmap)
         Log.d(TAG, "onCreateView captureBitmap w/h ${captureBitmap.width}/${captureBitmap.height}")
         Log.d(TAG, "onCreateView imageViewInspect w/h ${imageViewInspect.width}/${imageViewInspect.height}")
+        if (captureBitmap.width < captureBitmap.height) {
+            imageOrientation = InspectViewModel.ImageOrientation.PORTRAIT
+        }
+        else {
+            imageOrientation = InspectViewModel.ImageOrientation.LANDSCAPE
+        }
+        Log.d(TAG, "onCreateView imageOrientation $imageOrientation")
 
         // TODO: image attri data object
         // set image attributes
@@ -194,12 +202,12 @@ class InspectFragment : Fragment() {
 
         if (zoomDirection == InspectViewModel.ZoomDirection.IN) {
             // shrink base
-                if (zoomBase > 32) {
-                    zoomBase -= zoomBase / 8
-                }
+            if (zoomBase > 32) {
+                zoomBase -= zoomBase / 8
+            }
 //            zoomStepX.add((dimRatioX * zoomBase).toInt())
 //            zoomStepY.add((dimRatioY * zoomBase).toInt())
-            if (dimRatioX < dimRatioY) {
+            if (imageOrientation == InspectViewModel.ImageOrientation.PORTRAIT) {
                 // adjust stepX leaving stepY unchanged
                 zoomStepX.add((dimRatioX * zoomBase).toInt())
                 zoomStepY.add(zoomBase)
@@ -220,15 +228,34 @@ class InspectFragment : Fragment() {
 
         var zoomUpperLeftX = referenceUpperLeftX
         var width = imageBitmap.width
+        var totalStepX = 0
         for (stepX in zoomStepX) {
-            zoomUpperLeftX += (stepX / 2)
-            width -= stepX
+            totalStepX += stepX
+//            if (width - stepX > 0) {
+//                zoomUpperLeftX += (stepX / 2)
+//                width -= stepX
+//            }
         }
         var zoomUpperLeftY = referenceUpperLeftY
         var height = imageBitmap.height
+        var totalStepY = 0
         for (stepY in zoomStepY) {
-            zoomUpperLeftY += (stepY / 2)
-            height -= stepY
+            totalStepY += stepY
+//            if (height - stepY > 0) {
+//                zoomUpperLeftY += (stepY / 2)
+//                height -= stepY
+//            }
+        }
+        // TODO: prevent off-edge overflow!  fine zoomBase
+        if (width - totalStepX > 0 && height - totalStepY > 0) {
+            zoomUpperLeftX += (totalStepX / 2)
+            width -= totalStepX
+            zoomUpperLeftY += (totalStepY / 2)
+            height -= totalStepY
+        }
+        else {
+            Log.e(TAG, "zoomOnBitmap OFF-EDGE upper left X/Y $zoomUpperLeftX/$zoomUpperLeftY, w/h $width/$height")
+
         }
         Log.d(TAG, "zoomOnBitmap upper left X/Y $zoomUpperLeftX/$zoomUpperLeftY")
         Log.d(TAG, "zoomOnBitmap next w/h $width/$height")
