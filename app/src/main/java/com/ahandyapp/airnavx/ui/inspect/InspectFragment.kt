@@ -198,14 +198,10 @@ class InspectFragment : Fragment() {
         Log.d(TAG, "zoomOnBitmap inspectBitmap w/h ${inspectBitmap.width}/${inspectBitmap.height}")
         if (zoomDirection == InspectViewModel.ZoomDirection.IN) {
             // set zoomBase & zoomFactor for PORTRAIT
-//            zoomBase = inspectBitmap.width
             zoomBase = inspectBitmap.width
-//            var zoomFactor = captureBitmap.width/inspectBitmap.width
             if (imageOrientation == InspectViewModel.ImageOrientation.LANDSCAPE) {
                 // set zoomBase & zoomFactor for LANDSCAPE
-//                zoomBase = inspectBitmap.height
                 zoomBase = inspectBitmap.height
-//                zoomFactor = captureBitmap.height/inspectBitmap.height
             }
             if (zoomBase > 2048) {
                 zoomBase = zoomBase / 2
@@ -225,22 +221,6 @@ class InspectFragment : Fragment() {
             else {
                 zoomBase = 8
             }
-
-//            var zoomBaseTest = zoomBase
-//                // shrink base
-////            zoomBase -= (32 * zoomFactor) // too quickly to fine zoom
-////            zoomBase -= (16 * zoomFactor) // too slowly to fine zoom
-////            zoomBaseTest -= (24 * zoomFactor)
-//            zoomBaseTest -= (24 * zoomFactor)
-////            zoomBase = zoomBaseTest
-//            if (zoomBaseTest <= 0) {
-//                zoomBaseTest = zoomBase - 24
-//                if (zoomBaseTest <= 0) {
-//                    zoomBaseTest = 8
-//                }
-//            }
-//            zoomBase = zoomBaseTest
-//            Log.d(TAG, "zoomOnBitmap zoomBase $zoomBase with zoomFactor $zoomFactor")
             Log.d(TAG, "zoomOnBitmap zoomBase $zoomBase")
             if (imageOrientation == InspectViewModel.ImageOrientation.PORTRAIT) {
                 // adjust stepX leaving stepY unchanged
