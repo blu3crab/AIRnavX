@@ -13,6 +13,9 @@ import androidx.lifecycle.ViewModelProvider
 import com.ahandyapp.airnavx.databinding.FragmentInspectBinding
 import com.ahandyapp.airnavx.ui.capture.CaptureViewModel
 import android.view.MotionEvent
+import android.widget.Button
+import android.widget.Toast
+import com.ahandyapp.airnavx.R
 import java.util.ArrayList
 import kotlin.math.roundToInt
 
@@ -29,7 +32,8 @@ class InspectFragment : Fragment() {
 
     private lateinit var captureViewModel: CaptureViewModel
 
-    private lateinit var imageViewInspect: ImageView
+    private lateinit var inspectImageView: ImageView
+    private lateinit var measureButton: Button
     private lateinit var textViewInspect: TextView
 
     private var imageOrientation = InspectViewModel.ImageOrientation.PORTRAIT
@@ -60,16 +64,18 @@ class InspectFragment : Fragment() {
         val root: View = binding.root
 
         val textView: TextView = binding.textInspect
-        inspectViewModel.text.observe(viewLifecycleOwner) {
+        inspectViewModel.guideText.observe(viewLifecycleOwner) {
             textView.text = it
         }
 
-        val packageName = this.context?.getPackageName()
-
         // establish inspect imageview
-        val inspectViewIdString = "imageview_inspect"
-        val inspectViewId = resources.getIdentifier(inspectViewIdString, "id", packageName)
-        imageViewInspect = root.findViewById(inspectViewId) as ImageView
+        inspectImageView = root.findViewById(R.id.imageview_inspect) as ImageView
+        // establish measure button listener
+        val buttonMeasure = root.findViewById(R.id.button_measure) as Button
+        buttonMeasure.setOnClickListener {
+            Toast.makeText(this.context, "measuring OUI...", Toast.LENGTH_SHORT).show()
+            Log.d(TAG, "buttonMeasure.setOnClickListener measuring OUI...")
+        }
 
         // reference capture viewmodel
         Log.d(TAG, "onCreateView captureViewModel access...")
@@ -83,9 +89,9 @@ class InspectFragment : Fragment() {
         captureBitmap = captureViewModel.fullBitmapArray[captureViewModel.gridPosition]
         referenceBitmap = captureBitmap
         inspectBitmap = captureBitmap
-        imageViewInspect.setImageBitmap(captureBitmap)
+        inspectImageView.setImageBitmap(captureBitmap)
         Log.d(TAG, "onCreateView captureBitmap w/h ${captureBitmap.width}/${captureBitmap.height}")
-        Log.d(TAG, "onCreateView imageViewInspect w/h ${imageViewInspect.width}/${imageViewInspect.height}")
+        Log.d(TAG, "onCreateView imageViewInspect w/h ${inspectImageView.width}/${inspectImageView.height}")
         if (captureBitmap.width < captureBitmap.height) {
             imageOrientation = InspectViewModel.ImageOrientation.PORTRAIT
         }
@@ -170,7 +176,7 @@ class InspectFragment : Fragment() {
             }
 
         })
-        imageViewInspect.setOnTouchListener { _, event -> gestureDetector.onTouchEvent(event) }
+        inspectImageView.setOnTouchListener { _, event -> gestureDetector.onTouchEvent(event) }
           // TODO: pinch/zoom?
 //        imageViewFull.setOnTouchListener { v, event ->
 //            decodeTouchAction(event)
@@ -181,12 +187,12 @@ class InspectFragment : Fragment() {
     }
 
     private fun inspectZoomOnTap(zoomDirection: InspectViewModel.ZoomDirection) {
-        Log.d(TAG, "inspectZoomOnTap imageViewInspect w/h ${imageViewInspect.width}/${imageViewInspect.height}")
+        Log.d(TAG, "inspectZoomOnTap imageViewInspect w/h ${inspectImageView.width}/${inspectImageView.height}")
         Log.d(TAG, "inspectZoomOnTap referenceBitmap w/h ${referenceBitmap.width}/${referenceBitmap.height}")
         inspectBitmap = zoomOnBitmap(referenceBitmap, zoomDirection)
         Log.d(TAG, "inspectZoomOnTap inspectBitmap w/h ${inspectBitmap.width}/${inspectBitmap.height}")
 
-        imageViewInspect.setImageBitmap(inspectBitmap)
+        inspectImageView.setImageBitmap(inspectBitmap)
     }
 
     private fun zoomOnBitmap(imageBitmap: Bitmap, zoomDirection: InspectViewModel.ZoomDirection) : Bitmap {
@@ -280,10 +286,10 @@ class InspectFragment : Fragment() {
         }
         val imageBitmap = referenceBitmap
         Log.d(TAG, "centerZoomBitmap captureBitmap w/h ${imageBitmap.width}/${imageBitmap.height}")
-        Log.d(TAG, "centerZoomBitmap imageViewInspect w/h ${imageViewInspect.width}/${imageViewInspect.height}")
+        Log.d(TAG, "centerZoomBitmap imageViewInspect w/h ${inspectImageView.width}/${inspectImageView.height}")
         // translate imageView coords to image bitmap coords
-        val viewBitmapRatioX = (imageBitmap.width.toFloat() / imageViewInspect.width.toFloat()).toDouble()
-        val viewBitmapRatioY = (imageBitmap.height.toFloat() / imageViewInspect.height.toFloat()).toDouble()
+        val viewBitmapRatioX = (imageBitmap.width.toFloat() / inspectImageView.width.toFloat()).toDouble()
+        val viewBitmapRatioY = (imageBitmap.height.toFloat() / inspectImageView.height.toFloat()).toDouble()
         Log.d(TAG, "centerZoomBitmap ratio x/y $viewBitmapRatioX/$viewBitmapRatioY")
         // assign reference bitmap center
         referenceCenterX = (centerX * viewBitmapRatioX).toInt()
@@ -407,9 +413,9 @@ class InspectFragment : Fragment() {
         referenceCenterX = (width / 2)
         referenceCenterY = (height / 2)
 
-        imageViewInspect.setImageBitmap(inspectBitmap)
+        inspectImageView.setImageBitmap(inspectBitmap)
         Log.d(TAG, "centerZoomBitmap inspectBitmap w/h ${inspectBitmap.width}/${inspectBitmap.height}")
-        Log.d(TAG, "onCreateView imageViewInspect w/h ${imageViewInspect.width}/${imageViewInspect.height}")
+        Log.d(TAG, "onCreateView imageViewInspect w/h ${inspectImageView.width}/${inspectImageView.height}")
         // reset zoomStep
         zoomStepX = ArrayList<Int>()
         zoomStepY = ArrayList<Int>()

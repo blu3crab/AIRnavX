@@ -13,6 +13,11 @@
     <string name="menu_inspect">Inspect</string>
     <!--TODO: CAMERA -> CAPTURE?-->
     <string name="button_camera">CAMERA</string>
+
+    <string name="button_dimension">DIMENSION</string>
+    <string name="button_orient">ORIENT</string>
+    <string name="button_identify">IDENTIFY</string>
+    <string name="button_crafttype">CRAFT TYPE</string>
     <string name="button_measure">MEASURE</string>
 
 </resources>

@@ -15,8 +15,17 @@ class InspectViewModel : ViewModel() {
         LANDSCAPE(1)
     }
 
-    private val _text = MutableLiveData<String>().apply {
-        value = "Tap on object, size shape."
+    var ouiWidth = 0
+    var ouiHeight = 0
+
+    private val _guideText = MutableLiveData<String>().apply {
+        value = "TAP to zoom IN, \nDOUBLE TAP to zoom OUT, \nLONG PRESS to CENTER."
     }
-    val text: LiveData<String> = _text
+    val guideText: LiveData<String> = _guideText
+
+    private val _ouiSizeText = MutableLiveData<String>().apply {
+        value = "Object Under Inspection \nwidth $ouiWidth x height $ouiHeight"
+    }
+    val ouiSizeText: LiveData<String> = _ouiSizeText
+
 }

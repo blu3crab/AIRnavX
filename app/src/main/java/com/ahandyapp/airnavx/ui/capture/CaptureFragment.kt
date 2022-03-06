@@ -92,12 +92,14 @@ class CaptureFragment : Fragment() {
             textViewAngle.text = it
         }
 
-        val packageName = this.context?.packageName
+        //val packageName = this.context?.packageName
         // get reference to button
-        val buttonCameraIdString = "button_camera"
-        val buttonCameraId = resources.getIdentifier(buttonCameraIdString, "id", packageName)
-        val buttonCamera = root.findViewById(buttonCameraId) as Button
+        //val buttonCameraIdString = "button_camera"
+        //val buttonCameraIdString: String = getString(R.string.button_camera)
+        //val buttonCameraId = resources.getIdentifier(buttonCameraIdString, "id", packageName)
+        //val buttonCamera = root.findViewById(buttonCameraId) as Button
         // set camera button on-click listener
+        val buttonCamera = root.findViewById(R.id.button_camera) as Button
         buttonCamera.setOnClickListener {
             Toast.makeText(this.context, "launching camera...", Toast.LENGTH_SHORT).show()
             Log.d(TAG, "buttonCamera.setOnClickListener launching camera...")
@@ -106,9 +108,10 @@ class CaptureFragment : Fragment() {
         // TODO: button - delete capture set (single view model entry)
         // TODO: button - new session (createEmptyViewModel)
 
-        val previewViewIdString = "imageViewPreview"
-        val previewViewId = resources.getIdentifier(previewViewIdString, "id", packageName)
-        imageViewPreview = root.findViewById(previewViewId) as ImageView
+        //val previewViewIdString = "imageViewPreview"
+        //val previewViewId = resources.getIdentifier(previewViewIdString, "id", packageName)
+        //imageViewPreview = root.findViewById(previewViewId) as ImageView
+        imageViewPreview = root.findViewById(R.id.imageview_preview) as ImageView
 
         // establish grid view
         gridView = root.findViewById(R.id.gridView)
