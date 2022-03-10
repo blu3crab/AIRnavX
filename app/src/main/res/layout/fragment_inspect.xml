@@ -6,6 +6,7 @@
     android:layout_height="match_parent"
     tools:context=".ui.inspect.InspectFragment">
 
+
     <TextView
         android:id="@+id/text_inspect"
         android:layout_width="match_parent"
@@ -34,7 +35,7 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <Button
-        android:id="@+id/button_set_image_dimension"
+        android:id="@+id/button_dimension"
         android:layout_width="160dp"
         android:layout_height="42dp"
         android:layout_marginStart="8dp"
@@ -45,13 +46,13 @@
         android:textAlignment="center"
         android:textColor="#FFFFFF"
         android:visibility="visible"
-        app:layout_constraintBottom_toTopOf="@+id/button_orient_craft"
+        app:layout_constraintBottom_toTopOf="@+id/button_orient"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent" />
 
     <TextView
-        android:id="@+id/text_set_image_dimension"
+        android:id="@+id/text_dimension"
         android:layout_width="wrap_content"
         android:layout_height="42dp"
         android:layout_marginEnd="8dp"
@@ -63,10 +64,10 @@
         app:layout_constraintBottom_toTopOf="@+id/text_orient_craft"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.186"
-        app:layout_constraintStart_toEndOf="@+id/button_set_image_dimension" />
+        app:layout_constraintStart_toEndOf="@+id/button_dimension" />
 
     <Button
-        android:id="@+id/button_orient_craft"
+        android:id="@+id/button_orient"
         android:layout_width="160dp"
         android:layout_height="42dp"
         android:layout_marginStart="8dp"
@@ -77,7 +78,7 @@
         android:textAlignment="center"
         android:textColor="#FFFFFF"
         android:visibility="visible"
-        app:layout_constraintBottom_toTopOf="@+id/button_identity_craft"
+        app:layout_constraintBottom_toTopOf="@+id/button_identity"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent" />
@@ -95,10 +96,10 @@
         app:layout_constraintBottom_toTopOf="@+id/text_identity_craft"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.378"
-        app:layout_constraintStart_toEndOf="@+id/button_identity_craft" />
+        app:layout_constraintStart_toEndOf="@+id/button_identity" />
 
     <Button
-        android:id="@+id/button_identity_craft"
+        android:id="@+id/button_identity"
         android:layout_width="160dp"
         android:layout_height="42dp"
         android:layout_marginStart="8dp"
@@ -109,7 +110,7 @@
         android:textAlignment="center"
         android:textColor="#FFFFFF"
         android:visibility="visible"
-        app:layout_constraintBottom_toTopOf="@+id/button_set_craft_type"
+        app:layout_constraintBottom_toTopOf="@+id/button_crafttype"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent" />
@@ -127,10 +128,10 @@
         app:layout_constraintBottom_toTopOf="@+id/text_set_craft_type"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.1"
-        app:layout_constraintStart_toEndOf="@+id/button_identity_craft" />
+        app:layout_constraintStart_toEndOf="@+id/button_identity" />
 
     <Button
-        android:id="@+id/button_set_craft_type"
+        android:id="@+id/button_crafttype"
         android:layout_width="160dp"
         android:layout_height="42dp"
         android:layout_marginStart="8dp"
@@ -159,7 +160,7 @@
         app:layout_constraintBottom_toTopOf="@+id/text_measure"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.076"
-        app:layout_constraintStart_toEndOf="@+id/button_set_craft_type" />
+        app:layout_constraintStart_toEndOf="@+id/button_crafttype" />
 
     <Button
         android:id="@+id/button_measure"

@@ -6,6 +6,12 @@
     android:layout_height="match_parent"
     tools:context=".ui.capture.CaptureFragment">
 
+<!--    <data>
+        <variable
+            android:name="viewModel"
+            android:type="com.ahandyapp.airnavx.ui.capture.CaptureViewModel" />
+    </data> -->
+
     <ImageView
         android:id="@+id/imageview_preview"
         android:layout_width="wrap_content"
