@@ -34,9 +34,11 @@ class InspectFragment : Fragment() {
     private lateinit var captureViewModel: CaptureViewModel
 
     private lateinit var inspectImageView: ImageView
-    private lateinit var guideView: TextView
-//    private lateinit var measureDimensionView: TextView
-//    private lateinit var craftOrientationView: TextView
+    private lateinit var guideTextView: TextView
+    private lateinit var dimensionTextView: TextView
+    private lateinit var orientTextView: TextView
+    private lateinit var craftTypeTextView: TextView
+
     private lateinit var buttonDimension: Button
     private lateinit var buttonOrient: Button
     private lateinit var buttonCraftType: Button
@@ -72,19 +74,14 @@ class InspectFragment : Fragment() {
         val root: View = binding.root
 
         //val guideView: TextView = binding.textInspect
-        guideView = binding.textInspect
+        guideTextView = binding.textInspect
         inspectViewModel.guideText.observe(viewLifecycleOwner) {
-            guideView.text = it
+            guideTextView.text = it
         }
 
-//        //val measureDimensionView: TextView = binding.textDimension
-//        measureDimensionView = binding.textDimension
-//        inspectViewModel.measureDimensionText.observe(viewLifecycleOwner) {
-//            measureDimensionView.text = it
-//        }
-
-//        craftOrientationView = binding.textOrient
-//        updateCraftOrientationText()
+        dimensionTextView = binding.textDimension
+        //orientTextView = binding.textDimension
+        craftTypeTextView = binding.textCrafttype
 
         // establish inspect imageview
         inspectImageView = root.findViewById(R.id.imageview_inspect) as ImageView
@@ -107,6 +104,9 @@ class InspectFragment : Fragment() {
         inspectImageView.setImageBitmap(captureBitmap)
         Log.d(TAG, "onCreateView captureBitmap w/h ${captureBitmap.width}/${captureBitmap.height}")
         Log.d(TAG, "onCreateView imageViewInspect w/h ${inspectImageView.width}/${inspectImageView.height}")
+
+//        dimensionTextView.text = "H: ${captureBitmap.width} x V: ${captureBitmap.height}"
+
         if (captureBitmap.width < captureBitmap.height) {
             imageOrientation = InspectViewModel.ImageOrientation.PORTRAIT
         }
@@ -200,50 +200,64 @@ class InspectFragment : Fragment() {
 //
         return root
     }
-
+    // establish button listeners
     private fun setButtonListeners(root: View, context: Context) {
-        // establish button listeners
+        // measure image dimension by HORIZONTAL | VERTICAL
         buttonDimension = root.findViewById(R.id.button_dimension) as Button
         buttonDimension.text = inspectViewModel.measureDimension.toString()
+        dimensionTextView.text = "H: ${captureBitmap.width} x V: ${captureBitmap.height}"
         buttonDimension.setOnClickListener {
             //Toast.makeText(this.context, "Set dimension to measure - horizontal or vertical...", Toast.LENGTH_SHORT).show()
-            Log.d(TAG, "buttonDimension.setOnClickListener->Set dimension to measure - horizontal or vertical...")
             if (inspectViewModel.measureDimension == InspectViewModel.MeasureDimension.HORIZONTAL) {
                 inspectViewModel.measureDimension = InspectViewModel.MeasureDimension.VERTICAL
             }
             else {
                 inspectViewModel.measureDimension = InspectViewModel.MeasureDimension.HORIZONTAL
             }
-            updateMeasureDimensionText()
-            //binding?.invalidateAll()
-            //measureDimensionView.text = inspectViewModel.measureDimensionText.toString()
-//            var text = InspectViewModel.MeasureDimension.HORIZONTAL.toString() + "(" + inspectViewModel.zoomWidth.toString() + " pixels)"
-//            if (inspectViewModel.measureDimension == InspectViewModel.MeasureDimension.VERTICAL) {
-//                text = InspectViewModel.MeasureDimension.VERTICAL.toString() + "(" + inspectViewModel.zoomHeight.toString() + " pixels)"
-//            }
-//            measureDimensionView.text = text
+            //updateMeasureDimensionText()
+            buttonDimension.text = inspectViewModel.measureDimension.toString()
+            dimensionTextView.text = "H: ${inspectViewModel.zoomWidth} x V: ${inspectViewModel.zoomHeight}"
+            Log.d(TAG, "buttonDimension.setOnClickListener->Set dimension ${inspectViewModel.measureDimension}")
         }
+
+        // orient craft to WINGSPAN | LENGTH
         buttonOrient = root.findViewById(R.id.button_orient) as Button
         buttonOrient.text = inspectViewModel.craftOrientation.toString()
         buttonOrient.setOnClickListener {
             //Toast.makeText(this.context, "Set orientation of measure - wingspan or length-to-tail...", Toast.LENGTH_SHORT).show()
-            Log.d(TAG, "buttonOrient.setOnClickListener->Set orientation of measure - wingspan or length-to-tail...")
             if (inspectViewModel.craftOrientation == InspectViewModel.CraftOrientation.WINGSPAN) {
                 inspectViewModel.craftOrientation = InspectViewModel.CraftOrientation.LENGTH            }
             else {
                 inspectViewModel.craftOrientation = InspectViewModel.CraftOrientation.WINGSPAN
             }
-            updateCraftOrientationText()
+            //updateCraftOrientationText()
+            buttonOrient.text = inspectViewModel.craftOrientation.toString()
+            Log.d(TAG, "buttonOrient.setOnClickListener->Set orientation ${inspectViewModel.craftOrientation.toString()}...")
         }
+
+        // select craft type TODO: enable craft type entry & dimensions
+        buttonCraftType = root.findViewById(R.id.button_crafttype) as Button
+        buttonCraftType.text = inspectViewModel.craftDimsList[inspectViewModel.craftDimListInx].craftType
+        craftTypeTextView.text = "wing x length->${inspectViewModel.craftDimsList[inspectViewModel.craftDimListInx].wingspan} x " +
+                "${inspectViewModel.craftDimsList[inspectViewModel.craftDimListInx].length}"
+        buttonCraftType.setOnClickListener {
+            //Toast.makeText(this.context, "Select aircraft type...", Toast.LENGTH_SHORT).show()
+            ++inspectViewModel.craftDimListInx
+            if (inspectViewModel.craftDimListInx > inspectViewModel.craftDimsList.size-1) {
+                inspectViewModel.craftDimListInx = 0
+            }
+            buttonCraftType.text = inspectViewModel.craftDimsList[inspectViewModel.craftDimListInx].craftType
+            craftTypeTextView.text = "wingspan x length->${inspectViewModel.craftDimsList[inspectViewModel.craftDimListInx].wingspan}x" +
+                    "${inspectViewModel.craftDimsList[inspectViewModel.craftDimListInx].length}"
+
+            Log.d(TAG, "buttonCraftType.setOnClickListener->Select aircraft type ${inspectViewModel.craftDimListInx}, " +
+                    "${inspectViewModel.craftDimsList[inspectViewModel.craftDimListInx].craftType}...")
+        }
+
         val buttonIdentify = root.findViewById(R.id.button_identity) as Button
         buttonIdentify.setOnClickListener {
             Toast.makeText(this.context, "Identify aircraft...", Toast.LENGTH_SHORT).show()
             Log.d(TAG, "buttonIdentify.setOnClickListener->Identify aircraft...")
-        }
-        val buttonCraftType = root.findViewById(R.id.button_crafttype) as Button
-        buttonCraftType.setOnClickListener {
-            Toast.makeText(this.context, "Select aircraft type...", Toast.LENGTH_SHORT).show()
-            Log.d(TAG, "buttonCraftType.setOnClickListener->Select aircraft type...")
         }
         val buttonMeasure = root.findViewById(R.id.button_measure) as Button
         buttonMeasure.setOnClickListener {
@@ -252,26 +266,21 @@ class InspectFragment : Fragment() {
         }
     }
 
-    private fun updateMeasureDimensionText() {
-//        var text = InspectViewModel.MeasureDimension.HORIZONTAL.toString() + "(" + inspectViewModel.zoomWidth.toString() + " pixels)"
+//    private fun updateMeasureDimensionText() {
+//        var text = InspectViewModel.MeasureDimension.HORIZONTAL.toString()
 //        if (inspectViewModel.measureDimension == InspectViewModel.MeasureDimension.VERTICAL) {
-//            text = InspectViewModel.MeasureDimension.VERTICAL.toString() + "(" + inspectViewModel.zoomHeight.toString() + " pixels)"
+//            text = InspectViewModel.MeasureDimension.VERTICAL.toString()
 //        }
-//        measureDimensionView.text = text
-        var text = InspectViewModel.MeasureDimension.HORIZONTAL.toString()
-        if (inspectViewModel.measureDimension == InspectViewModel.MeasureDimension.VERTICAL) {
-            text = InspectViewModel.MeasureDimension.VERTICAL.toString()
-        }
-        buttonDimension.text = text
-    }
-
-    private fun updateCraftOrientationText() {
-        var text = InspectViewModel.CraftOrientation.WINGSPAN.toString()
-        if (inspectViewModel.craftOrientation == InspectViewModel.CraftOrientation.LENGTH) {
-            text = InspectViewModel.CraftOrientation.LENGTH.toString()
-        }
-        buttonOrient.text = text
-    }
+//        buttonDimension.text = text
+//    }
+//
+//    private fun updateCraftOrientationText() {
+//        var text = InspectViewModel.CraftOrientation.WINGSPAN.toString()
+//        if (inspectViewModel.craftOrientation == InspectViewModel.CraftOrientation.LENGTH) {
+//            text = InspectViewModel.CraftOrientation.LENGTH.toString()
+//        }
+//        buttonOrient.text = text
+//    }
 
     private fun inspectZoomOnTap(zoomDirection: InspectViewModel.ZoomDirection) {
         Log.d(TAG, "inspectZoomOnTap imageViewInspect w/h ${inspectImageView.width}/${inspectImageView.height}")
@@ -366,7 +375,8 @@ class InspectFragment : Fragment() {
         // update viewmodel
         inspectViewModel.zoomWidth = width
         inspectViewModel.zoomHeight = height
-        updateMeasureDimensionText()
+        dimensionTextView.text = "H: ${inspectViewModel.zoomWidth} x V: ${inspectViewModel.zoomHeight}"
+        //updateMeasureDimensionText()
         return zoomBitmap
     }
 

@@ -14,10 +14,14 @@
     <!--TODO: CAMERA -> CAPTURE?-->
     <string name="button_camera">CAMERA</string>
 
+    <!-- measure buttons   -->
     <string name="button_dimension">DIMENSION</string>
     <string name="button_orient">ORIENT</string>
     <string name="button_crafttype">CRAFT TYPE</string>
     <string name="button_identify">IDENTIFY</string>
     <string name="button_measure">MEASURE</string>
+    <!-- guides   -->
+    <string name="inspect_guide_text">TAP to zoom IN, \nDOUBLE TAP to zoom OUT, \nLONG PRESS to CENTER.\nSelect measurement settings.\nMeasure Altitude!"</string>
+
 
 </resources>
