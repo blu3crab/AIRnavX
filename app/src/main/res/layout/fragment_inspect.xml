@@ -154,7 +154,7 @@
         android:layout_marginEnd="8dp"
         android:layout_marginBottom="8dp"
         android:gravity="center"
-        android:text="aircraft identity"
+        android:text="aircraft identity tag"
         android:textColor="@color/purple_200"
         android:textSize="16dp"
         app:layout_constraintBottom_toTopOf="@+id/text_measure"

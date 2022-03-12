@@ -26,18 +26,14 @@ class InspectViewModel : ViewModel() {
         LENGTH("CRAFT LENGTH")
     }
 
-//    enum class CraftType(val crafttype: String) {
-//        C172("C172"),
-//        P28("P28"),
-//        P44("P44")
-//    }
-
     ///////////////////MODEL DATA////////////////////////
     private val _guideText = MutableLiveData<String>().apply {
         value = "TAP to zoom IN, \nDOUBLE TAP to zoom OUT, \nLONG PRESS to CENTER.\nSelect measurement settings.\nMeasure Altitude!"
         // TODO: value = R.id.guide_text
     }
     val guideText: LiveData<String> = _guideText
+
+    var imageOrientation = InspectViewModel.ImageOrientation.PORTRAIT
 
     var measureDimension = MeasureDimension.HORIZONTAL
     var zoomWidth = 0
@@ -48,16 +44,14 @@ class InspectViewModel : ViewModel() {
     var craftDimListInx = 0
 
     var craftDimsC172 = CraftDims(craftType = "C172", wingspan = 36.0, length = 27.17)
-    var craftDimsPA28 = CraftDims(craftType = "PA-28", wingspan = 28.22, length = 21.72)
-    var craftDimsPA44 = CraftDims(craftType = "PA-44", wingspan = 39.0, length = 27.26)
-    var craftDimsList: ArrayList<CraftDims> = arrayListOf(craftDimsC172, craftDimsPA28, craftDimsPA44)
+    var craftDimsPA28 = CraftDims(craftType = "PA28", wingspan = 28.22, length = 21.72)
+    var craftDimsPA34 = CraftDims(craftType = "PA34", wingspan = 38.9, length = 27.58)
+    var craftDimsList: ArrayList<CraftDims> = arrayListOf(craftDimsC172, craftDimsPA28, craftDimsPA34)
 
-//    var ouiWidth = 0
-//    var ouiHeight = 0
-//
-//    private val _ouiSizeText = MutableLiveData<String>().apply {
-//        value = "Object Under Inspection \nwidth $ouiWidth x height $ouiHeight"
-//    }
-//    val ouiSizeText: LiveData<String> = _ouiSizeText
+    var craftIdentListInx = 0
+
+    var craftIdentC172List: ArrayList<String> = arrayListOf("UNKNOWN", "N2621Z", "N20283", "N5215E")
+    var craftIdentPA28List: ArrayList<String> = arrayListOf("UNKNOWN", "N21803", "N38657", "N8445S")
+    var craftIdentPA34List: ArrayList<String> = arrayListOf("UNKNOWN", "N142GD")
 
 }
