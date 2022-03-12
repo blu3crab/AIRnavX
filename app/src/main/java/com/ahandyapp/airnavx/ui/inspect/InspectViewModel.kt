@@ -36,13 +36,13 @@ class InspectViewModel : ViewModel() {
 
     var craftOrientation = CraftOrientation.WINGSPAN
 
-    private var _measureDimensionText = MutableLiveData<String>().apply {
-        value = MeasureDimension.HORIZONTAL.toString() + "(" + zoomWidth.toString() + " pixels)"
-        if (measureDimension == MeasureDimension.VERTICAL) {
-            value = MeasureDimension.VERTICAL.toString() + "(" + zoomHeight.toString() + " pixels)"
-        }
-    }
-    var measureDimensionText: LiveData<String> = _measureDimensionText
+//    private var _measureDimensionText = MutableLiveData<String>().apply {
+//        value = MeasureDimension.HORIZONTAL.toString() + "(" + zoomWidth.toString() + " pixels)"
+//        if (measureDimension == MeasureDimension.VERTICAL) {
+//            value = MeasureDimension.VERTICAL.toString() + "(" + zoomHeight.toString() + " pixels)"
+//        }
+//    }
+//    var measureDimensionText: LiveData<String> = _measureDimensionText
 
     var ouiWidth = 0
     var ouiHeight = 0

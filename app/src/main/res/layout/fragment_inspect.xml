@@ -58,10 +58,10 @@
         android:layout_marginEnd="8dp"
         android:layout_marginBottom="4dp"
         android:gravity="center"
-        android:text="measure horizontal|vertical"
+        android:text="measure HORIZONTAL|VERTICAL"
         android:textColor="@color/purple_200"
         android:textSize="16dp"
-        app:layout_constraintBottom_toTopOf="@+id/text_orient_craft"
+        app:layout_constraintBottom_toTopOf="@+id/text_orient"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.186"
         app:layout_constraintStart_toEndOf="@+id/button_dimension" />
@@ -78,57 +78,25 @@
         android:textAlignment="center"
         android:textColor="#FFFFFF"
         android:visibility="visible"
-        app:layout_constraintBottom_toTopOf="@+id/button_identity"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toStartOf="parent" />
-
-    <TextView
-        android:id="@+id/text_orient_craft"
-        android:layout_width="wrap_content"
-        android:layout_height="42dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginBottom="8dp"
-        android:gravity="center"
-        android:text="aircraft orientation wingspan|tail"
-        android:textColor="@color/purple_200"
-        android:textSize="16dp"
-        app:layout_constraintBottom_toTopOf="@+id/text_identity_craft"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.378"
-        app:layout_constraintStart_toEndOf="@+id/button_identity" />
-
-    <Button
-        android:id="@+id/button_identity"
-        android:layout_width="160dp"
-        android:layout_height="42dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginEnd="218dp"
-        android:layout_marginBottom="4dp"
-        android:backgroundTint="@color/purple_200"
-        android:text="@string/button_identify"
-        android:textAlignment="center"
-        android:textColor="#FFFFFF"
-        android:visibility="visible"
         app:layout_constraintBottom_toTopOf="@+id/button_crafttype"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent" />
 
     <TextView
-        android:id="@+id/text_identity_craft"
+        android:id="@+id/text_orient"
         android:layout_width="wrap_content"
         android:layout_height="42dp"
         android:layout_marginEnd="8dp"
         android:layout_marginBottom="8dp"
         android:gravity="center"
-        android:text="aircraft identity"
+        android:text="orient to WINGSPAN|LENGTH"
         android:textColor="@color/purple_200"
         android:textSize="16dp"
-        app:layout_constraintBottom_toTopOf="@+id/text_set_craft_type"
+        app:layout_constraintBottom_toTopOf="@+id/text_crafttype"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.1"
-        app:layout_constraintStart_toEndOf="@+id/button_identity" />
+        app:layout_constraintHorizontal_bias="0.378"
+        app:layout_constraintStart_toEndOf="@+id/button_crafttype" />
 
     <Button
         android:id="@+id/button_crafttype"
@@ -142,25 +110,57 @@
         android:textAlignment="center"
         android:textColor="#FFFFFF"
         android:visibility="visible"
+        app:layout_constraintBottom_toTopOf="@+id/button_identity"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <TextView
+        android:id="@+id/text_crafttype"
+        android:layout_width="wrap_content"
+        android:layout_height="42dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginBottom="4dp"
+        android:gravity="center"
+        android:text="toggle aircraft type"
+        android:textColor="@color/purple_200"
+        android:textSize="16dp"
+        app:layout_constraintBottom_toTopOf="@+id/text_identify"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.076"
+        app:layout_constraintStart_toEndOf="@+id/button_crafttype" />
+
+    <Button
+        android:id="@+id/button_identity"
+        android:layout_width="160dp"
+        android:layout_height="42dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="218dp"
+        android:layout_marginBottom="4dp"
+        android:backgroundTint="@color/purple_200"
+        android:text="@string/button_identify"
+        android:textAlignment="center"
+        android:textColor="#FFFFFF"
+        android:visibility="visible"
         app:layout_constraintBottom_toTopOf="@+id/button_measure"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent" />
 
     <TextView
-        android:id="@+id/text_set_craft_type"
+        android:id="@+id/text_identify"
         android:layout_width="wrap_content"
         android:layout_height="42dp"
         android:layout_marginEnd="8dp"
-        android:layout_marginBottom="4dp"
+        android:layout_marginBottom="8dp"
         android:gravity="center"
-        android:text="aircraft type"
+        android:text="aircraft identity"
         android:textColor="@color/purple_200"
         android:textSize="16dp"
         app:layout_constraintBottom_toTopOf="@+id/text_measure"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.076"
-        app:layout_constraintStart_toEndOf="@+id/button_crafttype" />
+        app:layout_constraintHorizontal_bias="0.1"
+        app:layout_constraintStart_toEndOf="@+id/button_identity" />
 
     <Button
         android:id="@+id/button_measure"
