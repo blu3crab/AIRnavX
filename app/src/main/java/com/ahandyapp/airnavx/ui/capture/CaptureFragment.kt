@@ -30,6 +30,7 @@ import android.widget.*
 import androidx.fragment.app.activityViewModels
 import com.ahandyapp.airnavx.R
 import com.ahandyapp.airnavx.databinding.FragmentCaptureBinding
+import com.ahandyapp.airnavx.model.DEFAULT_STRING
 import com.ahandyapp.airnavx.ui.grid.GridViewAdapter
 import java.io.IOException
 
@@ -92,12 +93,6 @@ class CaptureFragment : Fragment() {
             textViewAngle.text = it
         }
 
-        //val packageName = this.context?.packageName
-        // get reference to button
-        //val buttonCameraIdString = "button_camera"
-        //val buttonCameraIdString: String = getString(R.string.button_camera)
-        //val buttonCameraId = resources.getIdentifier(buttonCameraIdString, "id", packageName)
-        //val buttonCamera = root.findViewById(buttonCameraId) as Button
         // set camera button on-click listener
         val buttonCamera = root.findViewById(R.id.button_camera) as Button
         buttonCamera.setOnClickListener {
@@ -210,7 +205,8 @@ class CaptureFragment : Fragment() {
                     )
                     if (airCaptureBitmap != null) {
                         // create initialized aircapture object
-                        val airCapture = createAirCapture()
+                        //val airCapture = createAirCapture()
+                        val airCapture: AirCapture = AirCapture()
                         // capture image attributes
                         airCapture.timestamp = captureTimestamp
                         airCapture.imagePath = Environment.DIRECTORY_PICTURES
@@ -285,7 +281,9 @@ class CaptureFragment : Fragment() {
             captureViewModel.DEFAULT_BLANK_GRID_HEIGHT
         )
         // initialize AirCapture to seed grid
-        val airCapture = createAirCapture()
+        //val airCapture = createAirCapture()
+        val airCapture: AirCapture = AirCapture()
+
         // initialize view
         captureViewModel.gridBitmapArray.add(blankBitmap)
         ++captureViewModel.gridCount
@@ -544,7 +542,8 @@ class CaptureFragment : Fragment() {
     }
 
     private fun getAirFilename(type: CaptureViewModel.AirFileType, captureTimestamp : String): String {
-        var airFilename = captureViewModel.DEFAULT_STRING
+        //var airFilename = captureViewModel.DEFAULT_STRING
+        var airFilename = DEFAULT_STRING
         if (type == CaptureViewModel.AirFileType.IMAGE) {
             airFilename = "AIR-" + captureTimestamp + "." + captureViewModel.DEFAULT_IMAGEFILE_EXT
         }
@@ -557,27 +556,27 @@ class CaptureFragment : Fragment() {
 
     /////////////////////////////AirCapture handlers///////////////////////////
     // TODO: refactor to AirCapture model
-    private fun createAirCapture(): AirCapture {
-        val airCapture = AirCapture(
-            captureViewModel.DEFAULT_STRING,
-            captureViewModel.DEFAULT_STRING,
-            captureViewModel.DEFAULT_STRING,
-            captureViewModel.DEFAULT_INT,
-            captureViewModel.DEFAULT_INT,
-            captureViewModel.DEFAULT_DOUBLE,
-            captureViewModel.DEFAULT_INT,
-            captureViewModel.DEFAULT_INT,
-            captureViewModel.DEFAULT_INT,
-            captureViewModel.DEFAULT_FLOAT_ARRAY,
-            captureViewModel.DEFAULT_DOUBLE,
-            captureViewModel.DEFAULT_INT,
-            captureViewModel.DEFAULT_INT,
-            captureViewModel.DEFAULT_FLOAT,
-            captureViewModel.DEFAULT_FLOAT,
-            captureViewModel.DEFAULT_FLOAT
-        )
-        return airCapture
-    }
+//    private fun createAirCapture(): AirCapture {
+//        val airCapture = AirCapture(
+//            captureViewModel.DEFAULT_STRING,
+//            captureViewModel.DEFAULT_STRING,
+//            captureViewModel.DEFAULT_STRING,
+//            captureViewModel.DEFAULT_INT,
+//            captureViewModel.DEFAULT_INT,
+//            captureViewModel.DEFAULT_DOUBLE,
+//            captureViewModel.DEFAULT_INT,
+//            captureViewModel.DEFAULT_INT,
+//            captureViewModel.DEFAULT_INT,
+//            captureViewModel.DEFAULT_FLOAT_ARRAY,
+//            captureViewModel.DEFAULT_DOUBLE,
+//            captureViewModel.DEFAULT_INT,
+//            captureViewModel.DEFAULT_INT,
+//            captureViewModel.DEFAULT_FLOAT,
+//            captureViewModel.DEFAULT_FLOAT,
+//            captureViewModel.DEFAULT_FLOAT
+//        )
+//        return airCapture
+//    }
 
     private fun readAirCaptureJson(airCaptureFile: File): AirCapture {
         //   extract aircapture json string

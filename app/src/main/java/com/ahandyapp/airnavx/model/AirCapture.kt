@@ -1,24 +1,30 @@
 package com.ahandyapp.airnavx.model
 
+val DEFAULT_STRING = "nada"
+val DEFAULT_DOUBLE = 0.0
+val DEFAULT_INT = 0
+val DEFAULT_FLOAT_ARRAY: FloatArray = floatArrayOf(0.0F, 0.0F)
+val DEFAULT_FLOAT = 0.0F
 
 data class AirCapture(
-    var timestamp: String,
-    var imagePath: String,
-    var imageName: String,
-    var imageWidth: Int,
-    var imageHeight: Int,
-    var decibel: Double,
-    var cameraAngle: Int,
-    var exifOrientation: Int,
-    var exifRotation: Int,
-    var exifLatLon: FloatArray,
-    var exifAltitude: Double,
-    var exifLength: Int,
-    var exifWidth: Int,
-    var airObjectPixelSize: Float,
-    var airObjectDistance: Float,
-    var airObjectAltitude: Float,
+    var timestamp: String = DEFAULT_STRING,
+    var imagePath: String = DEFAULT_STRING,
+    var imageName: String = DEFAULT_STRING,
+    var imageWidth: Int = DEFAULT_INT,
+    var imageHeight: Int = DEFAULT_INT,
+    var decibel: Double = DEFAULT_DOUBLE,
+    var cameraAngle: Int = DEFAULT_INT,
+    var exifOrientation: Int = DEFAULT_INT,
+    var exifRotation: Int = DEFAULT_INT,
+    var exifLatLon: FloatArray = DEFAULT_FLOAT_ARRAY,
+    var exifAltitude: Double = DEFAULT_DOUBLE,
+    var exifLength: Int = DEFAULT_INT,
+    var exifWidth: Int = DEFAULT_INT,
+    var airObjectPixelSize: Float = DEFAULT_FLOAT,
+    var airObjectDistance: Float = DEFAULT_FLOAT,
+    var airObjectAltitude: Float = DEFAULT_FLOAT
 ) {
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false

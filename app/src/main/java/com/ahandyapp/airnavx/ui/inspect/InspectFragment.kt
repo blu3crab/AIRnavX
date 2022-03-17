@@ -17,8 +17,10 @@ import android.view.MotionEvent
 import android.widget.Button
 import android.widget.Toast
 import com.ahandyapp.airnavx.R
+import com.ahandyapp.airnavx.model.AirCapture
 import java.util.ArrayList
 import kotlin.math.roundToInt
+import kotlin.math.sin
 
 
 class InspectFragment : Fragment() {
@@ -45,10 +47,12 @@ class InspectFragment : Fragment() {
     private lateinit var dimensionTextView: TextView
     private lateinit var orientTextView: TextView
     private lateinit var craftTypeTextView: TextView
-    private lateinit var identfiyTextView: TextView
+    private lateinit var identifyTextView: TextView
     private lateinit var measureTextView: TextView
 
     private lateinit var craftIdentList: ArrayList<String>
+
+    private lateinit var airCapture: AirCapture
 
     private lateinit var captureBitmap: Bitmap      // original capture bitmap
     private lateinit var referenceBitmap: Bitmap    // current reference bitmap
@@ -84,6 +88,8 @@ class InspectFragment : Fragment() {
         dimensionTextView = binding.textDimension
         //orientTextView = binding.textDimension
         craftTypeTextView = binding.textCrafttype
+        //identifyTextView = binding.textIdentify
+        measureTextView = binding.textMeasure
 
         // establish inspect imageview
         inspectImageView = root.findViewById(R.id.imageview_inspect) as ImageView
@@ -94,6 +100,9 @@ class InspectFragment : Fragment() {
         //var captureViewModel = ViewModelProvider(this).get(CaptureViewModel::class.java)
         val viewModel: CaptureViewModel by activityViewModels()
         captureViewModel = viewModel
+
+        airCapture = captureViewModel.airCaptureArray[captureViewModel.gridPosition]
+        Log.d(TAG, "onCreateView captureViewModel airCapture $airCapture")
 
         // set inspect image to selected capture thumb
         Log.d(TAG, "onCreateView captureViewModel grid position ${captureViewModel.gridPosition}")
@@ -276,8 +285,16 @@ class InspectFragment : Fragment() {
         }
 
         measureButton = root.findViewById(R.id.button_measure) as Button
+        measureTextView.text = "Altitude ${airCapture.airObjectAltitude}, distance ${airCapture.airObjectDistance}"
         measureButton.setOnClickListener {
             //Toast.makeText(this.context, "Measuring Object Under Inspection...", Toast.LENGTH_SHORT).show()
+//            val distFor100PerCentFOVat1FootPixel4 = 1.065
+//            Log.d(TAG, "buttonMeasure.setOnClickListener->Measuring Pixel4 $distFor100PerCentFOVat1FootPixel4")
+//            measure(distFor100PerCentFOVat1FootPixel4)
+            val distFor100PerCentFOVat1FootPixel6 = 0.96875
+            Log.d(TAG, "buttonMeasure.setOnClickListener->Measuring Pixel6 $distFor100PerCentFOVat1FootPixel6")
+            measure(distFor100PerCentFOVat1FootPixel6)
+            measureTextView.text = "Altitude ${airCapture.airObjectAltitude}, distance ${airCapture.airObjectDistance}"
             Log.d(TAG, "buttonMeasure.setOnClickListener->Measuring Object Under Inspection...")
         }
     }
@@ -295,14 +312,49 @@ class InspectFragment : Fragment() {
         Log.d(TAG, "setCraftIdentList $craftIdentList")
         return craftIdentList
     }
-//
-//    private fun updateCraftOrientationText() {
-//        var text = InspectViewModel.CraftOrientation.WINGSPAN.toString()
-//        if (inspectViewModel.craftOrientation == InspectViewModel.CraftOrientation.LENGTH) {
-//            text = InspectViewModel.CraftOrientation.LENGTH.toString()
-//        }
-//        buttonOrient.text = text
-//    }
+
+    private fun measure(distFor100PerCentFOVat1Foot:Double) {
+        var actualSize: Double = 0.0
+        if (inspectViewModel.craftOrientation == InspectViewModel.CraftOrientation.WINGSPAN) {
+            actualSize = inspectViewModel.craftDimsList[inspectViewModel.craftDimListInx].wingspan
+        }
+        else {  // LENGTH
+            actualSize = inspectViewModel.craftDimsList[inspectViewModel.craftDimListInx].length
+        }
+        Log.d(TAG, "measure-> actualSize $actualSize ")
+
+        //val distFor100PerCentFOVat1Foot = 1.065
+
+        val distObjectAt100PerCentFOV = actualSize * distFor100PerCentFOVat1Foot
+        Log.d(TAG, "measure-> distObjectAt100PerCentFOV $distObjectAt100PerCentFOV ")
+
+        var imageSize: Double = 0.0
+        var apparentSize: Double = 0.0
+        if (inspectViewModel.measureDimension == InspectViewModel.MeasureDimension.HORIZONTAL) {
+            imageSize = captureBitmap.width.toDouble()
+            apparentSize = inspectViewModel.zoomWidth.toDouble()
+        }
+        else {
+            imageSize = captureBitmap.height.toDouble()
+            apparentSize = inspectViewModel.zoomHeight.toDouble()
+        }
+        Log.d(TAG, "measure-> imageSize $imageSize, apparentSize $apparentSize")
+        var sizeRatio = apparentSize/imageSize
+        Log.d(TAG, "measure-> sizeRatio $sizeRatio")
+
+        //val distFor100PerCentFOVat1FootPixel6 = 0.96875
+        var dist: Double = distObjectAt100PerCentFOV / sizeRatio
+        Log.d(TAG, "measure-> dist $dist")
+        var cameraAngle: Double = airCapture.cameraAngle.toDouble()
+        Log.d(TAG, "measure-> cameraAngle $cameraAngle")
+        var angleRadians = cameraAngle * 0.01745329251994329576923690768489
+        Log.d(TAG, "measure-> sin(angleRadians) ${sin(angleRadians)}")
+        var altitude: Double = sin(angleRadians) * dist
+        Log.d(TAG, "measure-> altitude $altitude !!!!")
+        // TODO: float->double
+        airCapture.airObjectAltitude = altitude.toFloat()
+        airCapture.airObjectDistance = dist.toFloat()
+    }
 
     private fun inspectZoomOnTap(zoomDirection: InspectViewModel.ZoomDirection) {
         Log.d(TAG, "inspectZoomOnTap imageViewInspect w/h ${inspectImageView.width}/${inspectImageView.height}")
