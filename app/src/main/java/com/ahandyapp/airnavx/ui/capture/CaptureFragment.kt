@@ -18,21 +18,19 @@ import androidx.fragment.app.Fragment
 import com.ahandyapp.airnavx.model.AirCapture
 import com.ahandyapp.airnavx.ui.sense.AngleMeter
 import com.ahandyapp.airnavx.ui.sense.SoundMeter
-import com.google.gson.Gson
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
-
 import android.media.ExifInterface
 import android.widget.*
 import androidx.fragment.app.activityViewModels
 import com.ahandyapp.airnavx.R
 import com.ahandyapp.airnavx.databinding.FragmentCaptureBinding
-import com.ahandyapp.airnavx.model.DEFAULT_STRING
+import com.ahandyapp.airnavx.model.AirCaptureJson
+import com.ahandyapp.airnavx.model.AirConstant
 import com.ahandyapp.airnavx.ui.grid.GridViewAdapter
-import java.io.IOException
 
 
 class CaptureFragment : Fragment() {
@@ -65,6 +63,7 @@ class CaptureFragment : Fragment() {
     private val REQUEST_IMAGE_CAPTURE = 1001
     private lateinit var captureFile: File          // capture file
     private var captureTimestamp: String = "nada"   // capture file creation timestamp
+    private var airCaptureJson: AirCaptureJson = AirCaptureJson()
 
     /////////////////////////////life-cycle////////////////////////////////////
     override fun onCreateView(
@@ -155,7 +154,7 @@ class CaptureFragment : Fragment() {
             try {
                 // create the photo File
                 captureTimestamp = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())
-                val imageName = getAirFilename(CaptureViewModel.AirFileType.IMAGE, captureTimestamp)
+                val imageName = airCaptureJson.getAirFilename(CaptureViewModel.AirFileType.IMAGE, captureTimestamp)
                 val storageDir = context?.getExternalFilesDir(Environment.DIRECTORY_PICTURES)!!
                 val imageFile = createImageFile(storageDir, imageName)
 
@@ -210,7 +209,7 @@ class CaptureFragment : Fragment() {
                         // capture image attributes
                         airCapture.timestamp = captureTimestamp
                         airCapture.imagePath = Environment.DIRECTORY_PICTURES
-                        airCapture.imageName = getAirFilename(CaptureViewModel.AirFileType.IMAGE, captureTimestamp)
+                        airCapture.imageName = airCaptureJson.getAirFilename(CaptureViewModel.AirFileType.IMAGE, captureTimestamp)
 
                         // update image length & width prior to thumbnail extraction
                         airCapture.imageWidth = airCaptureBitmap.width
@@ -234,7 +233,7 @@ class CaptureFragment : Fragment() {
 
                         // record AirCapture
                         val storageDir = context?.getExternalFilesDir(Environment.DIRECTORY_PICTURES)!!
-                        val captureRecorded = writeAirCaptureJson(storageDir, airCapture)
+                        val captureRecorded = airCaptureJson.write(storageDir, captureTimestamp, airCapture)
                         Log.d(TAG,"dispatchTakePictureIntent onActivityResult captureRecorded $captureRecorded")
 
                         // refresh viewmodel
@@ -336,7 +335,7 @@ class CaptureFragment : Fragment() {
             val name = it.nameWithoutExtension
             val ext = it.extension
             Log.d(TAG, "fetchViewModel walk file name $name ext $ext")
-            val airCaptureName = name + "." + captureViewModel.DEFAULT_DATAFILE_EXT
+            val airCaptureName = name + "." + AirConstant.DEFAULT_DATAFILE_EXT
             val airCapturePath = "$storageDir/$airCaptureName"
             Log.d(TAG, "fetchViewModel airCaptureName $airCaptureName check...")
             val airCaptureFile = File(airCapturePath)
@@ -344,12 +343,12 @@ class CaptureFragment : Fragment() {
             if (airCaptureFile.exists()) {
                 Log.d(TAG, "fetchViewModel airCaptureName $airCaptureName exists...")
 
-                val airImageName = name + "." + captureViewModel.DEFAULT_IMAGEFILE_EXT
+                val airImageName = name + "." + AirConstant.DEFAULT_IMAGEFILE_EXT
                 val airImagePath = "$storageDir/$airImageName"
                 Log.d(TAG, "fetchViewModel airImageName $airImageName...")
                 val airImageFile = File(airImagePath)
                 // read json into airCapture
-                val airCapture = readAirCaptureJson(airCaptureFile)
+                val airCapture = airCaptureJson.read(airCaptureFile)
 
                 //   read air image into bitmap
                 val uri = Uri.fromFile(airImageFile)
@@ -370,7 +369,7 @@ class CaptureFragment : Fragment() {
     }
 
     private fun hasRequiredSuffix(file: File): Boolean {
-        val requiredSuffixes = listOf(captureViewModel.DEFAULT_IMAGEFILE_EXT)
+        val requiredSuffixes = listOf(AirConstant.DEFAULT_IMAGEFILE_EXT)
         return requiredSuffixes.contains(file.extension)
     }
 
@@ -541,17 +540,17 @@ class CaptureFragment : Fragment() {
         return true
     }
 
-    private fun getAirFilename(type: CaptureViewModel.AirFileType, captureTimestamp : String): String {
-        //var airFilename = captureViewModel.DEFAULT_STRING
-        var airFilename = DEFAULT_STRING
-        if (type == CaptureViewModel.AirFileType.IMAGE) {
-            airFilename = "AIR-" + captureTimestamp + "." + captureViewModel.DEFAULT_IMAGEFILE_EXT
-        }
-        else if (type == CaptureViewModel.AirFileType.DATA) {
-            airFilename = "AIR-" + captureTimestamp + "." + captureViewModel.DEFAULT_DATAFILE_EXT
-        }
-        return airFilename
-    }
+//    private fun getAirFilename(type: CaptureViewModel.AirFileType, captureTimestamp : String): String {
+//        //var airFilename = captureViewModel.DEFAULT_STRING
+//        var airFilename = AirConstant.DEFAULT_STRING
+//        if (type == CaptureViewModel.AirFileType.IMAGE) {
+//            airFilename = "AIR-" + captureTimestamp + "." + captureViewModel.DEFAULT_IMAGEFILE_EXT
+//        }
+//        else if (type == CaptureViewModel.AirFileType.DATA) {
+//            airFilename = "AIR-" + captureTimestamp + "." + captureViewModel.DEFAULT_DATAFILE_EXT
+//        }
+//        return airFilename
+//    }
     /////////////////////////////image manipulation////////////////////////////
 
     /////////////////////////////AirCapture handlers///////////////////////////
@@ -578,42 +577,42 @@ class CaptureFragment : Fragment() {
 //        return airCapture
 //    }
 
-    private fun readAirCaptureJson(airCaptureFile: File): AirCapture {
-        //   extract aircapture json string
-        var jsonString = "nada"
-        try {
-            jsonString = airCaptureFile.bufferedReader().use { it.readText() }
-        } catch (ioException: IOException) {
-            ioException.printStackTrace()
-        } finally {
-            airCaptureFile.bufferedReader().close()
-        }
-        Log.d(TAG, "fetchViewModel airCapture json $jsonString...")
-        // decode json string into airCapture
-        val airCapture = Gson().fromJson(jsonString, AirCapture::class.java)
-        Log.d(TAG, "fetchViewModel AirCapture $airCapture")
-        return airCapture
-    }
-
-    private fun writeAirCaptureJson(storageDir: File, airCapture: AirCapture): Boolean {
-        // TODO: refactor to AirCapture model-> write yourself!
-        try {
-            // transform AirCapture data class to json
-            val jsonCapture = Gson().toJson(airCapture)
-            Log.d(TAG, "recordAirCapture $jsonCapture")
-
-            // format AirCapture name & write json file
-            val name = getAirFilename(CaptureViewModel.AirFileType.DATA, captureTimestamp)
-            Log.d(TAG, "recordAirCapture storageDir->$storageDir, name->$name")
-            File(storageDir, name).printWriter().use { out ->
-                out.println(jsonCapture)
-            }
-        } catch (ex: Exception) {
-            Log.e(TAG, "recordAirCapture Exception ${ex.stackTrace}")
-            return false
-        }
-        return true
-    }
+//    private fun readAirCaptureJson(airCaptureFile: File): AirCapture {
+//        //   extract aircapture json string
+//        var jsonString = "nada"
+//        try {
+//            jsonString = airCaptureFile.bufferedReader().use { it.readText() }
+//        } catch (ioException: IOException) {
+//            ioException.printStackTrace()
+//        } finally {
+//            airCaptureFile.bufferedReader().close()
+//        }
+//        Log.d(TAG, "fetchViewModel airCapture json $jsonString...")
+//        // decode json string into airCapture
+//        val airCapture = Gson().fromJson(jsonString, AirCapture::class.java)
+//        Log.d(TAG, "fetchViewModel AirCapture $airCapture")
+//        return airCapture
+//    }
+//
+//    private fun writeAirCaptureJson(storageDir: File, airCapture: AirCapture): Boolean {
+//        // TODO: refactor to AirCapture model-> write yourself!
+//        try {
+//            // transform AirCapture data class to json
+//            val jsonCapture = Gson().toJson(airCapture)
+//            Log.d(TAG, "recordAirCapture $jsonCapture")
+//
+//            // format AirCapture name & write json file
+//            val name = getAirFilename(CaptureViewModel.AirFileType.DATA, captureTimestamp)
+//            Log.d(TAG, "recordAirCapture storageDir->$storageDir, name->$name")
+//            File(storageDir, name).printWriter().use { out ->
+//                out.println(jsonCapture)
+//            }
+//        } catch (ex: Exception) {
+//            Log.e(TAG, "recordAirCapture Exception ${ex.stackTrace}")
+//            return false
+//        }
+//        return true
+//    }
     /////////////////////////////AirCapture handlers///////////////////////////
 
     /////////////////////////////meter handlers////////////////////////////////

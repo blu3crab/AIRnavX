@@ -1,28 +1,28 @@
 package com.ahandyapp.airnavx.model
 
-val DEFAULT_STRING = "nada"
-val DEFAULT_DOUBLE = 0.0
-val DEFAULT_INT = 0
-val DEFAULT_FLOAT_ARRAY: FloatArray = floatArrayOf(0.0F, 0.0F)
-val DEFAULT_FLOAT = 0.0F
-
+//val DEFAULT_STRING = "nada"
+//val DEFAULT_DOUBLE = 0.0
+//val DEFAULT_INT = 0
+//val DEFAULT_FLOAT_ARRAY: FloatArray = floatArrayOf(0.0F, 0.0F)
+//val DEFAULT_FLOAT = 0.0F
+//
 data class AirCapture(
-    var timestamp: String = DEFAULT_STRING,
-    var imagePath: String = DEFAULT_STRING,
-    var imageName: String = DEFAULT_STRING,
-    var imageWidth: Int = DEFAULT_INT,
-    var imageHeight: Int = DEFAULT_INT,
-    var decibel: Double = DEFAULT_DOUBLE,
-    var cameraAngle: Int = DEFAULT_INT,
-    var exifOrientation: Int = DEFAULT_INT,
-    var exifRotation: Int = DEFAULT_INT,
-    var exifLatLon: FloatArray = DEFAULT_FLOAT_ARRAY,
-    var exifAltitude: Double = DEFAULT_DOUBLE,
-    var exifLength: Int = DEFAULT_INT,
-    var exifWidth: Int = DEFAULT_INT,
-    var airObjectPixelSize: Float = DEFAULT_FLOAT,
-    var airObjectDistance: Float = DEFAULT_FLOAT,
-    var airObjectAltitude: Float = DEFAULT_FLOAT
+    var timestamp: String = AirConstant.DEFAULT_STRING,
+    var imagePath: String = AirConstant.DEFAULT_STRING,
+    var imageName: String = AirConstant.DEFAULT_STRING,
+    var imageWidth: Int = AirConstant.DEFAULT_INT,
+    var imageHeight: Int = AirConstant.DEFAULT_INT,
+    var decibel: Double = AirConstant.DEFAULT_DOUBLE,
+    var cameraAngle: Int = AirConstant.DEFAULT_INT,
+    var exifOrientation: Int = AirConstant.DEFAULT_INT,
+    var exifRotation: Int = AirConstant.DEFAULT_INT,
+    var exifLatLon: FloatArray = AirConstant.DEFAULT_FLOAT_ARRAY,
+    var exifAltitude: Double = AirConstant.DEFAULT_DOUBLE,
+    var exifLength: Int = AirConstant.DEFAULT_INT,
+    var exifWidth: Int = AirConstant.DEFAULT_INT,
+    var airObjectPixelSize: Float = AirConstant.DEFAULT_FLOAT,
+    var airObjectDistance: Float = AirConstant.DEFAULT_FLOAT,
+    var airObjectAltitude: Float = AirConstant.DEFAULT_FLOAT
 ) {
 
     override fun equals(other: Any?): Boolean {
