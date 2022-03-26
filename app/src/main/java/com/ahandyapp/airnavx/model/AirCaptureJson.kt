@@ -14,17 +14,19 @@ class AirCaptureJson {
         //var airFilename = captureViewModel.DEFAULT_STRING
         var airFilename = AirConstant.DEFAULT_STRING
         if (type == CaptureViewModel.AirFileType.IMAGE) {
-            airFilename = "AIR-" + captureTimestamp + "." + AirConstant.DEFAULT_IMAGEFILE_EXT
+//            airFilename = "AIR-" + captureTimestamp + "." + AirConstant.DEFAULT_IMAGEFILE_EXT
+            airFilename = AirConstant.DEFAULT_FILE_PREFIX + captureTimestamp + "." + AirConstant.DEFAULT_IMAGEFILE_EXT
+
         }
         else if (type == CaptureViewModel.AirFileType.DATA) {
-            airFilename = "AIR-" + captureTimestamp + "." + AirConstant.DEFAULT_DATAFILE_EXT
+            airFilename = AirConstant.DEFAULT_FILE_PREFIX + captureTimestamp + "." + AirConstant.DEFAULT_DATAFILE_EXT
         }
         return airFilename
     }
 
     public fun read(airCaptureFile: File): AirCapture {
         //   extract aircapture json string
-        var jsonString = "nada"
+        var jsonString = AirConstant.DEFAULT_STRING
         try {
             jsonString = airCaptureFile.bufferedReader().use { it.readText() }
         } catch (ioException: IOException) {

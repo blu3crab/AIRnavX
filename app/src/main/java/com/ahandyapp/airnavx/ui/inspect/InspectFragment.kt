@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.media.ThumbnailUtils
 import android.os.Bundle
+import android.os.Environment
 import android.util.Log
 import android.view.*
 import android.widget.ImageView
@@ -18,6 +19,7 @@ import android.widget.Button
 import android.widget.Toast
 import com.ahandyapp.airnavx.R
 import com.ahandyapp.airnavx.model.AirCapture
+import com.ahandyapp.airnavx.model.AirCaptureJson
 import java.util.ArrayList
 import kotlin.math.roundToInt
 import kotlin.math.sin
@@ -26,6 +28,8 @@ import kotlin.math.sin
 class InspectFragment : Fragment() {
 
     private val TAG = "InspectFragment"
+
+    private var airCaptureJson: AirCaptureJson = AirCaptureJson()
 
     private lateinit var inspectViewModel: InspectViewModel
     private var _binding: FragmentInspectBinding? = null
@@ -351,9 +355,16 @@ class InspectFragment : Fragment() {
         Log.d(TAG, "measure-> sin(angleRadians) ${sin(angleRadians)}")
         var altitude: Double = sin(angleRadians) * dist
         Log.d(TAG, "measure-> altitude $altitude !!!!")
+
         // TODO: float->double
         airCapture.airObjectAltitude = altitude.toFloat()
         airCapture.airObjectDistance = dist.toFloat()
+        // TODO: return airCapture?
+        // write AirCapture
+        val storageDir = context?.getExternalFilesDir(Environment.DIRECTORY_PICTURES)!!
+        val captureRecorded = airCaptureJson.write(storageDir, airCapture.timestamp, airCapture)
+        Log.d(TAG,"dispatchTakePictureIntent onActivityResult captureRecorded $captureRecorded")
+
     }
 
     private fun inspectZoomOnTap(zoomDirection: InspectViewModel.ZoomDirection) {

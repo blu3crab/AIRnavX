@@ -231,7 +231,7 @@ class CaptureFragment : Fragment() {
                        // add set to view model
                         addViewModelSet(captureViewModel, gridView, imageViewPreview, airCaptureBitmap, thumbBitmap, airCapture)
 
-                        // record AirCapture
+                        // write AirCapture
                         val storageDir = context?.getExternalFilesDir(Environment.DIRECTORY_PICTURES)!!
                         val captureRecorded = airCaptureJson.write(storageDir, captureTimestamp, airCapture)
                         Log.d(TAG,"dispatchTakePictureIntent onActivityResult captureRecorded $captureRecorded")
@@ -539,81 +539,6 @@ class CaptureFragment : Fragment() {
         }
         return true
     }
-
-//    private fun getAirFilename(type: CaptureViewModel.AirFileType, captureTimestamp : String): String {
-//        //var airFilename = captureViewModel.DEFAULT_STRING
-//        var airFilename = AirConstant.DEFAULT_STRING
-//        if (type == CaptureViewModel.AirFileType.IMAGE) {
-//            airFilename = "AIR-" + captureTimestamp + "." + captureViewModel.DEFAULT_IMAGEFILE_EXT
-//        }
-//        else if (type == CaptureViewModel.AirFileType.DATA) {
-//            airFilename = "AIR-" + captureTimestamp + "." + captureViewModel.DEFAULT_DATAFILE_EXT
-//        }
-//        return airFilename
-//    }
-    /////////////////////////////image manipulation////////////////////////////
-
-    /////////////////////////////AirCapture handlers///////////////////////////
-    // TODO: refactor to AirCapture model
-//    private fun createAirCapture(): AirCapture {
-//        val airCapture = AirCapture(
-//            captureViewModel.DEFAULT_STRING,
-//            captureViewModel.DEFAULT_STRING,
-//            captureViewModel.DEFAULT_STRING,
-//            captureViewModel.DEFAULT_INT,
-//            captureViewModel.DEFAULT_INT,
-//            captureViewModel.DEFAULT_DOUBLE,
-//            captureViewModel.DEFAULT_INT,
-//            captureViewModel.DEFAULT_INT,
-//            captureViewModel.DEFAULT_INT,
-//            captureViewModel.DEFAULT_FLOAT_ARRAY,
-//            captureViewModel.DEFAULT_DOUBLE,
-//            captureViewModel.DEFAULT_INT,
-//            captureViewModel.DEFAULT_INT,
-//            captureViewModel.DEFAULT_FLOAT,
-//            captureViewModel.DEFAULT_FLOAT,
-//            captureViewModel.DEFAULT_FLOAT
-//        )
-//        return airCapture
-//    }
-
-//    private fun readAirCaptureJson(airCaptureFile: File): AirCapture {
-//        //   extract aircapture json string
-//        var jsonString = "nada"
-//        try {
-//            jsonString = airCaptureFile.bufferedReader().use { it.readText() }
-//        } catch (ioException: IOException) {
-//            ioException.printStackTrace()
-//        } finally {
-//            airCaptureFile.bufferedReader().close()
-//        }
-//        Log.d(TAG, "fetchViewModel airCapture json $jsonString...")
-//        // decode json string into airCapture
-//        val airCapture = Gson().fromJson(jsonString, AirCapture::class.java)
-//        Log.d(TAG, "fetchViewModel AirCapture $airCapture")
-//        return airCapture
-//    }
-//
-//    private fun writeAirCaptureJson(storageDir: File, airCapture: AirCapture): Boolean {
-//        // TODO: refactor to AirCapture model-> write yourself!
-//        try {
-//            // transform AirCapture data class to json
-//            val jsonCapture = Gson().toJson(airCapture)
-//            Log.d(TAG, "recordAirCapture $jsonCapture")
-//
-//            // format AirCapture name & write json file
-//            val name = getAirFilename(CaptureViewModel.AirFileType.DATA, captureTimestamp)
-//            Log.d(TAG, "recordAirCapture storageDir->$storageDir, name->$name")
-//            File(storageDir, name).printWriter().use { out ->
-//                out.println(jsonCapture)
-//            }
-//        } catch (ex: Exception) {
-//            Log.e(TAG, "recordAirCapture Exception ${ex.stackTrace}")
-//            return false
-//        }
-//        return true
-//    }
-    /////////////////////////////AirCapture handlers///////////////////////////
 
     /////////////////////////////meter handlers////////////////////////////////
     private fun startMeters(angleMeter: AngleMeter, soundMeter: SoundMeter): Boolean {

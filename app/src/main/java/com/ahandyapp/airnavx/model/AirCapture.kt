@@ -20,7 +20,8 @@ data class AirCapture(
     var exifAltitude: Double = AirConstant.DEFAULT_DOUBLE,
     var exifLength: Int = AirConstant.DEFAULT_INT,
     var exifWidth: Int = AirConstant.DEFAULT_INT,
-    var airObjectPixelSize: Float = AirConstant.DEFAULT_FLOAT,
+//    var airObjectPixelSize: Float = AirConstant.DEFAULT_FLOAT,
+    var airObjectPixelSize: Double = AirConstant.DEFAULT_DOUBLE,
     var airObjectDistance: Float = AirConstant.DEFAULT_FLOAT,
     var airObjectAltitude: Float = AirConstant.DEFAULT_FLOAT
 ) {

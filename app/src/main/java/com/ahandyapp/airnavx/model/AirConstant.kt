@@ -8,6 +8,7 @@ object AirConstant
     val DEFAULT_FLOAT_ARRAY: FloatArray = floatArrayOf(0.0F, 0.0F)
     val DEFAULT_FLOAT: Float = 0.0F
 
+    val DEFAULT_FILE_PREFIX = "AIR-"
     val DEFAULT_DATAFILE_EXT = "json"
     val DEFAULT_IMAGEFILE_EXT = "jpg"
 
