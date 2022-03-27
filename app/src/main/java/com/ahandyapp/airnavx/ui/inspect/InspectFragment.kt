@@ -289,16 +289,11 @@ class InspectFragment : Fragment() {
         }
 
         measureButton = root.findViewById(R.id.button_measure) as Button
-        measureTextView.text = "Altitude ${airCapture.airObjectAltitude}, distance ${airCapture.airObjectDistance}"
+        measureTextView.text = "Altitude ${airCapture.airObjectAltitude.toInt()}, distance ${airCapture.airObjectDistance.toInt()}"
         measureButton.setOnClickListener {
-            //Toast.makeText(this.context, "Measuring Object Under Inspection...", Toast.LENGTH_SHORT).show()
-//            val distFor100PerCentFOVat1FootPixel4 = 1.065
-//            Log.d(TAG, "buttonMeasure.setOnClickListener->Measuring Pixel4 $distFor100PerCentFOVat1FootPixel4")
-//            measure(distFor100PerCentFOVat1FootPixel4)
-            val distFor100PerCentFOVat1FootPixel6 = 0.96875
-            Log.d(TAG, "buttonMeasure.setOnClickListener->Measuring Pixel6 $distFor100PerCentFOVat1FootPixel6")
-            measure(distFor100PerCentFOVat1FootPixel6)
-            measureTextView.text = "Altitude ${airCapture.airObjectAltitude}, distance ${airCapture.airObjectDistance}"
+            Toast.makeText(this.context, "Measuring Object Under Inspection...", Toast.LENGTH_SHORT).show()
+            measure()
+            measureTextView.text = "Altitude ${airCapture.airObjectAltitude.toInt()}, distance ${airCapture.airObjectDistance.toInt()}"
             Log.d(TAG, "buttonMeasure.setOnClickListener->Measuring Object Under Inspection...")
         }
     }
@@ -317,7 +312,7 @@ class InspectFragment : Fragment() {
         return craftIdentList
     }
 
-    private fun measure(distFor100PerCentFOVat1Foot:Double) {
+    private fun measure() {
         var actualSize: Double = 0.0
         if (inspectViewModel.craftOrientation == InspectViewModel.CraftOrientation.WINGSPAN) {
             actualSize = inspectViewModel.craftDimsList[inspectViewModel.craftDimListInx].wingspan
@@ -327,9 +322,13 @@ class InspectFragment : Fragment() {
         }
         Log.d(TAG, "measure-> actualSize $actualSize ")
 
-        //val distFor100PerCentFOVat1Foot = 1.065
+        // TODO: collection for FOV at 1 foot per device for portrait | landscape
+        //val distFor100PerCentFOVat1FootPixel4 = 1.065
+        //Log.d(TAG, "buttonMeasure.setOnClickListener->Measuring Pixel4 $distFor100PerCentFOVat1FootPixel4")
+        val distFor100PerCentFOVat1FootPixel6 = 0.96875
+        Log.d(TAG, "buttonMeasure.setOnClickListener->Measuring Pixel6 $distFor100PerCentFOVat1FootPixel6")
 
-        val distObjectAt100PerCentFOV = actualSize * distFor100PerCentFOVat1Foot
+        val distObjectAt100PerCentFOV = actualSize * distFor100PerCentFOVat1FootPixel6
         Log.d(TAG, "measure-> distObjectAt100PerCentFOV $distObjectAt100PerCentFOV ")
 
         var imageSize: Double = 0.0
@@ -356,11 +355,10 @@ class InspectFragment : Fragment() {
         var altitude: Double = sin(angleRadians) * dist
         Log.d(TAG, "measure-> altitude $altitude !!!!")
 
-        // TODO: float->double
-        airCapture.airObjectAltitude = altitude.toFloat()
-        airCapture.airObjectDistance = dist.toFloat()
+        // write AirCapture measures
+        airCapture.airObjectAltitude = altitude.toDouble()
+        airCapture.airObjectDistance = dist.toDouble()
         // TODO: return airCapture?
-        // write AirCapture
         val storageDir = context?.getExternalFilesDir(Environment.DIRECTORY_PICTURES)!!
         val captureRecorded = airCaptureJson.write(storageDir, airCapture.timestamp, airCapture)
         Log.d(TAG,"dispatchTakePictureIntent onActivityResult captureRecorded $captureRecorded")

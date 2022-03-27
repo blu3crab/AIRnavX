@@ -2,6 +2,7 @@ package com.ahandyapp.airnavx.model
 
 object AirConstant
 {
+    val AIR_VERSION: String = "v1-27mar22"
     val DEFAULT_STRING: String = "nada"
     val DEFAULT_DOUBLE: Double = 0.0
     val DEFAULT_INT: Int = 0

@@ -6,8 +6,7 @@ package com.ahandyapp.airnavx.model
 //val DEFAULT_FLOAT_ARRAY: FloatArray = floatArrayOf(0.0F, 0.0F)
 //val DEFAULT_FLOAT = 0.0F
 //
-data class AirCapture(
-    var version: String = AirConstant.AIR_VERSION,
+data class AirCaptureV0(
     var timestamp: String = AirConstant.DEFAULT_STRING,
     var imagePath: String = AirConstant.DEFAULT_STRING,
     var imageName: String = AirConstant.DEFAULT_STRING,
@@ -26,16 +25,14 @@ data class AirCapture(
 //    var airObjectAltitude: Float = AirConstant.DEFAULT_FLOAT
     var airObjectPixelSize: Double = AirConstant.DEFAULT_DOUBLE,
     var airObjectDistance: Double = AirConstant.DEFAULT_DOUBLE,
-    var airObjectAltitude: Double = AirConstant.DEFAULT_DOUBLE,
-    var xtra1: String = AirConstant.DEFAULT_STRING,
-    var xtra2: String = AirConstant.DEFAULT_STRING,
-    ) {
+    var airObjectAltitude: Double = AirConstant.DEFAULT_DOUBLE
+) {
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
 
-        other as AirCapture
+        other as AirCaptureV0
 
         if (timestamp != other.timestamp) return false
         if (imagePath != other.imagePath) return false
