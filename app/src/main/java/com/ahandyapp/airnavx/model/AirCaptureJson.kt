@@ -10,7 +10,7 @@ class AirCaptureJson {
 
     private val TAG = "AirCaptureJson"
 
-    public fun getAirFilename(type: CaptureViewModel.AirFileType, captureTimestamp : String): String {
+    fun getAirFilename(type: CaptureViewModel.AirFileType, captureTimestamp : String): String {
         //var airFilename = captureViewModel.DEFAULT_STRING
         var airFilename = AirConstant.DEFAULT_STRING
         if (type == CaptureViewModel.AirFileType.IMAGE) {
@@ -24,7 +24,7 @@ class AirCaptureJson {
         return airFilename
     }
 
-    public fun read(airCaptureFile: File): AirCapture {
+    fun read(airCaptureFile: File): AirCapture {
         //   extract aircapture json string
         var jsonString = AirConstant.DEFAULT_STRING
         try {
@@ -41,7 +41,7 @@ class AirCaptureJson {
         return airCapture
     }
 
-    public fun write(storageDir: File, timestamp: String, airCapture: AirCapture): Boolean {
+    fun write(storageDir: File, timestamp: String, airCapture: AirCapture): Boolean {
         try {
             // transform AirCapture data class to json
             val jsonCapture = Gson().toJson(airCapture)

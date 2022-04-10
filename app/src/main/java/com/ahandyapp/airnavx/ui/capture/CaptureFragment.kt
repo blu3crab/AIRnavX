@@ -30,6 +30,7 @@ import com.ahandyapp.airnavx.R
 import com.ahandyapp.airnavx.databinding.FragmentCaptureBinding
 import com.ahandyapp.airnavx.model.AirCaptureJson
 import com.ahandyapp.airnavx.model.AirConstant
+import com.ahandyapp.airnavx.model.AirConstant.DEFAULT_STRING
 import com.ahandyapp.airnavx.ui.grid.GridViewAdapter
 
 
@@ -61,8 +62,8 @@ class CaptureFragment : Fragment() {
     //      dispatchTakePictureIntent - create image capture file & timestamp
     //      onActivityResult - pipeline image capture data stream
     private val REQUEST_IMAGE_CAPTURE = 1001
-    private lateinit var captureFile: File          // capture file
-    private var captureTimestamp: String = "nada"   // capture file creation timestamp
+    private lateinit var captureFile: File                  // capture file
+    private var captureTimestamp: String = DEFAULT_STRING   // capture file creation timestamp
     private var airCaptureJson: AirCaptureJson = AirCaptureJson()
 
     /////////////////////////////life-cycle////////////////////////////////////

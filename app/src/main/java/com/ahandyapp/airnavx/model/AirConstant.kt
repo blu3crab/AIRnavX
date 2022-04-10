@@ -12,6 +12,7 @@ object AirConstant
     val DEFAULT_FILE_PREFIX = "AIR-"
     val DEFAULT_DATAFILE_EXT = "json"
     val DEFAULT_IMAGEFILE_EXT = "jpg"
+    val DEFAULT_ZOOM_SUFFIX = "-zoom"
 
 
 }
