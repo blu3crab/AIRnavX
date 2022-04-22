@@ -15,8 +15,10 @@ class AirImageUtil {
         val storageDir = context?.getExternalFilesDir(Environment.DIRECTORY_PICTURES)!!
 
         try {
-            val filepath = storageDir.toString() + File.separator + imageFilename +
-                    AirConstant.DEFAULT_ZOOM_SUFFIX + "." + AirConstant.DEFAULT_IMAGEFILE_EXT
+            // TODO: generalize name - DEFAULT_ZOOM_SUFFIX
+//            val filepath = storageDir.toString() + File.separator + imageFilename +
+//                    AirConstant.DEFAULT_ZOOM_SUFFIX + "." + AirConstant.DEFAULT_IMAGEFILE_EXT
+            val filepath = storageDir.toString() + File.separator + imageFilename + "." + AirConstant.DEFAULT_IMAGEFILE_EXT
             val imageFile = File(filepath)
             imageFile.createNewFile()
             val output = FileOutputStream(imageFile)

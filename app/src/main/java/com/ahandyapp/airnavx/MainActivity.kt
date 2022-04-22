@@ -42,24 +42,11 @@ class MainActivity : AppCompatActivity() {
 
         setSupportActionBar(binding.appBarMain.toolbar)
 
-//        binding.appBarMain.fab.setOnClickListener { view ->
-//            Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-//                .setAction("Action", null).show()
-//        }
-//        binding.appBarMain.fab.setOnClickListener { view ->
-//            val intent= Intent()
-//            intent.action=Intent.ACTION_SEND
-//            intent.putExtra(Intent.EXTRA_TEXT,"Share AIR images!")
-//            intent.type="text/plain"
-//            startActivity(Intent.createChooser(intent,"Share To:"))
-//        }
         val storageDir = this?.getExternalFilesDir(Environment.DIRECTORY_PICTURES)!!
         Log.d(TAG, "onCreate storageDir = $storageDir...")
-        val jpegPath = "$storageDir/AIR-20220302_165123.jpg"
-        Log.d(TAG, "onCreate jpegPath = $jpegPath...")
-//        val storageDirFile = File(storageDir.toString())
-        val jpegFile = File(jpegPath)
-//        val storageDirFile = File(storageDir.toURI());
+//        val jpegPath = "$storageDir/AIR-20220302_165123.jpg"
+//        Log.d(TAG, "onCreate jpegPath = $jpegPath...")
+//        val jpegFile = File(jpegPath)
 
         if(storageDir.exists()) {
             binding.appBarMain.fab.setOnClickListener { view ->
@@ -71,37 +58,22 @@ class MainActivity : AppCompatActivity() {
                 for (file in fileList) {
                     var name = file.name
                     Log.d(TAG, "onShare listFiles file name $name")
-                    val jpegPath = "$storageDir/$name"
-                    Log.d(TAG, "onCreate jpegPath = $jpegPath...")
-                    val jpegFile = File(jpegPath)
+                    val airPath = "$storageDir/$name"
+                    Log.d(TAG, "onCreate airPath = $airPath...")
+                    val airFile = File(airPath)
 
                     val uri = FileProvider.getUriForFile(
                         this,
-//                    this.applicationContext.packageName.toString() + ".files.Pictures",
                         this.applicationContext.packageName.toString(),
-//                    storageDir
-                        jpegFile
-//                        file
-//                        fileList
+                        airFile
                     )
                     uriList.add(uri)
                 }
-//                    val intentShareFile = Intent(Intent.ACTION_SEND)
-//                    intentShareFile.putExtra(Intent.EXTRA_STREAM, uri)
                 // TODO: share succeeds - triggers permission exceptions - why?
                 val intentShareFile = Intent(Intent.ACTION_SEND_MULTIPLE)
                 intentShareFile.putParcelableArrayListExtra(Intent.EXTRA_STREAM, uriList)
                 intentShareFile.type = "image/jpeg";
                 startActivity(Intent.createChooser(intentShareFile, "Share AIR Files"));
-//                }
-
-//                intentShareFile.type = "text/plain";
-//                intentShareFile.putExtra(Intent.EXTRA_STREAM, storageDirFile)
-//
-//                intentShareFile.putExtra(Intent.EXTRA_SUBJECT, "Share AIR images!")
-//                intentShareFile.putExtra(Intent.EXTRA_TEXT, "Sharing File...");
-
-//                startActivity(Intent.createChooser(intentShareFile, "Share File"));
             }
         }
         val drawerLayout: DrawerLayout = binding.drawerLayout

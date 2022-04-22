@@ -20,6 +20,7 @@ import android.widget.Toast
 import com.ahandyapp.airnavx.R
 import com.ahandyapp.airnavx.model.AirCapture
 import com.ahandyapp.airnavx.model.AirCaptureJson
+import com.ahandyapp.airnavx.model.AirConstant
 import com.ahandyapp.airnavx.model.AirImageUtil
 import java.util.ArrayList
 import kotlin.math.roundToInt
@@ -364,8 +365,10 @@ class InspectFragment : Fragment() {
         val captureRecorded = airCaptureJson.write(storageDir, airCapture.timestamp, airCapture)
         Log.d(TAG,"dispatchTakePictureIntent onActivityResult captureRecorded $captureRecorded")
         // save AirCapture measured image
+        val imageFilename = airCapture.timestamp + AirConstant.DEFAULT_ZOOM_SUFFIX
         var airImageUtil = AirImageUtil()
-        val success = airImageUtil.convertBitmapToFile(context!!, inspectBitmap, airCapture.timestamp)
+//        val success = airImageUtil.convertBitmapToFile(context!!, inspectBitmap, airCapture.timestamp)
+        val success = airImageUtil.convertBitmapToFile(context!!, inspectBitmap, imageFilename)
     }
 
     private fun inspectZoomOnTap(zoomDirection: InspectViewModel.ZoomDirection) {
