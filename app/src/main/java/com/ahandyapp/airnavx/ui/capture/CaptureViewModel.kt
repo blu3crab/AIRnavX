@@ -17,14 +17,6 @@ class CaptureViewModel : ViewModel() {
         DATA
     }
 
-//    val DEFAULT_DATAFILE_EXT = "json"
-//    val DEFAULT_IMAGEFILE_EXT = "jpg"
-//    val DEFAULT_STRING = "nada"
-//    val DEFAULT_DOUBLE = 0.0
-//    val DEFAULT_INT = 0
-//    val DEFAULT_FLOAT_ARRAY: FloatArray = floatArrayOf(0.0F, 0.0F)
-//    val DEFAULT_FLOAT = 0.0F
-
     //<GridView
     //android:id="@+id/gridView"
     //android:layout_width="324dp"

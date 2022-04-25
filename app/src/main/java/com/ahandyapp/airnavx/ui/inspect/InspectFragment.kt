@@ -51,9 +51,9 @@ class InspectFragment : Fragment() {
     private lateinit var measureButton: Button
 
     private lateinit var dimensionTextView: TextView
-    private lateinit var orientTextView: TextView
+//    private lateinit var orientTextView: TextView
     private lateinit var craftTypeTextView: TextView
-    private lateinit var identifyTextView: TextView
+//    private lateinit var identifyTextView: TextView
     private lateinit var measureTextView: TextView
 
     private lateinit var craftIdentList: ArrayList<String>
@@ -367,7 +367,6 @@ class InspectFragment : Fragment() {
         // save AirCapture measured image
         val imageFilename = airCapture.timestamp + AirConstant.DEFAULT_ZOOM_SUFFIX
         var airImageUtil = AirImageUtil()
-//        val success = airImageUtil.convertBitmapToFile(context!!, inspectBitmap, airCapture.timestamp)
         val success = airImageUtil.convertBitmapToFile(context!!, inspectBitmap, imageFilename)
     }
 
