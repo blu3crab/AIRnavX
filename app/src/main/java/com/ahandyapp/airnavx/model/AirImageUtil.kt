@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.os.Environment
 import android.util.Log
 import android.widget.Toast
+import com.ahandyapp.airnavx.model.AirConstant.DEFAULT_EXTENSION_SEPARATOR
 import java.io.File
 import java.io.FileOutputStream
 
@@ -15,7 +16,7 @@ class AirImageUtil {
         val storageDir = context?.getExternalFilesDir(Environment.DIRECTORY_PICTURES)!!
 
         try {
-            val filepath = storageDir.toString() + File.separator + imageFilename + "." + AirConstant.DEFAULT_IMAGEFILE_EXT
+            val filepath = storageDir.toString() + File.separator + imageFilename + DEFAULT_EXTENSION_SEPARATOR + AirConstant.DEFAULT_IMAGEFILE_EXT
             val imageFile = File(filepath)
             imageFile.createNewFile()
             val output = FileOutputStream(imageFile)

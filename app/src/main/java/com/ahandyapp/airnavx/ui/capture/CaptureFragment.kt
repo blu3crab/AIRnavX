@@ -2,6 +2,8 @@ package com.ahandyapp.airnavx.ui.capture
 
 import android.app.Activity.RESULT_CANCELED
 import android.app.Activity.RESULT_OK
+import android.app.AlertDialog
+import android.content.DialogInterface
 import android.content.Intent
 import android.graphics.Bitmap
 import android.media.ThumbnailUtils
@@ -10,9 +12,6 @@ import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
 import android.util.Log
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import com.ahandyapp.airnavx.model.AirCapture
@@ -24,6 +23,7 @@ import java.util.*
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.media.ExifInterface
+import android.view.*
 import android.widget.*
 import androidx.fragment.app.activityViewModels
 import com.ahandyapp.airnavx.R
@@ -31,7 +31,14 @@ import com.ahandyapp.airnavx.databinding.FragmentCaptureBinding
 import com.ahandyapp.airnavx.model.AirCaptureJson
 import com.ahandyapp.airnavx.model.AirConstant
 import com.ahandyapp.airnavx.model.AirConstant.DEFAULT_STRING
+import com.ahandyapp.airnavx.model.AirConstant.DEFAULT_ZOOM_SUFFIX
 import com.ahandyapp.airnavx.ui.grid.GridViewAdapter
+import com.ahandyapp.airnavx.ui.inspect.InspectViewModel
+import java.io.FileNotFoundException
+import java.io.IOException
+import java.nio.file.Files
+import java.nio.file.Paths
+import kotlin.math.roundToInt
 
 
 class CaptureFragment : Fragment() {
@@ -49,6 +56,7 @@ class CaptureFragment : Fragment() {
     private lateinit var textViewAngle: TextView
     private lateinit var imageViewPreview: ImageView       // preview image display
     private lateinit var gridView: GridView
+//    private lateinit var airCapture: AirCapture
 
     // property is only valid between onCreateView and onDestroyView.
     private val binding get() = _binding!!
@@ -120,12 +128,21 @@ class CaptureFragment : Fragment() {
                 // create empty view model
                 createEmptyViewModel()
             }
+            else {
+                Log.d(TAG, "onCreateView refreshViewModel resetting EMPTY view model elements...")
+                refreshViewModel(captureViewModel.airCaptureArray[captureViewModel.gridPosition])
+            }
         }
         else {
             // re-establish view elements
             Log.d(TAG, "onCreateView DEFINED captureViewModel $captureViewModel")
             restoreViewModel()
+            // re-establish view elements
+            Log.d(TAG, "onCreateView refreshViewModel resetting DEFINED view model elements...")
+            refreshViewModel(captureViewModel.airCaptureArray[captureViewModel.gridPosition])
         }
+        // establish image gesture detector
+        establishGestureDetector(imageViewPreview)
         return root
     }
 
@@ -207,6 +224,7 @@ class CaptureFragment : Fragment() {
                         // create initialized aircapture object
                         //val airCapture = createAirCapture()
                         val airCapture: AirCapture = AirCapture()
+                        //airCapture = AirCapture()
                         // capture image attributes
                         airCapture.timestamp = captureTimestamp
                         airCapture.imagePath = Environment.DIRECTORY_PICTURES
@@ -228,9 +246,9 @@ class CaptureFragment : Fragment() {
 
                         // extract thumbnail at scale factor
                         val thumbBitmap = extractThumbnail(currentPhotoPath, airCaptureBitmap, captureViewModel.THUMB_SCALE_FACTOR)
-
+                        val zoomBitmap = airCaptureBitmap
                        // add set to view model
-                        addViewModelSet(captureViewModel, gridView, imageViewPreview, airCaptureBitmap, thumbBitmap, airCapture)
+                        addViewModelSet(captureViewModel, gridView, imageViewPreview, airCaptureBitmap, thumbBitmap, zoomBitmap, airCapture)
 
                         // write AirCapture
                         val storageDir = context?.getExternalFilesDir(Environment.DIRECTORY_PICTURES)!!
@@ -272,7 +290,159 @@ class CaptureFragment : Fragment() {
         }
     }
     /////////////////////////////life-cycle////////////////////////////////////
+    private fun establishGestureDetector(imageView: ImageView) {
+        val gestureDetector = GestureDetector(activity, object : GestureDetector.SimpleOnGestureListener() {
+            override fun onDown(event: MotionEvent?): Boolean {
+                Log.i("TAG", "establishGestureDetector onDown: ")
+                // don't return false here or else none of the other gestures will work
+                return true
+            }
 
+            override fun onSingleTapConfirmed(e: MotionEvent?): Boolean {
+                Log.i("TAG", "establishGestureDetector onSingleTapConfirmed...")
+                return true
+            }
+
+            override fun onLongPress(e: MotionEvent?) {
+                val x = e?.x?.roundToInt()
+                val y = e?.y?.roundToInt()
+                Log.i("TAG", "establishGestureDetector onLongPress: x $x, y $y")
+                showAlertDialog()
+            }
+
+            override fun onDoubleTap(e: MotionEvent?): Boolean {
+                val x = e?.x?.roundToInt()
+                val y = e?.y?.roundToInt()
+                Log.i("TAG", "establishGestureDetector onDoubleTap: x $x, y $y")
+                return true
+            }
+
+            override fun onScroll(
+                e1: MotionEvent?, e2: MotionEvent?,
+                distanceX: Float, distanceY: Float
+            ): Boolean {
+                Log.i("TAG", "establishGestureDetector nScroll: distanceX $distanceX distanceY $distanceY")
+                return true
+            }
+
+            override fun onFling(
+                event1: MotionEvent?, event2: MotionEvent?,
+                velocityX: Float, velocityY: Float
+            ): Boolean {
+                Log.d("TAG", "establishGestureDetector onFling: velocityX $velocityX velocityY $velocityY")
+                Log.i("TAG", "establishGestureDetector resetting view model...")
+
+                // reset viewmodel grid
+                captureViewModel.gridPosition = 0
+                captureViewModel.gridCount = 0
+                captureViewModel.gridLabelArray.clear()
+                captureViewModel.fullBitmapArray.clear()
+                captureViewModel.zoomBitmapArray.clear()
+                captureViewModel.airCaptureArray.clear()
+
+                Log.i("TAG", "showAlertDialog resetting view model...")
+                // if unable to restore captureViewModel from previous session
+                if (!fetchViewModel()) {
+                    // create empty view model
+                    createEmptyViewModel()
+                }
+                else {
+                    // re-establish view elements
+                    Log.d(TAG, "showAlertDialog refreshViewModel resetting view model elements...")
+                    refreshViewModel(captureViewModel.airCaptureArray[captureViewModel.gridPosition])
+                }
+
+                return true
+            }
+
+            override fun onShowPress(e: MotionEvent?) {
+                Log.i("TAG", "establishGestureDetector onShowPress: ")
+                return
+            }
+        })
+        imageView.setOnTouchListener { _, event -> gestureDetector.onTouchEvent(event) }
+        // TODO: pinch/zoom?
+//        imageViewFull.setOnTouchListener { v, event ->
+//            decodeTouchAction(event)
+//            true
+//        }
+//
+    }
+
+    private fun showAlertDialog() {
+        // build alert dialog
+        val dialogBuilder = AlertDialog.Builder(context)
+
+        // set message of alert dialog
+        dialogBuilder.setMessage("Delete AIR capture file?")
+            // if the dialog is cancelable
+            .setCancelable(false)
+            // positive button text and action
+            .setPositiveButton("Delete", DialogInterface.OnClickListener {
+                    dialog, id ->
+                val airCapture = captureViewModel.airCaptureArray[captureViewModel.gridPosition]
+                Log.d("TAG", "showAlertDialog deleting AIR capture files for ${airCapture.timestamp}")
+                try {
+                    // set path = storage dir + time.jpg
+                    val storageDir = context?.getExternalFilesDir(Environment.DIRECTORY_PICTURES)!!
+                    // TODO: storageDir.toString + File.delimiter
+                    val imagePath = Paths.get(storageDir.toString() + File.separator +
+                            AirConstant.DEFAULT_FILE_PREFIX + airCapture.timestamp  +
+                            AirConstant.DEFAULT_EXTENSION_SEPARATOR + AirConstant.DEFAULT_IMAGEFILE_EXT)
+                    val dataPath = Paths.get(storageDir.toString() + File.separator +
+                            AirConstant.DEFAULT_FILE_PREFIX + airCapture.timestamp  +
+                            AirConstant.DEFAULT_EXTENSION_SEPARATOR + AirConstant.DEFAULT_DATAFILE_EXT)
+                    val zoomPath = Paths.get(storageDir.toString() + File.separator +
+                            AirConstant.DEFAULT_FILE_PREFIX + airCapture.timestamp  +
+                            AirConstant.DEFAULT_ZOOM_SUFFIX + AirConstant.DEFAULT_EXTENSION_SEPARATOR +
+                            AirConstant.DEFAULT_IMAGEFILE_EXT)
+                    Log.d("TAG", "showAlertDialog deleting files \n$imagePath \n$dataPath \n$zoomPath")
+                    // Files.deleteIfExists(path)
+                    var result = Files.deleteIfExists(imagePath)
+                    if (result) {
+                        Log.d("TAG", "showAlertDialog delete image $imagePath success...")
+                    } else {
+                        Log.d("TAG", "showAlertDialog delete image $imagePath failed...")
+                    }
+                    result = Files.deleteIfExists(dataPath)
+                    if (result) {
+                        Log.d("TAG", "showAlertDialog delete datafile $dataPath success...")
+                    } else {
+                        Log.d("TAG", "showAlertDialog delete datafile $dataPath failed...")
+                    }
+                    result = Files.deleteIfExists(zoomPath)
+                    if (result) {
+                        Log.d("TAG", "showAlertDialog delete zoomimage $zoomPath success...")
+                    } else {
+                        Log.d("TAG", "showAlertDialog delete zoomimage $zoomPath failed...")
+                    }
+
+                } catch (ioException: IOException) {
+                    ioException.printStackTrace()
+                } finally {
+                    // reset viewmodel grid selection
+//                    captureViewModel.gridBitmapArray[captureViewModel.gridPosition].
+//                    gridLabelArray
+//                    fullBitmapArray
+//                    airCaptureArray
+//                    Log.i("TAG", "showAlertDialog resetting view model...")
+//                    fetchViewModel()
+                }
+
+                dialog.dismiss()
+            })
+            // negative button text and action
+            .setNegativeButton("Cancel", DialogInterface.OnClickListener {
+                    dialog, id -> dialog.cancel()
+            })
+
+        // create dialog box
+        val alert = dialogBuilder.create()
+        // set title for alert dialog box
+        alert.setTitle("AlertDialogExample")
+        // show alert dialog
+        alert.show()
+    }
     /////////////////////////////view model helpers////////////////////////////
     private fun createEmptyViewModel(): Boolean {
         // create empty bitmap to seed grid
@@ -283,12 +453,14 @@ class CaptureFragment : Fragment() {
         // initialize AirCapture to seed grid
         //val airCapture = createAirCapture()
         val airCapture: AirCapture = AirCapture()
+        //airCapture = AirCapture()
 
         // initialize view
         captureViewModel.gridBitmapArray.add(blankBitmap)
         ++captureViewModel.gridCount
         captureViewModel.gridLabelArray.add("thumb${captureViewModel.gridCount}")
         captureViewModel.fullBitmapArray.add(blankBitmap)
+        captureViewModel.zoomBitmapArray.add(blankBitmap)
         captureViewModel.airCaptureArray.add(airCapture)
         // initialize gridViewAdapter
         updateGridViewAdapter(
@@ -311,6 +483,7 @@ class CaptureFragment : Fragment() {
         imageViewPreview.setImageBitmap(captureViewModel.gridBitmapArray[captureViewModel.gridPosition])
         // restore aircapture data
         val airCapture = captureViewModel.airCaptureArray[captureViewModel.gridPosition]
+        //airCapture = captureViewModel.airCaptureArray[captureViewModel.gridPosition]
         // refresh viewmodel
         Log.d(TAG, "restoreViewModel refreshComplete $airCapture")
         val refreshComplete = refreshViewModel(airCapture)
@@ -329,23 +502,23 @@ class CaptureFragment : Fragment() {
             val name = file.name
             Log.d(TAG, "fetchViewModel listFiles file name $name")
         }
-        // for each name
+        // for each name with JPG extension
         File(storageDir.toString()).walk().filter { file-> hasRequiredSuffix(file) }.forEach { it ->
             //println(it)
             //val name = it.name    // full name w/ ext jpg
             val name = it.nameWithoutExtension
             val ext = it.extension
             Log.d(TAG, "fetchViewModel walk file name $name ext $ext")
-            val airCaptureName = name + "." + AirConstant.DEFAULT_DATAFILE_EXT
-            val airCapturePath = "$storageDir/$airCaptureName"
+            val airCaptureName = name  + AirConstant.DEFAULT_EXTENSION_SEPARATOR + AirConstant.DEFAULT_DATAFILE_EXT
+            val airCapturePath = storageDir.toString() + File.separator + airCaptureName
             Log.d(TAG, "fetchViewModel airCaptureName $airCaptureName check...")
             val airCaptureFile = File(airCapturePath)
             //   if name.json exists
             if (airCaptureFile.exists()) {
                 Log.d(TAG, "fetchViewModel airCaptureName $airCaptureName exists...")
 
-                val airImageName = name + "." + AirConstant.DEFAULT_IMAGEFILE_EXT
-                val airImagePath = "$storageDir/$airImageName"
+                val airImageName = name  + AirConstant.DEFAULT_EXTENSION_SEPARATOR + AirConstant.DEFAULT_IMAGEFILE_EXT
+                val airImagePath = storageDir.toString() + File.separator + airImageName
                 Log.d(TAG, "fetchViewModel airImageName $airImageName...")
                 val airImageFile = File(airImagePath)
                 // read json into airCapture
@@ -359,14 +532,56 @@ class CaptureFragment : Fragment() {
                 )
                 // add view model set
                 if (airCaptureBitmap != null) {
+                    // TODO: attempt to open associated zoom image file
+                    var zoomBitmap = fetchZoomBitmap(name)
+                    if (zoomBitmap != null) {
+                        Log.d(TAG,"fetchViewModel zoomBitmap w x h = ${zoomBitmap.width} x ${zoomBitmap.height}")
+                    }
+                    else {
+                        zoomBitmap = airCaptureBitmap
+                        Log.d(TAG,"fetchViewModel airCaptureBitmap w x h = ${zoomBitmap.width} x ${zoomBitmap.height}")
+                    }
                     // extract thumbnail at scale factor
                     val thumbBitmap = extractThumbnail(airImagePath, airCaptureBitmap, captureViewModel.THUMB_SCALE_FACTOR)
                     // add set to view model
-                    addViewModelSet(captureViewModel, gridView, imageViewPreview, airCaptureBitmap, thumbBitmap, airCapture)
+                    addViewModelSet(captureViewModel, gridView, imageViewPreview, airCaptureBitmap, thumbBitmap, zoomBitmap, airCapture)
                 }
             }
         }
-        return false
+        return true
+    }
+
+    private fun fetchZoomBitmap(name: String): Bitmap? {
+        var zoomBitmap: Bitmap? = null
+        try {
+            val storageDir = context?.getExternalFilesDir(Environment.DIRECTORY_PICTURES)!!
+            val airImageName =
+                name + DEFAULT_ZOOM_SUFFIX + AirConstant.DEFAULT_EXTENSION_SEPARATOR + AirConstant.DEFAULT_IMAGEFILE_EXT
+            Log.d(TAG, "fetchZoomBitmap airImageName $airImageName...")
+            val airImagePath = storageDir.toString() + File.separator + airImageName
+            Log.d(TAG, "fetchZoomBitmap airImagePath $airImagePath...")
+            val airImageFile = File(airImagePath)
+
+            //   read air image into bitmap
+            val uri = Uri.fromFile(airImageFile)
+            zoomBitmap = MediaStore.Images.Media.getBitmap(
+                activity?.applicationContext?.contentResolver,
+                uri
+            )
+            if (zoomBitmap != null) {
+                Log.d(
+                    TAG,
+                    "fetchZoomBitmap zoomBitmap w x h = ${zoomBitmap.width} x ${zoomBitmap.height}"
+                )
+            }
+        }
+        catch (ex: FileNotFoundException) {
+            Log.d(TAG, "fetchZoomBitmap FileNotFoundException...")
+        }
+        catch (ex: Exception) {
+            Log.e(TAG, "fetchZoomBitmap exception ${ex.message}")
+        }
+        return zoomBitmap
     }
 
     private fun hasRequiredSuffix(file: File): Boolean {
@@ -379,6 +594,7 @@ class CaptureFragment : Fragment() {
                                 imageViewPreview: ImageView,
                                 airImageBitmap: Bitmap,
                                 thumbBitmap: Bitmap,
+                                zoomBitmap: Bitmap,
                                 airCapture: AirCapture): Boolean {
         // rotate thumb bitmap
         val rotatedThumbBitmap = rotateBitmap(thumbBitmap, airCapture.exifRotation.toFloat())
@@ -390,8 +606,11 @@ class CaptureFragment : Fragment() {
         updateGridViewAdapter(gridView, captureViewModel.gridLabelArray, captureViewModel.gridBitmapArray)
         // rotate full bitmap
         val fullBitmap = rotateBitmap(airImageBitmap, airCapture.exifRotation.toFloat())
-        // insert full bitmap into array
+        // add full bitmap into array
         captureViewModel.fullBitmapArray.add(0, fullBitmap)
+        // add place holder zoom bitmap
+        captureViewModel.zoomBitmapArray.add(0, zoomBitmap)
+        // add aircapture
         captureViewModel.airCaptureArray.add(0, airCapture)
         return true
     }
@@ -413,6 +632,7 @@ class CaptureFragment : Fragment() {
             //imageViewPreview.setImageBitmap(fullBitmapArray[gridPosition])
             // sync AirCapture to thumb selection
             val airCapture = captureViewModel.airCaptureArray[captureViewModel.gridPosition]
+            //airCapture = captureViewModel.airCaptureArray[captureViewModel.gridPosition]
             Log.d(TAG,"updateGridViewAdapter soundMeter.deriveDecibel db->${airCapture.decibel}")
             refreshViewModel(airCapture)
             // TODO: invalidate view text?

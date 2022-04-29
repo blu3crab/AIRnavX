@@ -149,68 +149,69 @@ class InspectFragment : Fragment() {
         Log.d(TAG, "onCreateView ratio X/Y $dimRatioX/$dimRatioY")
 
         // establish inspect image gesture detector
-        val gestureDetector = GestureDetector(activity, object : GestureDetector.SimpleOnGestureListener() {
-            override fun onDown(event: MotionEvent?): Boolean {
-                Log.i("TAG", "onCreateView onDown: ")
-                // don't return false here or else none of the other gestures will work
-                return true
-            }
-
-            override fun onSingleTapConfirmed(e: MotionEvent?): Boolean {
-                Log.i("TAG", "onCreateView onSingleTapConfirmed ZOOM IN...")
-                inspectZoomOnTap(InspectViewModel.ZoomDirection.IN)
-                return true
-            }
-
-            override fun onLongPress(e: MotionEvent?) {
-                val x = e?.x?.roundToInt()
-                val y = e?.y?.roundToInt()
-                Log.i("TAG", "onCreateView onLongPress: x $x, y $y")
-                if (x != null && y != null) {
-                    centerBitmap(x, y)
-                }
-            }
-
-            override fun onDoubleTap(e: MotionEvent?): Boolean {
-                if (zoomStepX.size > 0) {
-                    Log.i("TAG", "onCreateView onDoubleTap ZOOM OUT...")
-                    inspectZoomOnTap(InspectViewModel.ZoomDirection.OUT)
-                }
-                else {
-                    Log.i("TAG", "onCreateView onDoubleTap NO ZOOM OUT at full size...")
-                }
-                return true
-            }
-
-            override fun onScroll(
-                e1: MotionEvent?, e2: MotionEvent?,
-                distanceX: Float, distanceY: Float
-            ): Boolean {
-                Log.i("TAG", "onCreateView nScroll: distanceX $distanceX distanceY $distanceY")
-                return true
-            }
-
-            override fun onFling(
-                event1: MotionEvent?, event2: MotionEvent?,
-                velocityX: Float, velocityY: Float
-            ): Boolean {
-                Log.d("TAG", "onCreateView onFling: velocityX $velocityX velocityY $velocityY")
-                return true
-            }
-
-            override fun onShowPress(e: MotionEvent?) {
-                Log.i("TAG", "onCreateView onShowPress: ")
-                return
-            }
-
-        })
-        inspectImageView.setOnTouchListener { _, event -> gestureDetector.onTouchEvent(event) }
-          // TODO: pinch/zoom?
-//        imageViewFull.setOnTouchListener { v, event ->
-//            decodeTouchAction(event)
-//            true
-//        }
+        establishGestureDetector(inspectImageView)
+//        val gestureDetector = GestureDetector(activity, object : GestureDetector.SimpleOnGestureListener() {
+//            override fun onDown(event: MotionEvent?): Boolean {
+//                Log.i("TAG", "onCreateView onDown: ")
+//                // don't return false here or else none of the other gestures will work
+//                return true
+//            }
 //
+//            override fun onSingleTapConfirmed(e: MotionEvent?): Boolean {
+//                Log.i("TAG", "onCreateView onSingleTapConfirmed ZOOM IN...")
+//                inspectZoomOnTap(InspectViewModel.ZoomDirection.IN)
+//                return true
+//            }
+//
+//            override fun onLongPress(e: MotionEvent?) {
+//                val x = e?.x?.roundToInt()
+//                val y = e?.y?.roundToInt()
+//                Log.i("TAG", "onCreateView onLongPress: x $x, y $y")
+//                if (x != null && y != null) {
+//                    centerBitmap(x, y)
+//                }
+//            }
+//
+//            override fun onDoubleTap(e: MotionEvent?): Boolean {
+//                if (zoomStepX.size > 0) {
+//                    Log.i("TAG", "onCreateView onDoubleTap ZOOM OUT...")
+//                    inspectZoomOnTap(InspectViewModel.ZoomDirection.OUT)
+//                }
+//                else {
+//                    Log.i("TAG", "onCreateView onDoubleTap NO ZOOM OUT at full size...")
+//                }
+//                return true
+//            }
+//
+//            override fun onScroll(
+//                e1: MotionEvent?, e2: MotionEvent?,
+//                distanceX: Float, distanceY: Float
+//            ): Boolean {
+//                Log.i("TAG", "onCreateView nScroll: distanceX $distanceX distanceY $distanceY")
+//                return true
+//            }
+//
+//            override fun onFling(
+//                event1: MotionEvent?, event2: MotionEvent?,
+//                velocityX: Float, velocityY: Float
+//            ): Boolean {
+//                Log.d("TAG", "onCreateView onFling: velocityX $velocityX velocityY $velocityY")
+//                return true
+//            }
+//
+//            override fun onShowPress(e: MotionEvent?) {
+//                Log.i("TAG", "onCreateView onShowPress: ")
+//                return
+//            }
+//
+//        })
+//        inspectImageView.setOnTouchListener { _, event -> gestureDetector.onTouchEvent(event) }
+//          // TODO: pinch/zoom?
+////        imageViewFull.setOnTouchListener { v, event ->
+////            decodeTouchAction(event)
+////            true
+////        }
+////
         return root
     }
     // establish button listeners
@@ -300,6 +301,70 @@ class InspectFragment : Fragment() {
         }
     }
 
+    private fun establishGestureDetector(imageView: ImageView) {
+        val gestureDetector = GestureDetector(activity, object : GestureDetector.SimpleOnGestureListener() {
+            override fun onDown(event: MotionEvent?): Boolean {
+                Log.i("TAG", "establishGestureDetector onDown: ")
+                // don't return false here or else none of the other gestures will work
+                return true
+            }
+
+            override fun onSingleTapConfirmed(e: MotionEvent?): Boolean {
+                Log.i("TAG", "establishGestureDetector onSingleTapConfirmed ZOOM IN...")
+                inspectZoomOnTap(InspectViewModel.ZoomDirection.IN)
+                return true
+            }
+
+            override fun onLongPress(e: MotionEvent?) {
+                val x = e?.x?.roundToInt()
+                val y = e?.y?.roundToInt()
+                Log.i("TAG", "establishGestureDetector onLongPress: x $x, y $y")
+                if (x != null && y != null) {
+                    centerBitmap(x, y)
+                }
+            }
+
+            override fun onDoubleTap(e: MotionEvent?): Boolean {
+                if (zoomStepX.size > 0) {
+                    Log.i("TAG", "establishGestureDetector onDoubleTap ZOOM OUT...")
+                    inspectZoomOnTap(InspectViewModel.ZoomDirection.OUT)
+                }
+                else {
+                    Log.i("TAG", "establishGestureDetector onDoubleTap NO ZOOM OUT at full size...")
+                }
+                return true
+            }
+
+            override fun onScroll(
+                e1: MotionEvent?, e2: MotionEvent?,
+                distanceX: Float, distanceY: Float
+            ): Boolean {
+                Log.i("TAG", "establishGestureDetector nScroll: distanceX $distanceX distanceY $distanceY")
+                return true
+            }
+
+            override fun onFling(
+                event1: MotionEvent?, event2: MotionEvent?,
+                velocityX: Float, velocityY: Float
+            ): Boolean {
+                Log.d("TAG", "establishGestureDetector onFling: velocityX $velocityX velocityY $velocityY")
+                return true
+            }
+
+            override fun onShowPress(e: MotionEvent?) {
+                Log.i("TAG", "establishGestureDetector onShowPress: ")
+                return
+            }
+        })
+        imageView.setOnTouchListener { _, event -> gestureDetector.onTouchEvent(event) }
+        // TODO: pinch/zoom?
+//        imageViewFull.setOnTouchListener { v, event ->
+//            decodeTouchAction(event)
+//            true
+//        }
+//
+    }
+
     private fun setCraftIdentList(): ArrayList<String> {
 //        // clear ident list index
 //        inspectViewModel.craftIdentListInx = 0
@@ -365,7 +430,7 @@ class InspectFragment : Fragment() {
         val captureRecorded = airCaptureJson.write(storageDir, airCapture.timestamp, airCapture)
         Log.d(TAG,"dispatchTakePictureIntent onActivityResult captureRecorded $captureRecorded")
         // save AirCapture measured image
-        val imageFilename = airCapture.timestamp + AirConstant.DEFAULT_ZOOM_SUFFIX
+        val imageFilename = AirConstant.DEFAULT_FILE_PREFIX + airCapture.timestamp + AirConstant.DEFAULT_ZOOM_SUFFIX
         var airImageUtil = AirImageUtil()
         val success = airImageUtil.convertBitmapToFile(context!!, inspectBitmap, imageFilename)
     }
