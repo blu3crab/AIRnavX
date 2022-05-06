@@ -102,7 +102,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun establishShareFAB() {
-        val storageDir = this?.getExternalFilesDir(Environment.DIRECTORY_PICTURES)!!
+        val storageDir = this.getExternalFilesDir(Environment.DIRECTORY_PICTURES)!!
         Log.d(TAG, "onCreate storageDir = $storageDir...")
 
         if(storageDir.exists()) {
@@ -112,7 +112,7 @@ class MainActivity : AppCompatActivity() {
 
                 val fileList = storageDir.listFiles()
                 var uriList = ArrayList<Uri>()
-                for (file in fileList) {
+                for (file in fileList!!) {
                     var name = file.name
                     Log.d(TAG, "onShare listFiles file name $name")
                     val airPath = "$storageDir/$name"
@@ -129,8 +129,8 @@ class MainActivity : AppCompatActivity() {
                 // TODO: share succeeds - triggers permission exceptions - why?
                 val intentShareFile = Intent(Intent.ACTION_SEND_MULTIPLE)
                 intentShareFile.putParcelableArrayListExtra(Intent.EXTRA_STREAM, uriList)
-                intentShareFile.type = "image/jpeg";
-                startActivity(Intent.createChooser(intentShareFile, "Share AIR Files"));
+                intentShareFile.type = "image/jpeg"
+                startActivity(Intent.createChooser(intentShareFile, "Share AIR Files"))
             }
         }
 
