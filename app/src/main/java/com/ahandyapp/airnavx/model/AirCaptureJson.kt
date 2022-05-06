@@ -11,10 +11,8 @@ class AirCaptureJson {
     private val TAG = "AirCaptureJson"
 
     fun getAirFilename(type: CaptureViewModel.AirFileType, captureTimestamp : String): String {
-        //var airFilename = captureViewModel.DEFAULT_STRING
         var airFilename = AirConstant.DEFAULT_STRING
         if (type == CaptureViewModel.AirFileType.IMAGE) {
-//            airFilename = "AIR-" + captureTimestamp + "." + AirConstant.DEFAULT_IMAGEFILE_EXT
             airFilename = AirConstant.DEFAULT_FILE_PREFIX + captureTimestamp  + AirConstant.DEFAULT_EXTENSION_SEPARATOR + AirConstant.DEFAULT_IMAGEFILE_EXT
 
         }

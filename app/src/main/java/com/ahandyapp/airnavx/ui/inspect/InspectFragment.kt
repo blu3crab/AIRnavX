@@ -112,7 +112,7 @@ class InspectFragment : Fragment() {
 
         // set inspect image to selected capture thumb
         Log.d(TAG, "onCreateView captureViewModel grid position ${captureViewModel.gridPosition}")
-        captureBitmap = captureViewModel.fullBitmapArray[captureViewModel.gridPosition]
+        captureBitmap = captureViewModel.origBitmapArray[captureViewModel.gridPosition]
         referenceBitmap = captureBitmap
         inspectBitmap = captureBitmap
         inspectImageView.setImageBitmap(captureBitmap)
@@ -120,10 +120,10 @@ class InspectFragment : Fragment() {
         Log.d(TAG, "onCreateView imageViewInspect w/h ${inspectImageView.width}/${inspectImageView.height}")
 
         if (captureBitmap.width < captureBitmap.height) {
-            inspectViewModel.imageOrientation = InspectViewModel.ImageOrientation.PORTRAIT
+            inspectViewModel.imageOrientation = AirConstant.ImageOrientation.PORTRAIT
         }
         else {
-            inspectViewModel.imageOrientation = InspectViewModel.ImageOrientation.LANDSCAPE
+            inspectViewModel.imageOrientation = AirConstant.ImageOrientation.LANDSCAPE
         }
         Log.d(TAG, "onCreateView imageOrientation ${inspectViewModel.imageOrientation}")
 
@@ -222,11 +222,11 @@ class InspectFragment : Fragment() {
         dimensionTextView.text = "H: ${captureBitmap.width} x V: ${captureBitmap.height}"
         dimensionButton.setOnClickListener {
             //Toast.makeText(this.context, "Set dimension to measure - horizontal or vertical...", Toast.LENGTH_SHORT).show()
-            if (inspectViewModel.measureDimension == InspectViewModel.MeasureDimension.HORIZONTAL) {
-                inspectViewModel.measureDimension = InspectViewModel.MeasureDimension.VERTICAL
+            if (inspectViewModel.measureDimension == AirConstant.MeasureDimension.HORIZONTAL) {
+                inspectViewModel.measureDimension = AirConstant.MeasureDimension.VERTICAL
             }
             else {
-                inspectViewModel.measureDimension = InspectViewModel.MeasureDimension.HORIZONTAL
+                inspectViewModel.measureDimension = AirConstant.MeasureDimension.HORIZONTAL
             }
             //updateMeasureDimensionText()
             dimensionButton.text = inspectViewModel.measureDimension.toString()
@@ -239,10 +239,10 @@ class InspectFragment : Fragment() {
         orientButton.text = inspectViewModel.craftOrientation.toString()
         orientButton.setOnClickListener {
             //Toast.makeText(this.context, "Set orientation of measure - wingspan or length-to-tail...", Toast.LENGTH_SHORT).show()
-            if (inspectViewModel.craftOrientation == InspectViewModel.CraftOrientation.WINGSPAN) {
-                inspectViewModel.craftOrientation = InspectViewModel.CraftOrientation.LENGTH            }
+            if (inspectViewModel.craftOrientation == AirConstant.CraftOrientation.WINGSPAN) {
+                inspectViewModel.craftOrientation = AirConstant.CraftOrientation.LENGTH            }
             else {
-                inspectViewModel.craftOrientation = InspectViewModel.CraftOrientation.WINGSPAN
+                inspectViewModel.craftOrientation = AirConstant.CraftOrientation.WINGSPAN
             }
             //updateCraftOrientationText()
             orientButton.text = inspectViewModel.craftOrientation.toString()
@@ -381,7 +381,7 @@ class InspectFragment : Fragment() {
 
     private fun measure() {
         var actualSize: Double = 0.0
-        if (inspectViewModel.craftOrientation == InspectViewModel.CraftOrientation.WINGSPAN) {
+        if (inspectViewModel.craftOrientation == AirConstant.CraftOrientation.WINGSPAN) {
             actualSize = inspectViewModel.craftDimsList[inspectViewModel.craftDimListInx].wingspan
         }
         else {  // LENGTH
@@ -400,7 +400,7 @@ class InspectFragment : Fragment() {
 
         var imageSize: Double = 0.0
         var apparentSize: Double = 0.0
-        if (inspectViewModel.measureDimension == InspectViewModel.MeasureDimension.HORIZONTAL) {
+        if (inspectViewModel.measureDimension == AirConstant.MeasureDimension.HORIZONTAL) {
             imageSize = captureBitmap.width.toDouble()
             apparentSize = inspectViewModel.zoomWidth.toDouble()
         }
@@ -422,17 +422,32 @@ class InspectFragment : Fragment() {
         var altitude: Double = sin(angleRadians) * dist
         Log.d(TAG, "measure-> altitude $altitude !!!!")
 
-        // write AirCapture measures
+        // update & write AirCapture measures
         airCapture.airObjectAltitude = altitude.toDouble()
         airCapture.airObjectDistance = dist.toDouble()
+        airCapture.craftOrientation = inspectViewModel.craftOrientation
+        airCapture.measureDimension = inspectViewModel.measureDimension
+        airCapture.zoomWidth = inspectBitmap.width
+        airCapture.zoomHeight = inspectBitmap.height
+        airCapture.craftId = craftIdentList[inspectViewModel.craftIdentListInx]
+        airCapture.craftType = inspectViewModel.craftDimsList[inspectViewModel.craftDimListInx].craftType
+        airCapture.craftWingspan = inspectViewModel.craftDimsList[inspectViewModel.craftDimListInx].wingspan
+        airCapture.craftLength = inspectViewModel.craftDimsList[inspectViewModel.craftDimListInx].length
         // TODO: return airCapture?
         val storageDir = context?.getExternalFilesDir(Environment.DIRECTORY_PICTURES)!!
         val captureRecorded = airCaptureJson.write(storageDir, airCapture.timestamp, airCapture)
-        Log.d(TAG,"dispatchTakePictureIntent onActivityResult captureRecorded $captureRecorded")
+        Log.d(TAG,"measure captureRecorded $captureRecorded")
         // save AirCapture measured image
         val imageFilename = AirConstant.DEFAULT_FILE_PREFIX + airCapture.timestamp + AirConstant.DEFAULT_ZOOM_SUFFIX
         var airImageUtil = AirImageUtil()
         val success = airImageUtil.convertBitmapToFile(context!!, inspectBitmap, imageFilename)
+        Log.d(TAG,"measure convertBitmapToFile $success for $imageFilename")
+
+        if (success) {
+            // update capture viewmodel zoom bitmap array
+            captureViewModel.zoomBitmapArray[captureViewModel.gridPosition] = inspectBitmap
+            Log.d(TAG,"measure captureViewModel zoomBitmapArray position ${captureViewModel.gridPosition} updated with $imageFilename")
+        }
     }
 
     private fun inspectZoomOnTap(zoomDirection: InspectViewModel.ZoomDirection) {
@@ -454,7 +469,7 @@ class InspectFragment : Fragment() {
         if (zoomDirection == InspectViewModel.ZoomDirection.IN) {
             // set zoomBase & zoomFactor for PORTRAIT
             zoomBase = inspectBitmap.width
-            if (inspectViewModel.imageOrientation == InspectViewModel.ImageOrientation.LANDSCAPE) {
+            if (inspectViewModel.imageOrientation == AirConstant.ImageOrientation.LANDSCAPE) {
                 // set zoomBase & zoomFactor for LANDSCAPE
                 zoomBase = inspectBitmap.height
             }
@@ -477,7 +492,7 @@ class InspectFragment : Fragment() {
                 zoomBase = 8
             }
             Log.d(TAG, "zoomOnBitmap zoomBase $zoomBase")
-            if (inspectViewModel.imageOrientation == InspectViewModel.ImageOrientation.PORTRAIT) {
+            if (inspectViewModel.imageOrientation == AirConstant.ImageOrientation.PORTRAIT) {
                 // adjust stepX leaving stepY unchanged
                 zoomStepX.add((dimRatioX * zoomBase).toInt())
                 zoomStepY.add(zoomBase)

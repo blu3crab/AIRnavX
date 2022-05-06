@@ -1,20 +1,22 @@
 package com.ahandyapp.airnavx.ui.gallery
 
-import android.graphics.Bitmap
+import android.graphics.*
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.ImageView
-import android.widget.TextView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.ahandyapp.airnavx.R
 import com.ahandyapp.airnavx.databinding.FragmentGalleryBinding
 import com.ahandyapp.airnavx.model.AirCapture
+import com.ahandyapp.airnavx.model.AirConstant
+import com.ahandyapp.airnavx.model.AirImageUtil
 import com.ahandyapp.airnavx.ui.capture.CaptureViewModel
 import com.ahandyapp.airnavx.ui.inspect.InspectViewModel
 
@@ -37,6 +39,7 @@ class GalleryFragment : Fragment() {
 
     private lateinit var captureBitmap: Bitmap  // original capture bitmap
     private lateinit var zoomBitmap: Bitmap     // paired zoom bitmap
+    private lateinit var overBitmap: Bitmap     // paired zoom bitmap
     private lateinit var galleryBitmap: Bitmap  // gallery view image bitmap
 
     override fun onCreateView(
@@ -67,17 +70,33 @@ class GalleryFragment : Fragment() {
 
         // set inspect image to selected capture thumb
         Log.d(TAG, "onCreateView captureViewModel grid position ${captureViewModel.gridPosition}")
-        captureBitmap = captureViewModel.fullBitmapArray[captureViewModel.gridPosition]
-        galleryBitmap = captureBitmap
-        galleryImageView.setImageBitmap(captureBitmap)
-        Log.d(TAG, "onCreateView captureBitmap w/h ${captureBitmap.width}/${captureBitmap.height}")
-        Log.d(TAG, "onCreateView imageViewGallery w/h ${galleryImageView.width}/${galleryImageView.height}")
+        captureBitmap = captureViewModel.origBitmapArray[captureViewModel.gridPosition]
+        zoomBitmap = captureViewModel.zoomBitmapArray[captureViewModel.gridPosition]
+        overBitmap = captureViewModel.overBitmapArray[captureViewModel.gridPosition]
+        galleryImageView.setImageBitmap(overBitmap)
+
+        Log.d(TAG,"onCreateView captureBitmap w/h ${captureBitmap.width}/${captureBitmap.height}" )
+        Log.d(TAG,"onCreateView imageViewGallery w/h ${galleryImageView.width}/${galleryImageView.height}")
+
+        // set camera button on-click listener
+        val buttonRefresh = root.findViewById(R.id.button_refresh) as Button
+        buttonRefresh.setOnClickListener {
+            Toast.makeText(this.context, "refreshing overlay...", Toast.LENGTH_SHORT).show()
+            Log.d(TAG, "buttonRefresh.setOnClickListener refresh...")
+            refresh()
+        }
+
+//        overBitmap = overlay(captureBitmap, zoomBitmap)
+//        galleryImageView.setImageBitmap(overBitmap)
+//        // TODO: write gallery bitmap
+//        // save AirCapture measured image
+//        val imageFilename = AirConstant.DEFAULT_FILE_PREFIX + airCapture.timestamp + AirConstant.DEFAULT_OVER_SUFFIX
+//        var airImageUtil = AirImageUtil()
+//        val success = airImageUtil.convertBitmapToFile(context!!, overBitmap, imageFilename)
 
         // connect to inspectViewModel
         val viewModelT2: InspectViewModel by activityViewModels()
         inspectViewModel = viewModelT2
-        // TODO: inspectViewModel stores zoom array?
-        zoomBitmap = captureBitmap
 
         return root
     }
@@ -85,5 +104,111 @@ class GalleryFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+    }
+
+    private fun refresh() {
+        overBitmap = overlay(captureBitmap, zoomBitmap)
+        galleryImageView.setImageBitmap(overBitmap)
+        // TODO: write gallery bitmap
+        // save overlay image
+        val imageFilename = AirConstant.DEFAULT_FILE_PREFIX + airCapture.timestamp + AirConstant.DEFAULT_OVER_SUFFIX
+        var airImageUtil = AirImageUtil()
+        val success = airImageUtil.convertBitmapToFile(context!!, overBitmap, imageFilename)
+        if (success) {
+            // update capture viewmodel overlay bitmap array
+            captureViewModel.overBitmapArray[captureViewModel.gridPosition] = overBitmap
+            Log.d(TAG,"refresh captureViewModel overBitmapArray position ${captureViewModel.gridPosition} updated with $imageFilename")
+        }
+    }
+    private fun overlay(bmp1: Bitmap, bmp2: Bitmap): Bitmap {
+        val bmOverlay = Bitmap.createBitmap(bmp1.width, bmp1.height, bmp1.config)
+        val canvas = Canvas(bmOverlay)
+        canvas.drawBitmap(bmp1, Matrix(), null)
+        // upper left corner
+        //canvas.drawBitmap(bmp2, Rect(0, 0, bmp2.width, bmp2.height), Rect(0, 0, 1024, 1024), null)
+        // lower left corner
+        canvas.drawBitmap(bmp2,
+            Rect(0, 0, bmp2.width, bmp2.height),
+            Rect(0, bmp1.height-1024, 1024, bmp1.height), null)
+//        bmp1.recycle()
+//        bmp2.recycle()
+        // TODO: draw overlay & zoom borders
+        var paint = Paint()
+        paint.setStyle(Paint.Style.STROKE)  // border - no fill
+        paint.setColor(Color.BLACK)
+        paint.setStrokeWidth(16F)
+        // draw zoom border
+        canvas.drawRect(0F, (bmp1.height-1024).toFloat(),1024F,  bmp1.height.toFloat(), paint);
+        paint.setColor(Color.CYAN)
+        paint.setStrokeWidth(32F)
+        // overlay border
+        canvas.drawRect(0F, 0F, bmp1.width.toFloat(), bmp1.height.toFloat(), paint);
+//        paint.setStrokeWidth(0F);
+//        paint.setColor(Color.CYAN);
+//        canvas.drawRect(33F, 60F, 77F, 77F, paint );
+//        paint.setColor(Color.YELLOW);
+//        canvas.drawRect(33F, 33F, 77F, 60F, paint );
+        paint.setColor(Color.BLACK)
+        paint.setStyle(Paint.Style.FILL_AND_STROKE)
+        paint.setStrokeWidth(8F)
+        // initial offsets, size
+        var offsetX = 128F
+        var offsetY = 512F
+        var textsize = 256F
+
+        // primary group: altitude, decibels
+        paint.setTextSize(textsize)
+
+        val altitude = airCapture.airObjectAltitude.toInt()
+        canvas.drawText("Altitude->  $altitude  feet", offsetX, offsetY, paint)
+
+        offsetY += textsize + textsize/2
+        val decibel = airCapture.decibel.toInt()
+        canvas.drawText("Decibels->  $decibel  dB", offsetX, offsetY, paint)
+        // corollary group: camera angle - distance
+        paint.setTextSize(textsize/2)
+
+//        offsetY += textsize + textsize/2
+//        offsetY += textsize + textsize/4
+//        offsetY += textsize + textsize/8
+        offsetY += textsize
+        val craftType = airCapture.craftType
+        val craftId = airCapture.craftId
+        val craftTypeText = "Aircraft->  $craftType   Id-> $craftId"
+        canvas.drawText("$craftTypeText", offsetX, offsetY, paint)
+
+//        offsetY += textsize + textsize/8
+        offsetY += textsize
+        val cameraAngle = airCapture.cameraAngle
+        val dist = airCapture.airObjectDistance.toInt()
+        val cameraDistText = "CameraAngle->  $cameraAngle deg   Distance->  $dist feet"
+        canvas.drawText("$cameraDistText", offsetX, offsetY, paint)
+
+        // craft dimensions
+//        offsetY += textsize + textsize/8
+//        offsetY += textsize
+        offsetY = (bmp1.height-1024) - (textsize * 2)
+        val craftWingspan = airCapture.craftWingspan
+        val craftLength = airCapture.craftLength
+        val craftDimsText = "wingspan $craftWingspan feet X length $craftLength feet"
+        canvas.drawText("$craftDimsText", offsetX, offsetY, paint)
+
+        // measure WINGSPAN | LENGTH, HORIZONTAL | VERTICAL
+        offsetY += textsize
+        val craftOrientation = airCapture.craftOrientation  // WINGSPAN | LENGTH
+        val measureDimension = airCapture.measureDimension  // HORIZONTAL | VERTICAL
+        val measureText = "Measure->  $craftOrientation $measureDimension"
+        canvas.drawText("$measureText", offsetX, offsetY, paint)
+
+        // TODO: zoom wxh
+        offsetX = 1024F + 128F
+        offsetY += (textsize * 2)
+        val zoomWidth = airCapture.zoomWidth
+        val zoomHeight = airCapture.zoomHeight
+        val zoomText = "Zoom w X h ->  $zoomWidth X $zoomHeight pixels"
+        canvas.drawText("$zoomText", offsetX, offsetY, paint)
+
+
+        return bmOverlay
     }
 }

@@ -30,10 +30,10 @@ import com.ahandyapp.airnavx.R
 import com.ahandyapp.airnavx.databinding.FragmentCaptureBinding
 import com.ahandyapp.airnavx.model.AirCaptureJson
 import com.ahandyapp.airnavx.model.AirConstant
+import com.ahandyapp.airnavx.model.AirConstant.DEFAULT_OVER_SUFFIX
 import com.ahandyapp.airnavx.model.AirConstant.DEFAULT_STRING
 import com.ahandyapp.airnavx.model.AirConstant.DEFAULT_ZOOM_SUFFIX
 import com.ahandyapp.airnavx.ui.grid.GridViewAdapter
-import com.ahandyapp.airnavx.ui.inspect.InspectViewModel
 import java.io.FileNotFoundException
 import java.io.IOException
 import java.nio.file.Files
@@ -246,9 +246,11 @@ class CaptureFragment : Fragment() {
 
                         // extract thumbnail at scale factor
                         val thumbBitmap = extractThumbnail(currentPhotoPath, airCaptureBitmap, captureViewModel.THUMB_SCALE_FACTOR)
-                        val zoomBitmap = airCaptureBitmap
-                       // add set to view model
-                        addViewModelSet(captureViewModel, gridView, imageViewPreview, airCaptureBitmap, thumbBitmap, zoomBitmap, airCapture)
+//                        val zoomBitmap = airCaptureBitmap
+//                        val overBitmap = airCaptureBitmap
+                        // add set to view model
+                        addViewModelSet(captureViewModel, gridView, imageViewPreview,
+                            airCaptureBitmap, thumbBitmap, null, null, airCapture)
 
                         // write AirCapture
                         val storageDir = context?.getExternalFilesDir(Environment.DIRECTORY_PICTURES)!!
@@ -336,8 +338,9 @@ class CaptureFragment : Fragment() {
                 captureViewModel.gridPosition = 0
                 captureViewModel.gridCount = 0
                 captureViewModel.gridLabelArray.clear()
-                captureViewModel.fullBitmapArray.clear()
+                captureViewModel.origBitmapArray.clear()
                 captureViewModel.zoomBitmapArray.clear()
+                captureViewModel.overBitmapArray.clear()
                 captureViewModel.airCaptureArray.clear()
 
                 Log.i("TAG", "showAlertDialog resetting view model...")
@@ -459,10 +462,12 @@ class CaptureFragment : Fragment() {
         captureViewModel.gridBitmapArray.add(blankBitmap)
         ++captureViewModel.gridCount
         captureViewModel.gridLabelArray.add("thumb${captureViewModel.gridCount}")
-        captureViewModel.fullBitmapArray.add(blankBitmap)
+        captureViewModel.origBitmapArray.add(blankBitmap)
         captureViewModel.zoomBitmapArray.add(blankBitmap)
+        captureViewModel.overBitmapArray.add(blankBitmap)
         captureViewModel.airCaptureArray.add(airCapture)
         // initialize gridViewAdapter
+        captureViewModel.gridPosition = 0
         updateGridViewAdapter(
             gridView,
             captureViewModel.gridLabelArray,
@@ -532,31 +537,43 @@ class CaptureFragment : Fragment() {
                 )
                 // add view model set
                 if (airCaptureBitmap != null) {
-                    // TODO: attempt to open associated zoom image file
-                    var zoomBitmap = fetchZoomBitmap(name)
+                    // attempt to open associated zoom image file
+                    var zoomBitmap = fetchBitmap(name, DEFAULT_ZOOM_SUFFIX)
                     if (zoomBitmap != null) {
                         Log.d(TAG,"fetchViewModel zoomBitmap w x h = ${zoomBitmap.width} x ${zoomBitmap.height}")
                     }
-                    else {
-                        zoomBitmap = airCaptureBitmap
-                        Log.d(TAG,"fetchViewModel airCaptureBitmap w x h = ${zoomBitmap.width} x ${zoomBitmap.height}")
+//                    else {
+//                        zoomBitmap = airCaptureBitmap
+//                        Log.d(TAG,"fetchViewModel airCaptureBitmap w x h = ${zoomBitmap.width} x ${zoomBitmap.height}")
+//                    }
+                    // attempt to open associated over image file
+                    var overBitmap = fetchBitmap(name, DEFAULT_OVER_SUFFIX)
+                    if (overBitmap != null) {
+                        Log.d(TAG,"fetchViewModel overBitmap w x h = ${overBitmap.width} x ${overBitmap.height}")
                     }
+//                    else {
+//                        overBitmap = airCaptureBitmap
+//                        Log.d(TAG,"fetchViewModel airCaptureBitmap w x h = ${overBitmap.width} x ${overBitmap.height}")
+//                    }
+
                     // extract thumbnail at scale factor
                     val thumbBitmap = extractThumbnail(airImagePath, airCaptureBitmap, captureViewModel.THUMB_SCALE_FACTOR)
                     // add set to view model
-                    addViewModelSet(captureViewModel, gridView, imageViewPreview, airCaptureBitmap, thumbBitmap, zoomBitmap, airCapture)
+                    addViewModelSet(captureViewModel, gridView, imageViewPreview,
+                        airCaptureBitmap, thumbBitmap, zoomBitmap, overBitmap, airCapture)
                 }
             }
         }
         return true
     }
 
-    private fun fetchZoomBitmap(name: String): Bitmap? {
+    private fun fetchBitmap(name: String, suffix: String): Bitmap? {
         var zoomBitmap: Bitmap? = null
         try {
             val storageDir = context?.getExternalFilesDir(Environment.DIRECTORY_PICTURES)!!
             val airImageName =
-                name + DEFAULT_ZOOM_SUFFIX + AirConstant.DEFAULT_EXTENSION_SEPARATOR + AirConstant.DEFAULT_IMAGEFILE_EXT
+                name + suffix + AirConstant.DEFAULT_EXTENSION_SEPARATOR + AirConstant.DEFAULT_IMAGEFILE_EXT
+//            name + DEFAULT_ZOOM_SUFFIX + AirConstant.DEFAULT_EXTENSION_SEPARATOR + AirConstant.DEFAULT_IMAGEFILE_EXT
             Log.d(TAG, "fetchZoomBitmap airImageName $airImageName...")
             val airImagePath = storageDir.toString() + File.separator + airImageName
             Log.d(TAG, "fetchZoomBitmap airImagePath $airImagePath...")
@@ -594,7 +611,8 @@ class CaptureFragment : Fragment() {
                                 imageViewPreview: ImageView,
                                 airImageBitmap: Bitmap,
                                 thumbBitmap: Bitmap,
-                                zoomBitmap: Bitmap,
+                                zoomBitmap: Bitmap?,
+                                overBitmap: Bitmap?,
                                 airCapture: AirCapture): Boolean {
         // rotate thumb bitmap
         val rotatedThumbBitmap = rotateBitmap(thumbBitmap, airCapture.exifRotation.toFloat())
@@ -603,13 +621,28 @@ class CaptureFragment : Fragment() {
         ++captureViewModel.gridCount
         captureViewModel.gridLabelArray.add("thumb${captureViewModel.gridCount}")
         captureViewModel.gridBitmapArray.add(0, rotatedThumbBitmap)
+        captureViewModel.gridPosition = 0
         updateGridViewAdapter(gridView, captureViewModel.gridLabelArray, captureViewModel.gridBitmapArray)
         // rotate full bitmap
         val fullBitmap = rotateBitmap(airImageBitmap, airCapture.exifRotation.toFloat())
         // add full bitmap into array
-        captureViewModel.fullBitmapArray.add(0, fullBitmap)
-        // add place holder zoom bitmap
-        captureViewModel.zoomBitmapArray.add(0, zoomBitmap)
+        captureViewModel.origBitmapArray.add(0, fullBitmap)
+        // if zoom & overlay are copies of the full bitmap, assign rotated full bitmap
+        if (zoomBitmap == null) {
+            captureViewModel.zoomBitmapArray.add(0, fullBitmap)
+        }
+        else {
+//            val zoomBitmap = rotateBitmap(zoomBitmap, airCapture.exifRotation.toFloat())
+            captureViewModel.zoomBitmapArray.add(0, zoomBitmap)
+        }
+
+        if (overBitmap == null) {
+            captureViewModel.overBitmapArray.add(0, fullBitmap)
+        }
+        else {
+//            val overBitmap = rotateBitmap(overBitmap, airCapture.exifRotation.toFloat())
+            captureViewModel.overBitmapArray.add(0, overBitmap)
+        }
         // add aircapture
         captureViewModel.airCaptureArray.add(0, airCapture)
         return true
@@ -620,7 +653,7 @@ class CaptureFragment : Fragment() {
         gridLabelArray: ArrayList<String>,
         gridBitmapArray: ArrayList<Bitmap>) {
 
-        captureViewModel.gridPosition = 0
+//        captureViewModel.gridPosition = 0
 
         val gridViewAdapter = GridViewAdapter(this.requireContext(), gridLabelArray, gridBitmapArray)
         gridView.adapter = gridViewAdapter

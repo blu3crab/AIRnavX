@@ -13,6 +13,7 @@
     <string name="menu_inspect">Inspect</string>
     <!--TODO: CAMERA -> CAPTURE?-->
     <string name="button_camera">CAMERA</string>
+    <string name="button_refresh">REFRESH</string>
 
     <!-- measure buttons   -->
     <string name="button_dimension">DIMENSION</string>

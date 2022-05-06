@@ -34,8 +34,9 @@ class CaptureViewModel : ViewModel() {
     var gridBitmapArray = ArrayList<Bitmap>()
     var gridLabelArray = ArrayList<String>()
 
-    var fullBitmapArray = ArrayList<Bitmap>()
+    var origBitmapArray = ArrayList<Bitmap>()
     var zoomBitmapArray = ArrayList<Bitmap>()
+    var overBitmapArray = ArrayList<Bitmap>()
     var airCaptureArray = ArrayList<AirCapture>()
     ///////////////////////////////////////////////////////////////////////////
     // live data
