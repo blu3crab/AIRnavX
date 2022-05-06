@@ -42,11 +42,68 @@ class MainActivity : AppCompatActivity() {
 
         setSupportActionBar(binding.appBarMain.toolbar)
 
+        establishShareFAB()
+//
+//        val storageDir = this?.getExternalFilesDir(Environment.DIRECTORY_PICTURES)!!
+//        Log.d(TAG, "onCreate storageDir = $storageDir...")
+////        val jpegPath = "$storageDir/AIR-20220302_165123.jpg"
+////        Log.d(TAG, "onCreate jpegPath = $jpegPath...")
+////        val jpegFile = File(jpegPath)
+//
+//        if(storageDir.exists()) {
+//            binding.appBarMain.fab.setOnClickListener { view ->
+//                val authority = this.applicationContext.packageName.toString()
+//                Log.d(TAG, "onShare authority = $authority...")
+//
+//                val fileList = storageDir.listFiles()
+//                var uriList = ArrayList<Uri>()
+//                for (file in fileList) {
+//                    var name = file.name
+//                    Log.d(TAG, "onShare listFiles file name $name")
+//                    val airPath = "$storageDir/$name"
+//                    Log.d(TAG, "onCreate airPath = $airPath...")
+//                    val airFile = File(airPath)
+//
+//                    val uri = FileProvider.getUriForFile(
+//                        this,
+//                        this.applicationContext.packageName.toString(),
+//                        airFile
+//                    )
+//                    uriList.add(uri)
+//                }
+//                // TODO: share succeeds - triggers permission exceptions - why?
+//                val intentShareFile = Intent(Intent.ACTION_SEND_MULTIPLE)
+//                intentShareFile.putParcelableArrayListExtra(Intent.EXTRA_STREAM, uriList)
+//                intentShareFile.type = "image/jpeg";
+//                startActivity(Intent.createChooser(intentShareFile, "Share AIR Files"));
+//            }
+//        }
+        val drawerLayout: DrawerLayout = binding.drawerLayout
+        val navView: NavigationView = binding.navView
+        val navController = findNavController(R.id.nav_host_fragment_content_main)
+        // Passing each menu ID as a set of Ids because each
+        // menu should be considered as top level destinations.
+        appBarConfiguration = AppBarConfiguration(
+            setOf(
+                // Sense & Inspect -> top arrow nav to Capture
+                // Gallery -> top menu hamburger
+                R.id.nav_capture, R.id.nav_gallery
+                //R.id.nav_capture, R.id.nav_gallery, R.id.nav_inspect
+                //R.id.nav_capture, R.id.nav_inspect, R.id.nav_gallery, R.id.nav_sense
+            ), drawerLayout
+        )
+        setupActionBarWithNavController(navController, appBarConfiguration)
+        navView.setupWithNavController(navController)
+
+        if (!hasPermissions(this, PERMISSIONS_REQUIRED)) {
+            Log.d(TAG, "onCreate hasPermissions FALSE...")
+            requestPermissions(PERMISSIONS_REQUIRED, PERMISSIONS_REQUEST_CODE)
+        }
+    }
+
+    private fun establishShareFAB() {
         val storageDir = this?.getExternalFilesDir(Environment.DIRECTORY_PICTURES)!!
         Log.d(TAG, "onCreate storageDir = $storageDir...")
-//        val jpegPath = "$storageDir/AIR-20220302_165123.jpg"
-//        Log.d(TAG, "onCreate jpegPath = $jpegPath...")
-//        val jpegFile = File(jpegPath)
 
         if(storageDir.exists()) {
             binding.appBarMain.fab.setOnClickListener { view ->
@@ -76,29 +133,8 @@ class MainActivity : AppCompatActivity() {
                 startActivity(Intent.createChooser(intentShareFile, "Share AIR Files"));
             }
         }
-        val drawerLayout: DrawerLayout = binding.drawerLayout
-        val navView: NavigationView = binding.navView
-        val navController = findNavController(R.id.nav_host_fragment_content_main)
-        // Passing each menu ID as a set of Ids because each
-        // menu should be considered as top level destinations.
-        appBarConfiguration = AppBarConfiguration(
-            setOf(
-                // Sense & Inspect -> top arrow nav to Capture
-                // Gallery -> top menu hamburger
-                R.id.nav_capture, R.id.nav_gallery
-                //R.id.nav_capture, R.id.nav_gallery, R.id.nav_inspect
-                //R.id.nav_capture, R.id.nav_inspect, R.id.nav_gallery, R.id.nav_sense
-            ), drawerLayout
-        )
-        setupActionBarWithNavController(navController, appBarConfiguration)
-        navView.setupWithNavController(navController)
 
-        if (!hasPermissions(this, PERMISSIONS_REQUIRED)) {
-            Log.d(TAG, "onCreate hasPermissions FALSE...")
-            requestPermissions(PERMISSIONS_REQUIRED, PERMISSIONS_REQUEST_CODE)
-        }
     }
-
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         // Inflate the menu; this adds items to the action bar if it is present.
         menuInflater.inflate(R.menu.main, menu)

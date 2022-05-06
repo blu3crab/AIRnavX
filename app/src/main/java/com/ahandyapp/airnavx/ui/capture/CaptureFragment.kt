@@ -56,7 +56,6 @@ class CaptureFragment : Fragment() {
     private lateinit var textViewAngle: TextView
     private lateinit var imageViewPreview: ImageView       // preview image display
     private lateinit var gridView: GridView
-//    private lateinit var airCapture: AirCapture
 
     // property is only valid between onCreateView and onDestroyView.
     private val binding get() = _binding!!
@@ -108,12 +107,7 @@ class CaptureFragment : Fragment() {
             Log.d(TAG, "buttonCamera.setOnClickListener launching camera...")
             dispatchTakePictureIntent()
         }
-        // TODO: button - delete capture set (single view model entry)
-        // TODO: button - new session (createEmptyViewModel)
 
-        //val previewViewIdString = "imageViewPreview"
-        //val previewViewId = resources.getIdentifier(previewViewIdString, "id", packageName)
-        //imageViewPreview = root.findViewById(previewViewId) as ImageView
         imageViewPreview = root.findViewById(R.id.imageview_preview) as ImageView
 
         // establish grid view
@@ -143,6 +137,9 @@ class CaptureFragment : Fragment() {
         }
         // establish image gesture detector
         establishGestureDetector(imageViewPreview)
+
+//        establishShareFAB()
+
         return root
     }
 
@@ -160,6 +157,40 @@ class CaptureFragment : Fragment() {
         super.onPause()
         Log.d(TAG, "onPause...")
     }
+
+//    private fun establishShareFAB() {
+//
+//        val storageDir = context?.getExternalFilesDir(Environment.DIRECTORY_PICTURES)!!
+//        Log.d(TAG, "onCreate storageDir = $storageDir...")
+//
+//        if(storageDir.exists()) {
+//            binding.appBarMain.fab.setOnClickListener {
+//                val authority = context!!.applicationContext.packageName.toString()
+//                Log.d(TAG, "onShare authority = $authority...")
+//
+//                val fileList = storageDir.listFiles()
+//                var uriList = ArrayList<Uri>()
+//                for (file in fileList) {
+//                    var name = file.name
+//                    Log.d(TAG, "onShare listFiles file name $name")
+//                    val airPath = "$storageDir/$name"
+//                    Log.d(TAG, "onCreate airPath = $airPath...")
+//                    val airFile = File(airPath)
+//
+//                    val uri = FileProvider.getUriForFile(
+//                        context!!,
+//                        context!!.packageName.toString(),
+//                        airFile
+//                    )
+//                    uriList.add(uri)
+//                }
+//                val intentShareFile = Intent(Intent.ACTION_SEND_MULTIPLE)
+//                intentShareFile.putParcelableArrayListExtra(Intent.EXTRA_STREAM, uriList)
+//                intentShareFile.type = "image/jpeg";
+//                startActivity(Intent.createChooser(intentShareFile, "Share AIR Files"));
+//            }
+//        }
+//    }
 
     private fun dispatchTakePictureIntent() {
         // start/exercise angle & sound meters
@@ -246,8 +277,6 @@ class CaptureFragment : Fragment() {
 
                         // extract thumbnail at scale factor
                         val thumbBitmap = extractThumbnail(currentPhotoPath, airCaptureBitmap, captureViewModel.THUMB_SCALE_FACTOR)
-//                        val zoomBitmap = airCaptureBitmap
-//                        val overBitmap = airCaptureBitmap
                         // add set to view model
                         addViewModelSet(captureViewModel, gridView, imageViewPreview,
                             airCaptureBitmap, thumbBitmap, null, null, airCapture)
@@ -305,6 +334,7 @@ class CaptureFragment : Fragment() {
                 return true
             }
 
+            // LONGPRESS -> delete selected set
             override fun onLongPress(e: MotionEvent?) {
                 val x = e?.x?.roundToInt()
                 val y = e?.y?.roundToInt()
@@ -327,12 +357,14 @@ class CaptureFragment : Fragment() {
                 return true
             }
 
+            // FLING -> refresh from files
             override fun onFling(
                 event1: MotionEvent?, event2: MotionEvent?,
                 velocityX: Float, velocityY: Float
             ): Boolean {
                 Log.d("TAG", "establishGestureDetector onFling: velocityX $velocityX velocityY $velocityY")
                 Log.i("TAG", "establishGestureDetector resetting view model...")
+                Toast.makeText(context, "Fetching AIR capture files from storage...", Toast.LENGTH_SHORT).show()
 
                 // reset viewmodel grid
                 captureViewModel.gridPosition = 0
@@ -364,12 +396,6 @@ class CaptureFragment : Fragment() {
             }
         })
         imageView.setOnTouchListener { _, event -> gestureDetector.onTouchEvent(event) }
-        // TODO: pinch/zoom?
-//        imageViewFull.setOnTouchListener { v, event ->
-//            decodeTouchAction(event)
-//            true
-//        }
-//
     }
 
     private fun showAlertDialog() {
@@ -384,6 +410,7 @@ class CaptureFragment : Fragment() {
             .setPositiveButton("Delete", DialogInterface.OnClickListener {
                     dialog, id ->
                 val airCapture = captureViewModel.airCaptureArray[captureViewModel.gridPosition]
+                Toast.makeText(context, "Deleting AIR capture files for ${airCapture.timestamp}...", Toast.LENGTH_SHORT).show()
                 Log.d("TAG", "showAlertDialog deleting AIR capture files for ${airCapture.timestamp}")
                 try {
                     // set path = storage dir + time.jpg
@@ -423,13 +450,6 @@ class CaptureFragment : Fragment() {
                 } catch (ioException: IOException) {
                     ioException.printStackTrace()
                 } finally {
-                    // reset viewmodel grid selection
-//                    captureViewModel.gridBitmapArray[captureViewModel.gridPosition].
-//                    gridLabelArray
-//                    fullBitmapArray
-//                    airCaptureArray
-//                    Log.i("TAG", "showAlertDialog resetting view model...")
-//                    fetchViewModel()
                 }
 
                 dialog.dismiss()
