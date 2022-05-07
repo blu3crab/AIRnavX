@@ -43,41 +43,7 @@ class MainActivity : AppCompatActivity() {
         setSupportActionBar(binding.appBarMain.toolbar)
 
         establishShareFAB()
-//
-//        val storageDir = this?.getExternalFilesDir(Environment.DIRECTORY_PICTURES)!!
-//        Log.d(TAG, "onCreate storageDir = $storageDir...")
-////        val jpegPath = "$storageDir/AIR-20220302_165123.jpg"
-////        Log.d(TAG, "onCreate jpegPath = $jpegPath...")
-////        val jpegFile = File(jpegPath)
-//
-//        if(storageDir.exists()) {
-//            binding.appBarMain.fab.setOnClickListener { view ->
-//                val authority = this.applicationContext.packageName.toString()
-//                Log.d(TAG, "onShare authority = $authority...")
-//
-//                val fileList = storageDir.listFiles()
-//                var uriList = ArrayList<Uri>()
-//                for (file in fileList) {
-//                    var name = file.name
-//                    Log.d(TAG, "onShare listFiles file name $name")
-//                    val airPath = "$storageDir/$name"
-//                    Log.d(TAG, "onCreate airPath = $airPath...")
-//                    val airFile = File(airPath)
-//
-//                    val uri = FileProvider.getUriForFile(
-//                        this,
-//                        this.applicationContext.packageName.toString(),
-//                        airFile
-//                    )
-//                    uriList.add(uri)
-//                }
-//                // TODO: share succeeds - triggers permission exceptions - why?
-//                val intentShareFile = Intent(Intent.ACTION_SEND_MULTIPLE)
-//                intentShareFile.putParcelableArrayListExtra(Intent.EXTRA_STREAM, uriList)
-//                intentShareFile.type = "image/jpeg";
-//                startActivity(Intent.createChooser(intentShareFile, "Share AIR Files"));
-//            }
-//        }
+
         val drawerLayout: DrawerLayout = binding.drawerLayout
         val navView: NavigationView = binding.navView
         val navController = findNavController(R.id.nav_host_fragment_content_main)

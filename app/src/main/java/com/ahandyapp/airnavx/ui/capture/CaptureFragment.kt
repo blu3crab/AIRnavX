@@ -30,9 +30,6 @@ import com.ahandyapp.airnavx.R
 import com.ahandyapp.airnavx.databinding.FragmentCaptureBinding
 import com.ahandyapp.airnavx.model.AirCaptureJson
 import com.ahandyapp.airnavx.model.AirConstant
-import com.ahandyapp.airnavx.model.AirConstant.DEFAULT_OVER_SUFFIX
-import com.ahandyapp.airnavx.model.AirConstant.DEFAULT_STRING
-import com.ahandyapp.airnavx.model.AirConstant.DEFAULT_ZOOM_SUFFIX
 import com.ahandyapp.airnavx.ui.grid.GridViewAdapter
 import java.io.FileNotFoundException
 import java.io.IOException
@@ -70,7 +67,7 @@ class CaptureFragment : Fragment() {
     //      onActivityResult - pipeline image capture data stream
     private val REQUEST_IMAGE_CAPTURE = 1001
     private lateinit var captureFile: File                  // capture file
-    private var captureTimestamp: String = DEFAULT_STRING   // capture file creation timestamp
+    private var captureTimestamp: String = AirConstant.DEFAULT_STRING   // capture file creation timestamp
     private var airCaptureJson: AirCaptureJson = AirCaptureJson()
 
     /////////////////////////////life-cycle////////////////////////////////////
@@ -138,8 +135,6 @@ class CaptureFragment : Fragment() {
         // establish image gesture detector
         establishGestureDetector(imageViewPreview)
 
-//        establishShareFAB()
-
         return root
     }
 
@@ -157,40 +152,6 @@ class CaptureFragment : Fragment() {
         super.onPause()
         Log.d(TAG, "onPause...")
     }
-
-//    private fun establishShareFAB() {
-//
-//        val storageDir = context?.getExternalFilesDir(Environment.DIRECTORY_PICTURES)!!
-//        Log.d(TAG, "onCreate storageDir = $storageDir...")
-//
-//        if(storageDir.exists()) {
-//            binding.appBarMain.fab.setOnClickListener {
-//                val authority = context!!.applicationContext.packageName.toString()
-//                Log.d(TAG, "onShare authority = $authority...")
-//
-//                val fileList = storageDir.listFiles()
-//                var uriList = ArrayList<Uri>()
-//                for (file in fileList) {
-//                    var name = file.name
-//                    Log.d(TAG, "onShare listFiles file name $name")
-//                    val airPath = "$storageDir/$name"
-//                    Log.d(TAG, "onCreate airPath = $airPath...")
-//                    val airFile = File(airPath)
-//
-//                    val uri = FileProvider.getUriForFile(
-//                        context!!,
-//                        context!!.packageName.toString(),
-//                        airFile
-//                    )
-//                    uriList.add(uri)
-//                }
-//                val intentShareFile = Intent(Intent.ACTION_SEND_MULTIPLE)
-//                intentShareFile.putParcelableArrayListExtra(Intent.EXTRA_STREAM, uriList)
-//                intentShareFile.type = "image/jpeg";
-//                startActivity(Intent.createChooser(intentShareFile, "Share AIR Files"));
-//            }
-//        }
-//    }
 
     private fun dispatchTakePictureIntent() {
         // start/exercise angle & sound meters
@@ -415,7 +376,6 @@ class CaptureFragment : Fragment() {
                 try {
                     // set path = storage dir + time.jpg
                     val storageDir = context?.getExternalFilesDir(Environment.DIRECTORY_PICTURES)!!
-                    // TODO: storageDir.toString + File.delimiter
                     val imagePath = Paths.get(storageDir.toString() + File.separator +
                             AirConstant.DEFAULT_FILE_PREFIX + airCapture.timestamp  +
                             AirConstant.DEFAULT_EXTENSION_SEPARATOR + AirConstant.DEFAULT_IMAGEFILE_EXT)
@@ -558,23 +518,15 @@ class CaptureFragment : Fragment() {
                 // add view model set
                 if (airCaptureBitmap != null) {
                     // attempt to open associated zoom image file
-                    var zoomBitmap = fetchBitmap(name, DEFAULT_ZOOM_SUFFIX)
+                    var zoomBitmap = fetchBitmap(name, AirConstant.DEFAULT_ZOOM_SUFFIX)
                     if (zoomBitmap != null) {
                         Log.d(TAG,"fetchViewModel zoomBitmap w x h = ${zoomBitmap.width} x ${zoomBitmap.height}")
                     }
-//                    else {
-//                        zoomBitmap = airCaptureBitmap
-//                        Log.d(TAG,"fetchViewModel airCaptureBitmap w x h = ${zoomBitmap.width} x ${zoomBitmap.height}")
-//                    }
                     // attempt to open associated over image file
-                    var overBitmap = fetchBitmap(name, DEFAULT_OVER_SUFFIX)
+                    var overBitmap = fetchBitmap(name, AirConstant.DEFAULT_OVER_SUFFIX)
                     if (overBitmap != null) {
                         Log.d(TAG,"fetchViewModel overBitmap w x h = ${overBitmap.width} x ${overBitmap.height}")
                     }
-//                    else {
-//                        overBitmap = airCaptureBitmap
-//                        Log.d(TAG,"fetchViewModel airCaptureBitmap w x h = ${overBitmap.width} x ${overBitmap.height}")
-//                    }
 
                     // extract thumbnail at scale factor
                     val thumbBitmap = extractThumbnail(airImagePath, airCaptureBitmap, captureViewModel.THUMB_SCALE_FACTOR)
@@ -593,7 +545,6 @@ class CaptureFragment : Fragment() {
             val storageDir = context?.getExternalFilesDir(Environment.DIRECTORY_PICTURES)!!
             val airImageName =
                 name + suffix + AirConstant.DEFAULT_EXTENSION_SEPARATOR + AirConstant.DEFAULT_IMAGEFILE_EXT
-//            name + DEFAULT_ZOOM_SUFFIX + AirConstant.DEFAULT_EXTENSION_SEPARATOR + AirConstant.DEFAULT_IMAGEFILE_EXT
             Log.d(TAG, "fetchZoomBitmap airImageName $airImageName...")
             val airImagePath = storageDir.toString() + File.separator + airImageName
             Log.d(TAG, "fetchZoomBitmap airImagePath $airImagePath...")
@@ -652,7 +603,6 @@ class CaptureFragment : Fragment() {
             captureViewModel.zoomBitmapArray.add(0, fullBitmap)
         }
         else {
-//            val zoomBitmap = rotateBitmap(zoomBitmap, airCapture.exifRotation.toFloat())
             captureViewModel.zoomBitmapArray.add(0, zoomBitmap)
         }
 
@@ -660,7 +610,6 @@ class CaptureFragment : Fragment() {
             captureViewModel.overBitmapArray.add(0, fullBitmap)
         }
         else {
-//            val overBitmap = rotateBitmap(overBitmap, airCapture.exifRotation.toFloat())
             captureViewModel.overBitmapArray.add(0, overBitmap)
         }
         // add aircapture
@@ -688,8 +637,6 @@ class CaptureFragment : Fragment() {
             //airCapture = captureViewModel.airCaptureArray[captureViewModel.gridPosition]
             Log.d(TAG,"updateGridViewAdapter soundMeter.deriveDecibel db->${airCapture.decibel}")
             refreshViewModel(airCapture)
-            // TODO: invalidate view text?
-            //captureViewModel.apply {  }
         }
     }
 
@@ -757,7 +704,6 @@ class CaptureFragment : Fragment() {
     }
 
     private fun extractExif(photoFile: File, airCapture: AirCapture): Boolean {
-        // TODO: extractEXIF(photoFile): Boolean
         try {
             // extract EXIF attributes from photoFile
             var rotation = 0

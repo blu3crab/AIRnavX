@@ -130,7 +130,6 @@ class InspectFragment : Fragment() {
         // establish measure button listeners
         this.context?.let { setButtonListeners(root, it) }
 
-        // TODO: image attri data object
         // set image attributes
         referenceUpperLeftX = 0
         referenceUpperLeftY = 0
@@ -150,68 +149,7 @@ class InspectFragment : Fragment() {
 
         // establish inspect image gesture detector
         establishGestureDetector(inspectImageView)
-//        val gestureDetector = GestureDetector(activity, object : GestureDetector.SimpleOnGestureListener() {
-//            override fun onDown(event: MotionEvent?): Boolean {
-//                Log.i("TAG", "onCreateView onDown: ")
-//                // don't return false here or else none of the other gestures will work
-//                return true
-//            }
-//
-//            override fun onSingleTapConfirmed(e: MotionEvent?): Boolean {
-//                Log.i("TAG", "onCreateView onSingleTapConfirmed ZOOM IN...")
-//                inspectZoomOnTap(InspectViewModel.ZoomDirection.IN)
-//                return true
-//            }
-//
-//            override fun onLongPress(e: MotionEvent?) {
-//                val x = e?.x?.roundToInt()
-//                val y = e?.y?.roundToInt()
-//                Log.i("TAG", "onCreateView onLongPress: x $x, y $y")
-//                if (x != null && y != null) {
-//                    centerBitmap(x, y)
-//                }
-//            }
-//
-//            override fun onDoubleTap(e: MotionEvent?): Boolean {
-//                if (zoomStepX.size > 0) {
-//                    Log.i("TAG", "onCreateView onDoubleTap ZOOM OUT...")
-//                    inspectZoomOnTap(InspectViewModel.ZoomDirection.OUT)
-//                }
-//                else {
-//                    Log.i("TAG", "onCreateView onDoubleTap NO ZOOM OUT at full size...")
-//                }
-//                return true
-//            }
-//
-//            override fun onScroll(
-//                e1: MotionEvent?, e2: MotionEvent?,
-//                distanceX: Float, distanceY: Float
-//            ): Boolean {
-//                Log.i("TAG", "onCreateView nScroll: distanceX $distanceX distanceY $distanceY")
-//                return true
-//            }
-//
-//            override fun onFling(
-//                event1: MotionEvent?, event2: MotionEvent?,
-//                velocityX: Float, velocityY: Float
-//            ): Boolean {
-//                Log.d("TAG", "onCreateView onFling: velocityX $velocityX velocityY $velocityY")
-//                return true
-//            }
-//
-//            override fun onShowPress(e: MotionEvent?) {
-//                Log.i("TAG", "onCreateView onShowPress: ")
-//                return
-//            }
-//
-//        })
-//        inspectImageView.setOnTouchListener { _, event -> gestureDetector.onTouchEvent(event) }
-//          // TODO: pinch/zoom?
-////        imageViewFull.setOnTouchListener { v, event ->
-////            decodeTouchAction(event)
-////            true
-////        }
-////
+
         return root
     }
     // establish button listeners
@@ -357,19 +295,9 @@ class InspectFragment : Fragment() {
             }
         })
         imageView.setOnTouchListener { _, event -> gestureDetector.onTouchEvent(event) }
-        // TODO: pinch/zoom?
-//        imageViewFull.setOnTouchListener { v, event ->
-//            decodeTouchAction(event)
-//            true
-//        }
-//
     }
 
     private fun setCraftIdentList(): ArrayList<String> {
-//        // clear ident list index
-//        inspectViewModel.craftIdentListInx = 0
-        // set ident list based on selected type
-//            var craftIdentList: ArrayList<String>
         when (inspectViewModel.craftDimsList[inspectViewModel.craftDimListInx].craftType) {
             "PA28" -> craftIdentList = inspectViewModel.craftIdentPA28List
             "PA34" -> craftIdentList = inspectViewModel.craftIdentPA34List
@@ -433,7 +361,7 @@ class InspectFragment : Fragment() {
         airCapture.craftType = inspectViewModel.craftDimsList[inspectViewModel.craftDimListInx].craftType
         airCapture.craftWingspan = inspectViewModel.craftDimsList[inspectViewModel.craftDimListInx].wingspan
         airCapture.craftLength = inspectViewModel.craftDimsList[inspectViewModel.craftDimListInx].length
-        // TODO: return airCapture?
+        // write airCapture update
         val storageDir = context?.getExternalFilesDir(Environment.DIRECTORY_PICTURES)!!
         val captureRecorded = airCaptureJson.write(storageDir, airCapture.timestamp, airCapture)
         Log.d(TAG,"measure captureRecorded $captureRecorded")
@@ -707,8 +635,6 @@ class InspectFragment : Fragment() {
     }
     /////////////////////////unused///////////////////////////
     private fun scaleImage(imageBitmap: Bitmap, scaleFactor: Int): Bitmap {
-//        val width = (imageBitmap.width)?.div(scaleFactor)
-//        val height = (imageBitmap.height)?.div(scaleFactor)
         val width = (imageBitmap.width)?.times(scaleFactor)
         val height = (imageBitmap.height)?.times(scaleFactor)
         val thumbBitmap = ThumbnailUtils.extractThumbnail(
@@ -724,47 +650,5 @@ class InspectFragment : Fragment() {
         }
         return thumbBitmap
     }
-
-    // TODO: pinch/zoom? onclick listener
-    fun decodeTouchAction(event: MotionEvent) {
-        val action = event.action
-        var pDownX: Int
-        var pDownY: Int
-        var pUpX: Int
-        var pUpY: Int
-        var pMoveX: Int
-        var pMoveY: Int
-
-        when(action){
-
-            MotionEvent.ACTION_DOWN -> {
-                pDownX= event.x.toInt()
-                pDownY= event.y.toInt()
-                Log.d(TAG, "decodeTouchAction DOWN event at $pDownX, $pDownY...")
-            }
-
-            MotionEvent.ACTION_MOVE -> {
-                pMoveX= event.x.toInt()
-                pMoveY= event.y.toInt()
-                Log.d(TAG, "decodeTouchAction MOVE event at $pMoveX, $pMoveY...")
-            }
-
-            MotionEvent.ACTION_UP -> {
-                pUpX= event.x.toInt()
-                pUpY= event.y.toInt()
-                Log.d(TAG, "decodeTouchAction UP event at $pUpX, $pUpY...")
-            }
-
-            MotionEvent.ACTION_CANCEL -> {
-                Log.d(TAG, "decodeTouchAction CANCEL event...")
-            }
-
-            else ->{
-                Log.d(TAG, "imageViewPreview.setOnClickListener UNKNOWN event...")
-            }
-        }
-        true
-
-    }
-
+    /////////////////////////EOF///////////////////////////
 }
