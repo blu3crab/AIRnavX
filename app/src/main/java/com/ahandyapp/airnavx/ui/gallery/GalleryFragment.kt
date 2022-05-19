@@ -74,12 +74,24 @@ class GalleryFragment : Fragment() {
         Log.d(TAG,"onCreateView captureBitmap w/h ${captureBitmap.width}/${captureBitmap.height}" )
         Log.d(TAG,"onCreateView imageViewGallery w/h ${galleryImageView.width}/${galleryImageView.height}")
 
-        // set camera button on-click listener
+        // set button on-click listener
         val buttonRefresh = root.findViewById(R.id.button_refresh) as Button
         buttonRefresh.setOnClickListener {
             Toast.makeText(this.context, "refreshing overlay...", Toast.LENGTH_SHORT).show()
             Log.d(TAG, "buttonRefresh.setOnClickListener refresh...")
             refresh()
+        }
+        val buttonNext = root.findViewById(R.id.button_next) as Button
+        buttonNext.setOnClickListener {
+            Toast.makeText(this.context, "next overlay...", Toast.LENGTH_SHORT).show()
+            Log.d(TAG, "buttonRefresh.setOnClickListener next...")
+            navigateOverlay(+1)
+        }
+        val buttonBack = root.findViewById(R.id.button_back) as Button
+        buttonBack.setOnClickListener {
+            Toast.makeText(this.context, "back overlay...", Toast.LENGTH_SHORT).show()
+            Log.d(TAG, "buttonRefresh.setOnClickListener back...")
+            navigateOverlay(-1)
         }
 
         // connect to inspectViewModel
@@ -94,6 +106,13 @@ class GalleryFragment : Fragment() {
         _binding = null
     }
 
+    private fun navigateOverlay(toggle: Int) {
+        if ((captureViewModel.gridPosition + toggle) >= 0 && (captureViewModel.gridPosition + toggle) < captureViewModel.gridCount) {
+            captureViewModel.gridPosition += toggle
+            overBitmap = captureViewModel.overBitmapArray[captureViewModel.gridPosition]
+            galleryImageView.setImageBitmap(overBitmap)
+        }
+    }
     private fun refresh() {
         overBitmap = overlay(captureBitmap, zoomBitmap)
         galleryImageView.setImageBitmap(overBitmap)
