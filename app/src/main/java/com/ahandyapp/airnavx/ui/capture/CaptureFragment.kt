@@ -364,7 +364,7 @@ class CaptureFragment : Fragment() {
         val dialogBuilder = AlertDialog.Builder(context)
 
         // set message of alert dialog
-        dialogBuilder.setMessage("Delete AIR capture file?")
+        dialogBuilder.setMessage("Delete AIR capture files?")
             // if the dialog is cancelable
             .setCancelable(false)
             // positive button text and action
