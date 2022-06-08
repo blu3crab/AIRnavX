@@ -1,11 +1,10 @@
 package com.ahandyapp.airnavx.ui.gallery
 
+import android.content.Context
 import android.graphics.*
 import android.os.Bundle
 import android.util.Log
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.Toast
@@ -19,6 +18,7 @@ import com.ahandyapp.airnavx.model.AirConstant
 import com.ahandyapp.airnavx.model.AirImageUtil
 import com.ahandyapp.airnavx.ui.capture.CaptureViewModel
 import com.ahandyapp.airnavx.ui.inspect.InspectViewModel
+import kotlin.math.roundToInt
 
 class GalleryFragment : Fragment() {
 
@@ -81,22 +81,13 @@ class GalleryFragment : Fragment() {
             Log.d(TAG, "buttonRefresh.setOnClickListener refresh...")
             refresh()
         }
-        val buttonNext = root.findViewById(R.id.button_next) as Button
-        buttonNext.setOnClickListener {
-            Toast.makeText(this.context, "next overlay...", Toast.LENGTH_SHORT).show()
-            Log.d(TAG, "buttonRefresh.setOnClickListener next...")
-            navigateOverlay(+1)
-        }
-        val buttonBack = root.findViewById(R.id.button_back) as Button
-        buttonBack.setOnClickListener {
-            Toast.makeText(this.context, "back overlay...", Toast.LENGTH_SHORT).show()
-            Log.d(TAG, "buttonRefresh.setOnClickListener back...")
-            navigateOverlay(-1)
-        }
 
         // connect to inspectViewModel
         val viewModelT2: InspectViewModel by activityViewModels()
         inspectViewModel = viewModelT2
+
+        // establish gesture detector
+        this.context?.let { establishGestureDetector(it, galleryImageView) }
 
         return root
     }
@@ -106,12 +97,16 @@ class GalleryFragment : Fragment() {
         _binding = null
     }
 
-    private fun navigateOverlay(toggle: Int) {
+    private fun navigateOverlay(toggle: Int): Boolean {
+        Log.d(TAG,"navigateOverlay gridPosition ${captureViewModel.gridPosition} of ${captureViewModel.gridCount}, toggle $toggle")
         if ((captureViewModel.gridPosition + toggle) >= 0 && (captureViewModel.gridPosition + toggle) < captureViewModel.gridCount) {
             captureViewModel.gridPosition += toggle
             overBitmap = captureViewModel.overBitmapArray[captureViewModel.gridPosition]
             galleryImageView.setImageBitmap(overBitmap)
+            Log.d(TAG,"navigateOverlay updated gridPosition ${captureViewModel.gridPosition}")
+            return true
         }
+        return false
     }
     private fun refresh() {
         overBitmap = overlay(captureBitmap, zoomBitmap)
@@ -212,4 +207,79 @@ class GalleryFragment : Fragment() {
 
         return bmOverlay
     }
+
+    private fun establishGestureDetector(context: Context, imageView: ImageView) {
+        val gestureDetector = GestureDetector(activity, object : GestureDetector.SimpleOnGestureListener() {
+            override fun onDown(event: MotionEvent?): Boolean {
+                Log.i("TAG", "establishGestureDetector onDown: ")
+                // don't return false here or else none of the other gestures will work
+                return true
+            }
+
+            override fun onSingleTapConfirmed(e: MotionEvent?): Boolean {
+                Log.i("TAG", "establishGestureDetector onSingleTapConfirmed ZOOM IN...")
+                return true
+            }
+
+            override fun onLongPress(e: MotionEvent?) {
+                val x = e?.x?.roundToInt()
+                val y = e?.y?.roundToInt()
+                Log.i("TAG", "establishGestureDetector onLongPress: x $x, y $y")
+            }
+
+            override fun onDoubleTap(e: MotionEvent?): Boolean {
+                Log.i("TAG", "establishGestureDetector onDoubleTap...")
+                return true
+            }
+
+            override fun onScroll(
+                e1: MotionEvent?, e2: MotionEvent?,
+                distanceX: Float, distanceY: Float
+            ): Boolean {
+                Log.i("TAG", "establishGestureDetector nScroll: distanceX $distanceX distanceY $distanceY")
+                return true
+            }
+
+            override fun onFling(
+                event1: MotionEvent?, event2: MotionEvent?,
+                velocityX: Float, velocityY: Float
+            ): Boolean {
+                val SWIPE_MIN_DISTANCE = 120
+                val SWIPE_THRESHOLD_VELOCITY = 200
+
+                Log.d("TAG", "establishGestureDetector onFling: velocityX $velocityX velocityY $velocityY")
+                if (event1 != null && event2 != null) {
+                    var newImageDisplayed = false
+                    if (event1.getX() - event2.getX() > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
+                        Log.d("TAG", "establishGestureDetector onFling: LEFT SWIPE")
+                        newImageDisplayed = navigateOverlay(1)      // next
+                        if (!newImageDisplayed ) {
+                            Toast.makeText(context, "End of Gallery", Toast.LENGTH_SHORT).show()
+                        }
+                    }  else if (event2.getX() - event1.getX() > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
+                        Log.d("TAG", "establishGestureDetector onFling: RIGHT SWIPE")
+                        newImageDisplayed = navigateOverlay(-1) // prev
+                        if (!newImageDisplayed ) {
+                            Toast.makeText(context, "Start of Gallery", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                    if (event1.getY() - event2.getY() > SWIPE_MIN_DISTANCE && Math.abs(velocityY) > SWIPE_THRESHOLD_VELOCITY) {
+                        Log.d("TAG", "establishGestureDetector onFling: UP SWIPE")
+                    }  else if (event2.getY() - event1.getY() > SWIPE_MIN_DISTANCE && Math.abs(velocityY) > SWIPE_THRESHOLD_VELOCITY) {
+                        Log.d("TAG", "establishGestureDetector onFling: DOWN SWIPE")
+                    }
+
+                }
+
+                return true
+            }
+
+            override fun onShowPress(e: MotionEvent?) {
+                Log.i("TAG", "establishGestureDetector onShowPress: ")
+                return
+            }
+        })
+        imageView.setOnTouchListener { _, event -> gestureDetector.onTouchEvent(event) }
+    }
+
 }
