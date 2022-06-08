@@ -264,12 +264,13 @@ class GalleryFragment : Fragment() {
                         }
                     }
                     else if (event1.getY() - event2.getY() > SWIPE_MIN_DISTANCE && Math.abs(velocityY) > SWIPE_THRESHOLD_VELOCITY) {
-                        // DOWN SWIPE - refresh overlay
-                        Log.d("TAG", "establishGestureDetector onFling: DOWN SWIPE")
-                        refresh()
-                    }  else if (event2.getY() - event1.getY() > SWIPE_MIN_DISTANCE && Math.abs(velocityY) > SWIPE_THRESHOLD_VELOCITY) {
                         // UP SWIPE - delete image set
                         Log.d("TAG", "establishGestureDetector onFling: UP SWIPE")
+                    }  else if (event2.getY() - event1.getY() > SWIPE_MIN_DISTANCE && Math.abs(velocityY) > SWIPE_THRESHOLD_VELOCITY) {
+                        // DOWN SWIPE - refresh overlay
+                        Log.d("TAG", "establishGestureDetector onFling: DOWN SWIPE")
+                        Log.d("TAG", "establishGestureDetector refreshing overlay...")
+                        refresh()
                     }
 
                 }
