@@ -1,6 +1,8 @@
 package com.ahandyapp.airnavx.ui.capture
 
 import android.graphics.Bitmap
+import android.widget.GridView
+import android.widget.ImageView
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -33,6 +35,9 @@ class CaptureViewModel : ViewModel() {
 
     var gridBitmapArray = ArrayList<Bitmap>()
     var gridLabelArray = ArrayList<String>()
+
+    lateinit var imageViewPreview: ImageView       // preview image display
+    lateinit var gridView: GridView
 
     var origBitmapArray = ArrayList<Bitmap>()
     var zoomBitmapArray = ArrayList<Bitmap>()

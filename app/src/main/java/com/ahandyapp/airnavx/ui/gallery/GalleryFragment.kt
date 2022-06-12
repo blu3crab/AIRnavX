@@ -14,6 +14,7 @@ import androidx.lifecycle.ViewModelProvider
 import com.ahandyapp.airnavx.R
 import com.ahandyapp.airnavx.databinding.FragmentGalleryBinding
 import com.ahandyapp.airnavx.model.AirCapture
+import com.ahandyapp.airnavx.model.AirCaptureJson
 import com.ahandyapp.airnavx.model.AirConstant
 import com.ahandyapp.airnavx.model.AirImageUtil
 import com.ahandyapp.airnavx.ui.capture.CaptureViewModel
@@ -30,17 +31,20 @@ class GalleryFragment : Fragment() {
     // This property is only valid between onCreateView and onDestroyView.
     private val binding get() = _binding!!
 
-    private lateinit var galleryImageView: ImageView
+//    private lateinit var galleryImageView: ImageView
 
     private lateinit var captureViewModel: CaptureViewModel
     private lateinit var inspectViewModel: InspectViewModel
 
     private lateinit var airCapture: AirCapture
 
-    private lateinit var captureBitmap: Bitmap  // original capture bitmap
-    private lateinit var zoomBitmap: Bitmap     // paired zoom bitmap
-    private lateinit var overBitmap: Bitmap     // paired zoom bitmap
-    private lateinit var galleryBitmap: Bitmap  // gallery view image bitmap
+//    private lateinit var captureBitmap: Bitmap  // original capture bitmap
+//    private lateinit var zoomBitmap: Bitmap     // paired zoom bitmap
+//    private lateinit var overBitmap: Bitmap     // paired zoom bitmap
+//    private lateinit var galleryBitmap: Bitmap  // gallery view image bitmap
+
+    private var airImageUtil = AirImageUtil()
+    private var airCaptureJson: AirCaptureJson = AirCaptureJson()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -55,7 +59,7 @@ class GalleryFragment : Fragment() {
         val root: View = binding.root
 
         // establish gallery imageview
-        galleryImageView = root.findViewById(R.id.imageview_gallery) as ImageView
+        galleryViewModel.galleryImageView = root.findViewById(R.id.imageview_gallery) as ImageView
 
         // connect to captureViewModel
         val viewModelT1: CaptureViewModel by activityViewModels()
@@ -64,15 +68,17 @@ class GalleryFragment : Fragment() {
         airCapture = captureViewModel.airCaptureArray[captureViewModel.gridPosition]
         Log.d(TAG, "onCreateView captureViewModel airCapture $airCapture")
 
-        // set inspect image to selected capture thumb
+        // TODO: refreshGalleryView()
+        // set gallery image to selected capture thumb
         Log.d(TAG, "onCreateView captureViewModel grid position ${captureViewModel.gridPosition}")
-        captureBitmap = captureViewModel.origBitmapArray[captureViewModel.gridPosition]
-        zoomBitmap = captureViewModel.zoomBitmapArray[captureViewModel.gridPosition]
-        overBitmap = captureViewModel.overBitmapArray[captureViewModel.gridPosition]
-        galleryImageView.setImageBitmap(overBitmap)
+        airImageUtil.refreshGalleryView(galleryViewModel, captureViewModel)
+//        galleryViewModel.captureBitmap = captureViewModel.origBitmapArray[captureViewModel.gridPosition]
+//        galleryViewModel.zoomBitmap = captureViewModel.zoomBitmapArray[captureViewModel.gridPosition]
+//        galleryViewModel.overBitmap = captureViewModel.overBitmapArray[captureViewModel.gridPosition]
+//        galleryViewModel.galleryImageView.setImageBitmap(galleryViewModel.overBitmap)
 
-        Log.d(TAG,"onCreateView captureBitmap w/h ${captureBitmap.width}/${captureBitmap.height}" )
-        Log.d(TAG,"onCreateView imageViewGallery w/h ${galleryImageView.width}/${galleryImageView.height}")
+        Log.d(TAG,"onCreateView captureBitmap w/h ${galleryViewModel.captureBitmap.width}/${galleryViewModel.captureBitmap.height}" )
+        Log.d(TAG,"onCreateView imageViewGallery w/h ${galleryViewModel.galleryImageView.width}/${galleryViewModel.galleryImageView.height}")
 
         // set button on-click listener
         val buttonRefresh = root.findViewById(R.id.button_refresh) as Button
@@ -87,7 +93,7 @@ class GalleryFragment : Fragment() {
         inspectViewModel = viewModelT2
 
         // establish gesture detector
-        this.context?.let { establishGestureDetector(it, galleryImageView) }
+        this.context?.let { establishGestureDetector(it, galleryViewModel.galleryImageView) }
 
         return root
     }
@@ -101,23 +107,23 @@ class GalleryFragment : Fragment() {
         Log.d(TAG,"navigateOverlay gridPosition ${captureViewModel.gridPosition} of ${captureViewModel.gridCount}, toggle $toggle")
         if ((captureViewModel.gridPosition + toggle) >= 0 && (captureViewModel.gridPosition + toggle) < captureViewModel.gridCount) {
             captureViewModel.gridPosition += toggle
-            overBitmap = captureViewModel.overBitmapArray[captureViewModel.gridPosition]
-            galleryImageView.setImageBitmap(overBitmap)
+            galleryViewModel.overBitmap = captureViewModel.overBitmapArray[captureViewModel.gridPosition]
+            galleryViewModel.galleryImageView.setImageBitmap(galleryViewModel.overBitmap)
             Log.d(TAG,"navigateOverlay updated gridPosition ${captureViewModel.gridPosition}")
             return true
         }
         return false
     }
     private fun refresh() {
-        overBitmap = overlay(captureBitmap, zoomBitmap)
-        galleryImageView.setImageBitmap(overBitmap)
+        galleryViewModel.overBitmap = overlay(galleryViewModel.captureBitmap, galleryViewModel.zoomBitmap)
+        galleryViewModel.galleryImageView.setImageBitmap(galleryViewModel.overBitmap)
         // save overlay image
         val imageFilename = AirConstant.DEFAULT_FILE_PREFIX + airCapture.timestamp + AirConstant.DEFAULT_OVER_SUFFIX
-        var airImageUtil = AirImageUtil()
-        val success = airImageUtil.convertBitmapToFile(context!!, overBitmap, imageFilename)
+        //var airImageUtil = AirImageUtil()
+        val success = airImageUtil.convertBitmapToFile(context!!, galleryViewModel.overBitmap, imageFilename)
         if (success) {
             // update capture viewmodel overlay bitmap array
-            captureViewModel.overBitmapArray[captureViewModel.gridPosition] = overBitmap
+            captureViewModel.overBitmapArray[captureViewModel.gridPosition] = galleryViewModel.overBitmap
             Log.d(TAG,"refresh captureViewModel overBitmapArray position ${captureViewModel.gridPosition} updated with $imageFilename")
         }
     }
@@ -266,7 +272,14 @@ class GalleryFragment : Fragment() {
                     else if (event1.getY() - event2.getY() > SWIPE_MIN_DISTANCE && Math.abs(velocityY) > SWIPE_THRESHOLD_VELOCITY) {
                         // UP SWIPE - delete image set
                         Log.d("TAG", "establishGestureDetector onFling: UP SWIPE")
-                    }  else if (event2.getY() - event1.getY() > SWIPE_MIN_DISTANCE && Math.abs(velocityY) > SWIPE_THRESHOLD_VELOCITY) {
+//                        activity?.let {
+//                            airImageUtil.showDeleteAlertDialog(context, it, captureViewModel)
+//                        }
+                        airImageUtil.showDeleteAlertDialog(context, activity!!, galleryViewModel, captureViewModel)
+                        // TODO: refresh gallery image
+                        refresh() // overlay measurement details!
+                    }
+                    else if (event2.getY() - event1.getY() > SWIPE_MIN_DISTANCE && Math.abs(velocityY) > SWIPE_THRESHOLD_VELOCITY) {
                         // DOWN SWIPE - refresh overlay
                         Log.d("TAG", "establishGestureDetector onFling: DOWN SWIPE")
                         Log.d("TAG", "establishGestureDetector refreshing overlay...")
