@@ -7,24 +7,28 @@ import android.content.DialogInterface
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
+import android.media.ExifInterface
 import android.media.ThumbnailUtils
 import android.media.ThumbnailUtils.extractThumbnail
 import android.net.Uri
 import android.os.Environment
 import android.provider.MediaStore
 import android.util.Log
+import android.widget.AdapterView
 import android.widget.GridView
 import android.widget.ImageView
 import android.widget.Toast
 import com.ahandyapp.airnavx.model.AirConstant.DEFAULT_EXTENSION_SEPARATOR
 import com.ahandyapp.airnavx.ui.capture.CaptureViewModel
 import com.ahandyapp.airnavx.ui.gallery.GalleryViewModel
+import com.ahandyapp.airnavx.ui.grid.GridViewAdapter
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.FileOutputStream
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Paths
+import java.util.ArrayList
 
 class AirImageUtil {
     private val TAG = "AirImageUtil"
@@ -65,6 +69,7 @@ class AirImageUtil {
             // positive button text and action
             .setPositiveButton("Delete", DialogInterface.OnClickListener {
                     dialog, id ->
+                val deletedGridPosition = captureViewModel.gridPosition
                 val airCapture = captureViewModel.airCaptureArray[captureViewModel.gridPosition]
                 Toast.makeText(context, "Deleting AIR capture files for ${airCapture.timestamp}...", Toast.LENGTH_SHORT).show()
                 Log.d("TAG", "showDeleteAlertDialog deleting AIR capture files for ${airCapture.timestamp}")
@@ -105,9 +110,17 @@ class AirImageUtil {
                 } catch (ioException: IOException) {
                     ioException.printStackTrace()
                 } finally {
-                    Log.d("TAG", "establishGestureDetector refreshing gallery...")
+                    Log.d("TAG", "showDeleteAlertDialog refreshing gallery...")
                     val airImageUtil = AirImageUtil()
                     airImageUtil.fetchViewModel(context, activity, captureViewModel)
+
+                    if (deletedGridPosition > 0 && deletedGridPosition < captureViewModel.gridCount) {
+                        captureViewModel.gridPosition = deletedGridPosition
+                    }
+                    else if (deletedGridPosition >= captureViewModel.gridCount) {
+                        captureViewModel.gridPosition = deletedGridPosition
+                    }
+                    Log.d("TAG", "showDeleteAlertDialog grid position set to $captureViewModel.gridPosition")
                     // refresh gallery view if defined
                     if (galleryViewModel != null) {
                         airImageUtil.refreshGalleryView(galleryViewModel, captureViewModel)
@@ -249,7 +262,7 @@ class AirImageUtil {
     }
     ///////////////////////////////////////////////////////////////////////////
     // extract thumbnail from bitmap
-    private fun extractThumbnail(currentPhotoPath: String, imageBitmap: Bitmap, scaleFactor: Int): Bitmap {
+    fun extractThumbnail(currentPhotoPath: String, imageBitmap: Bitmap, scaleFactor: Int): Bitmap {
         val width = (imageBitmap.width).div(scaleFactor)
         val height = (imageBitmap.height).div(scaleFactor)
         val thumbBitmap = ThumbnailUtils.extractThumbnail(
@@ -271,20 +284,23 @@ class AirImageUtil {
     fun refreshGalleryView(galleryViewModel: GalleryViewModel, captureViewModel: CaptureViewModel): Boolean {
         Log.d(TAG, "refreshGalleryView grid position ${captureViewModel.gridPosition}, grid count ${captureViewModel.gridCount}")
         // adjust grid position to valid range
-        if (captureViewModel.gridCount > 0 && captureViewModel.gridPosition >= captureViewModel.gridCount ) {
+        if (captureViewModel.gridCount < 0) {
+            captureViewModel.gridPosition = 0
+            Log.e(TAG, "refreshGalleryView invalid grid negative position adjusted to ${captureViewModel.gridPosition}")
+        }
+        else if (captureViewModel.gridPosition >= captureViewModel.gridCount ) {
             captureViewModel.gridPosition = captureViewModel.gridCount - 1
+            Log.e(TAG, "refreshGalleryView invalid grid positive position adjusted to ${captureViewModel.gridPosition}")
         }
-        if (captureViewModel.gridPosition >= 0 && captureViewModel.gridPosition < captureViewModel.gridCount) {
-            galleryViewModel.captureBitmap = captureViewModel.origBitmapArray[captureViewModel.gridPosition]
-            galleryViewModel.zoomBitmap = captureViewModel.zoomBitmapArray[captureViewModel.gridPosition]
-            galleryViewModel.overBitmap = captureViewModel.overBitmapArray[captureViewModel.gridPosition]
-            galleryViewModel.galleryImageView.setImageBitmap(galleryViewModel.overBitmap)
-            return true
-        }
-        return false
+        galleryViewModel.captureBitmap = captureViewModel.origBitmapArray[captureViewModel.gridPosition]
+        galleryViewModel.zoomBitmap = captureViewModel.zoomBitmapArray[captureViewModel.gridPosition]
+        galleryViewModel.overBitmap = captureViewModel.overBitmapArray[captureViewModel.gridPosition]
+        galleryViewModel.galleryImageView.setImageBitmap(galleryViewModel.overBitmap)
+        return true
     }
-
-    private fun addViewModelSet(captureViewModel: CaptureViewModel,
+    ///////////////////////////////////////////////////////////////////////////
+    // add view model set to capture view model
+    fun addViewModelSet(captureViewModel: CaptureViewModel,
                                 gridView: GridView,
                                 imageViewPreview: ImageView,
                                 airImageBitmap: Bitmap,
@@ -300,7 +316,7 @@ class AirImageUtil {
         captureViewModel.gridLabelArray.add("thumb${captureViewModel.gridCount}")
         captureViewModel.gridBitmapArray.add(0, rotatedThumbBitmap)
         captureViewModel.gridPosition = 0
-//        // TODO: invoke in onCreate
+//        // update grid view adapter
 //        updateGridViewAdapter(gridView, captureViewModel.gridLabelArray, captureViewModel.gridBitmapArray)
         // rotate full bitmap
         val fullBitmap = rotateBitmap(airImageBitmap, airCapture.exifRotation.toFloat())
@@ -340,6 +356,83 @@ class AirImageUtil {
             true
         )
         return rotatedBitmap
+    }
+
+    /////////////////////////////image manipulation////////////////////////////
+    // create blank bitmap to dims
+    fun createBlankBitmap(width: Int, height: Int): Bitmap {
+        val conf = Bitmap.Config.ARGB_8888 // see other conf types
+        val bitmap1 = Bitmap.createBitmap(width, height, conf) // creates a MUTABLE bitmap
+        return bitmap1
+    }
+    // create image file from name
+    fun createImageFile(storageDir: File, imageName: String): File? {
+        var imageFile: File? = null
+        try {
+            // create file
+            imageFile = File(storageDir, imageName)
+            Log.d(TAG, "createImageFile storageDir->$storageDir, name->$imageName")
+        } catch (ex: Exception) {
+            Log.e(TAG, "createImageFile Exception ${ex.stackTrace}")
+        }
+        return imageFile
+    }
+
+    // extract EXIF attributes from photoFile
+    fun extractExif(photoFile: File, airCapture: AirCapture): Boolean {
+        try {
+            var rotation = 0
+
+            val exif = ExifInterface(photoFile.absolutePath)
+
+            // orientation
+            val orientation: Int = exif.getAttributeInt(
+                ExifInterface.TAG_ORIENTATION,
+                ExifInterface.ORIENTATION_NORMAL
+            )
+
+            when (orientation) {
+                ExifInterface.ORIENTATION_ROTATE_270 -> rotation = 270
+                ExifInterface.ORIENTATION_ROTATE_180 -> rotation = 180
+                ExifInterface.ORIENTATION_ROTATE_90 -> rotation = 90
+            }
+
+            Log.i(TAG,"dispatchTakePictureIntent onActivityResult EXIF orientation: $orientation")
+            Log.i(TAG, "dispatchTakePictureIntent onActivityResult EXIF Rotate value: $rotation")
+
+            // lat-lon
+            val latlong: FloatArray = floatArrayOf(0.0F, 0.0F)
+            exif.getLatLong(latlong)
+            Log.i(TAG, "dispatchTakePictureIntent EXIF ->${latlong[0]} , ${latlong[1]}")
+            // altitude
+            val altitude = exif.getAltitude(0.0)
+            Log.i(TAG, "dispatchTakePictureIntent EXIF altitude $altitude")
+            // width
+            val width: Int = exif.getAttributeInt(
+                ExifInterface.TAG_IMAGE_WIDTH,
+                ExifInterface.ORIENTATION_NORMAL
+            )
+            Log.i(TAG,"dispatchTakePictureIntent onActivityResult EXIF width: $width")
+            // length
+            val length: Int = exif.getAttributeInt(
+                ExifInterface.TAG_IMAGE_LENGTH,
+                ExifInterface.ORIENTATION_NORMAL
+            )
+            Log.i(TAG,"dispatchTakePictureIntent onActivityResult EXIF length: $length")
+
+            // update airCapture data
+            airCapture.exifOrientation = orientation
+            airCapture.exifRotation = rotation
+            airCapture.exifLatLon = latlong
+            airCapture.exifAltitude = altitude
+            airCapture.exifLength = length
+            airCapture.exifWidth = width
+
+        } catch (ex: Exception) {
+            Log.e(TAG, "dispatchTakePictureIntent Meter Exception ${ex.stackTrace}")
+            return false
+        }
+        return true
     }
 
 }
