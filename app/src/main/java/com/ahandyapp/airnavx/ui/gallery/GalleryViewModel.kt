@@ -5,6 +5,7 @@ import android.widget.ImageView
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import com.ahandyapp.airnavx.model.AirCapture
 
 class GalleryViewModel : ViewModel() {
 
@@ -15,6 +16,7 @@ class GalleryViewModel : ViewModel() {
 
     lateinit var galleryImageView: ImageView
 
+    lateinit var airCapture: AirCapture
     lateinit var captureBitmap: Bitmap  // original capture bitmap
     lateinit var zoomBitmap: Bitmap     // paired zoom bitmap
     lateinit var overBitmap: Bitmap     // paired zoom bitmap

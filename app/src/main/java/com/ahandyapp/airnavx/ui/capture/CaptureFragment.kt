@@ -396,7 +396,6 @@ class CaptureFragment : Fragment() {
         captureViewModel.imageViewPreview.setImageBitmap(captureViewModel.gridBitmapArray[captureViewModel.gridPosition])
         // restore aircapture data
         val airCapture = captureViewModel.airCaptureArray[captureViewModel.gridPosition]
-        //airCapture = captureViewModel.airCaptureArray[captureViewModel.gridPosition]
         // refresh viewmodel
         Log.d(TAG, "restoreViewModel refreshComplete $airCapture")
         val refreshComplete = refreshViewModel(airCapture)
@@ -420,7 +419,6 @@ class CaptureFragment : Fragment() {
             captureViewModel.imageViewPreview.setImageBitmap(gridBitmapArray[captureViewModel.gridPosition])
             // sync AirCapture to thumb selection
             val airCapture = captureViewModel.airCaptureArray[captureViewModel.gridPosition]
-            //airCapture = captureViewModel.airCaptureArray[captureViewModel.gridPosition]
             Log.d(TAG,"updateGridViewAdapter soundMeter.deriveDecibel db->${airCapture.decibel}")
             refreshViewModel(airCapture)
         }

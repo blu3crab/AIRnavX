@@ -36,7 +36,7 @@ class GalleryFragment : Fragment() {
     private lateinit var captureViewModel: CaptureViewModel
     private lateinit var inspectViewModel: InspectViewModel
 
-    private lateinit var airCapture: AirCapture
+//    private lateinit var airCapture: AirCapture
 
 //    private lateinit var captureBitmap: Bitmap  // original capture bitmap
 //    private lateinit var zoomBitmap: Bitmap     // paired zoom bitmap
@@ -65,8 +65,8 @@ class GalleryFragment : Fragment() {
         val viewModelT1: CaptureViewModel by activityViewModels()
         captureViewModel = viewModelT1
 
-        airCapture = captureViewModel.airCaptureArray[captureViewModel.gridPosition]
-        Log.d(TAG, "onCreateView captureViewModel airCapture $airCapture")
+        galleryViewModel.airCapture = captureViewModel.airCaptureArray[captureViewModel.gridPosition]
+        Log.d(TAG, "onCreateView captureViewModel airCapture $galleryViewModel.airCapture")
 
         // TODO: refreshGalleryView()
         // set gallery image to selected capture thumb
@@ -107,6 +107,9 @@ class GalleryFragment : Fragment() {
         Log.d(TAG,"navigateOverlay gridPosition ${captureViewModel.gridPosition} of ${captureViewModel.gridCount}, toggle $toggle")
         if ((captureViewModel.gridPosition + toggle) >= 0 && (captureViewModel.gridPosition + toggle) < captureViewModel.gridCount) {
             captureViewModel.gridPosition += toggle
+            galleryViewModel.airCapture = captureViewModel.airCaptureArray[captureViewModel.gridPosition]
+            galleryViewModel.captureBitmap = captureViewModel.origBitmapArray[captureViewModel.gridPosition]
+            galleryViewModel.zoomBitmap = captureViewModel.zoomBitmapArray[captureViewModel.gridPosition]
             galleryViewModel.overBitmap = captureViewModel.overBitmapArray[captureViewModel.gridPosition]
             galleryViewModel.galleryImageView.setImageBitmap(galleryViewModel.overBitmap)
             Log.d(TAG,"navigateOverlay updated gridPosition ${captureViewModel.gridPosition}")
@@ -118,7 +121,7 @@ class GalleryFragment : Fragment() {
         galleryViewModel.overBitmap = overlay(galleryViewModel.captureBitmap, galleryViewModel.zoomBitmap)
         galleryViewModel.galleryImageView.setImageBitmap(galleryViewModel.overBitmap)
         // save overlay image
-        val imageFilename = AirConstant.DEFAULT_FILE_PREFIX + airCapture.timestamp + AirConstant.DEFAULT_OVER_SUFFIX
+        val imageFilename = AirConstant.DEFAULT_FILE_PREFIX + galleryViewModel.airCapture.timestamp + AirConstant.DEFAULT_OVER_SUFFIX
         //var airImageUtil = AirImageUtil()
         val success = airImageUtil.convertBitmapToFile(context!!, galleryViewModel.overBitmap, imageFilename)
         if (success) {
@@ -144,13 +147,13 @@ class GalleryFragment : Fragment() {
         canvas.drawRect(0F, (bmp1.height-1024).toFloat(),1024F,  bmp1.height.toFloat(), paint);
         // test altitude for border color code
         paint.setColor(Color.CYAN)
-        if (airCapture.airObjectAltitude > 1000) {
+        if (galleryViewModel.airCapture.airObjectAltitude > 1000) {
             paint.setColor(Color.GREEN)
         }
-        else if (airCapture.airObjectAltitude < 1000 && airCapture.airObjectAltitude > 500) {
+        else if (galleryViewModel.airCapture.airObjectAltitude < 1000 && galleryViewModel.airCapture.airObjectAltitude > 500) {
             paint.setColor(Color.YELLOW)
         }
-        else if (airCapture.airObjectAltitude < 500) {
+        else if (galleryViewModel.airCapture.airObjectAltitude < 500) {
             paint.setColor(Color.RED)
         }
         paint.setStrokeWidth(48F)
@@ -168,46 +171,46 @@ class GalleryFragment : Fragment() {
         // primary group: altitude, decibels
         paint.setTextSize(textsize)
 
-        val altitude = airCapture.airObjectAltitude.toInt()
+        val altitude = galleryViewModel.airCapture.airObjectAltitude.toInt()
         canvas.drawText("Altitude->  $altitude  feet", offsetX, offsetY, paint)
 
         offsetY += textsize + textsize/2
-        val decibel = airCapture.decibel.toInt()
+        val decibel = galleryViewModel.airCapture.decibel.toInt()
         canvas.drawText("Decibels->  $decibel  dB", offsetX, offsetY, paint)
         // corollary group: camera angle - distance
         paint.setTextSize(textsize/2)
 
         offsetY += textsize
-        val craftType = airCapture.craftType
-        val craftId = airCapture.craftId
+        val craftType = galleryViewModel.airCapture.craftType
+        val craftId = galleryViewModel.airCapture.craftId
         val craftTypeText = "Aircraft->  $craftType   Id-> $craftId"
         canvas.drawText("$craftTypeText", offsetX, offsetY, paint)
 
         offsetY += textsize
-        val cameraAngle = airCapture.cameraAngle
-        val dist = airCapture.airObjectDistance.toInt()
+        val cameraAngle = galleryViewModel.airCapture.cameraAngle
+        val dist = galleryViewModel.airCapture.airObjectDistance.toInt()
         val cameraDistText = "CameraAngle->  $cameraAngle deg   Distance->  $dist feet"
         canvas.drawText("$cameraDistText", offsetX, offsetY, paint)
 
         // craft dimensions
         offsetY = (bmp1.height-1024) - (textsize * 2)
-        val craftWingspan = airCapture.craftWingspan
-        val craftLength = airCapture.craftLength
+        val craftWingspan = galleryViewModel.airCapture.craftWingspan
+        val craftLength = galleryViewModel.airCapture.craftLength
         val craftDimsText = "wingspan $craftWingspan feet X length $craftLength feet"
         canvas.drawText("$craftDimsText", offsetX, offsetY, paint)
 
         // measure WINGSPAN | LENGTH, HORIZONTAL | VERTICAL
         offsetY += textsize
-        val craftOrientation = airCapture.craftOrientation  // WINGSPAN | LENGTH
-        val measureDimension = airCapture.measureDimension  // HORIZONTAL | VERTICAL
+        val craftOrientation = galleryViewModel.airCapture.craftOrientation  // WINGSPAN | LENGTH
+        val measureDimension = galleryViewModel.airCapture.measureDimension  // HORIZONTAL | VERTICAL
         val measureText = "Measure->  $craftOrientation $measureDimension"
         canvas.drawText("$measureText", offsetX, offsetY, paint)
 
         // zoom w x h
         offsetX = 1024F + 128F
         offsetY += (textsize * 2)
-        val zoomWidth = airCapture.zoomWidth
-        val zoomHeight = airCapture.zoomHeight
+        val zoomWidth = galleryViewModel.airCapture.zoomWidth
+        val zoomHeight = galleryViewModel.airCapture.zoomHeight
         val zoomText = "Zoom w X h ->  $zoomWidth X $zoomHeight pixels"
         canvas.drawText("$zoomText", offsetX, offsetY, paint)
 

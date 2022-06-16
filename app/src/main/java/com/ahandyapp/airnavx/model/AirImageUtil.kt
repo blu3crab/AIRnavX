@@ -113,12 +113,13 @@ class AirImageUtil {
                     Log.d("TAG", "showDeleteAlertDialog refreshing gallery...")
                     val airImageUtil = AirImageUtil()
                     airImageUtil.fetchViewModel(context, activity, captureViewModel)
-
-                    if (deletedGridPosition > 0 && deletedGridPosition < captureViewModel.gridCount) {
+                    // TODO: refactor grid position validation
+                    // if valid grid position in range
+                    if (deletedGridPosition >= 0 && deletedGridPosition < captureViewModel.gridCount) {
                         captureViewModel.gridPosition = deletedGridPosition
                     }
                     else if (deletedGridPosition >= captureViewModel.gridCount) {
-                        captureViewModel.gridPosition = deletedGridPosition
+                        captureViewModel.gridPosition = captureViewModel.gridCount-1
                     }
                     Log.d("TAG", "showDeleteAlertDialog grid position set to $captureViewModel.gridPosition")
                     // refresh gallery view if defined
@@ -283,8 +284,12 @@ class AirImageUtil {
     // set gallery image to selected capture thumb
     fun refreshGalleryView(galleryViewModel: GalleryViewModel, captureViewModel: CaptureViewModel): Boolean {
         Log.d(TAG, "refreshGalleryView grid position ${captureViewModel.gridPosition}, grid count ${captureViewModel.gridCount}")
+        // TODO: refactor grid position validation
+        if (captureViewModel.gridCount <= 0) {
+            return false;
+        }
         // adjust grid position to valid range
-        if (captureViewModel.gridCount < 0) {
+        if (captureViewModel.gridPosition < 0) {
             captureViewModel.gridPosition = 0
             Log.e(TAG, "refreshGalleryView invalid grid negative position adjusted to ${captureViewModel.gridPosition}")
         }
