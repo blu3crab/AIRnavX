@@ -21,6 +21,8 @@ import com.ahandyapp.airnavx.R
 import com.ahandyapp.airnavx.model.AirCapture
 import com.ahandyapp.airnavx.model.AirCaptureJson
 import com.ahandyapp.airnavx.model.AirConstant
+import com.ahandyapp.airnavx.model.AirConstant.SWIPE_MIN_DISTANCE
+import com.ahandyapp.airnavx.model.AirConstant.SWIPE_THRESHOLD_VELOCITY
 import com.ahandyapp.airnavx.model.AirImageUtil
 import java.util.ArrayList
 import kotlin.math.roundToInt
@@ -114,8 +116,10 @@ class InspectFragment : Fragment() {
         Log.d(TAG, "onCreateView captureViewModel grid position ${captureViewModel.gridPosition}")
         captureBitmap = captureViewModel.origBitmapArray[captureViewModel.gridPosition]
         referenceBitmap = captureBitmap
-        inspectBitmap = captureBitmap
-        inspectImageView.setImageBitmap(captureBitmap)
+        //inspectBitmap = captureBitmap
+        inspectBitmap = captureViewModel.zoomBitmapArray[captureViewModel.gridPosition]
+        //inspectImageView.setImageBitmap(captureBitmap)
+        inspectImageView.setImageBitmap(inspectBitmap)
         Log.d(TAG, "onCreateView captureBitmap w/h ${captureBitmap.width}/${captureBitmap.height}")
         Log.d(TAG, "onCreateView imageViewInspect w/h ${inspectImageView.width}/${inspectImageView.height}")
 
@@ -286,6 +290,31 @@ class InspectFragment : Fragment() {
                 velocityX: Float, velocityY: Float
             ): Boolean {
                 Log.d("TAG", "establishGestureDetector onFling: velocityX $velocityX velocityY $velocityY")
+
+                if (event1 != null && event2 != null) {
+                    var newImageDisplayed = false
+                    if (event1.getX() - event2.getX() > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
+                        Log.d("TAG", "establishGestureDetector onFling: LEFT SWIPE")
+                    }  else if (event2.getX() - event1.getX() > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
+                        Log.d("TAG", "establishGestureDetector onFling: RIGHT SWIPE")
+                    }
+                    else if (event1.getY() - event2.getY() > SWIPE_MIN_DISTANCE && Math.abs(velocityY) > SWIPE_THRESHOLD_VELOCITY) {
+                        // UP SWIPE
+                        Log.d("TAG", "establishGestureDetector onFling: UP SWIPE")
+                    }
+                    else if (event2.getY() - event1.getY() > SWIPE_MIN_DISTANCE && Math.abs(velocityY) > SWIPE_THRESHOLD_VELOCITY) {
+                        // DOWN SWIPE - refresh overlay
+                        // show original air capture image
+                        captureBitmap = captureViewModel.origBitmapArray[captureViewModel.gridPosition]
+                        referenceBitmap = captureBitmap
+                        inspectBitmap = captureBitmap
+                        inspectImageView.setImageBitmap(inspectBitmap)
+                        Log.d(TAG, "onFling captureBitmap w/h ${captureBitmap.width}/${captureBitmap.height}")
+                        Log.d(TAG, "onFling imageViewInspect w/h ${inspectImageView.width}/${inspectImageView.height}")
+                    }
+
+                }
+
                 return true
             }
 

@@ -19,6 +19,8 @@ import com.ahandyapp.airnavx.databinding.FragmentGalleryBinding
 import com.ahandyapp.airnavx.model.AirCapture
 import com.ahandyapp.airnavx.model.AirCaptureJson
 import com.ahandyapp.airnavx.model.AirConstant
+import com.ahandyapp.airnavx.model.AirConstant.SWIPE_MIN_DISTANCE
+import com.ahandyapp.airnavx.model.AirConstant.SWIPE_THRESHOLD_VELOCITY
 import com.ahandyapp.airnavx.model.AirImageUtil
 import com.ahandyapp.airnavx.ui.capture.CaptureViewModel
 import com.ahandyapp.airnavx.ui.inspect.InspectViewModel
@@ -289,8 +291,8 @@ class GalleryFragment : Fragment() {
                 event1: MotionEvent?, event2: MotionEvent?,
                 velocityX: Float, velocityY: Float
             ): Boolean {
-                val SWIPE_MIN_DISTANCE = 120
-                val SWIPE_THRESHOLD_VELOCITY = 200
+//                val SWIPE_MIN_DISTANCE = 120
+//                val SWIPE_THRESHOLD_VELOCITY = 200
 
                 Log.d("TAG", "establishGestureDetector onFling: velocityX $velocityX velocityY $velocityY")
                 if (event1 != null && event2 != null) {

@@ -29,7 +29,10 @@ class InspectViewModel : ViewModel() {
 
     ///////////////////MODEL DATA////////////////////////
     private val _guideText = MutableLiveData<String>().apply {
-        value = "TAP to zoom IN, \nDOUBLE TAP to zoom OUT, \nLONG PRESS to CENTER.\nZOOM & CENTER so craft fills view.\nSelect measurement settings.\nMeasure Altitude!"
+        value = "ZOOM & CENTER so craft fills view.\n" +
+                "LONG PRESS to CENTER.\n" +
+                "TAP to zoom IN, DOUBLE TAP to zoom OUT, \n" +
+                "Select measurement settings - Measure Altitude!"
         // TODO: value = R.id.guide_text
     }
     val guideText: LiveData<String> = _guideText
