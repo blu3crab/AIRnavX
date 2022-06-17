@@ -374,6 +374,7 @@ class InspectFragment : Fragment() {
         if (success) {
             // update capture viewmodel zoom bitmap array
             captureViewModel.zoomBitmapArray[captureViewModel.gridPosition] = inspectBitmap
+            captureViewModel.zoomDirtyArray[captureViewModel.gridPosition] = true
             Log.d(TAG,"measure captureViewModel zoomBitmapArray position ${captureViewModel.gridPosition} updated with $imageFilename")
         }
     }

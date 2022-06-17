@@ -43,8 +43,9 @@
         android:text="@string/button_refresh"
         android:textAlignment="center"
         android:textColor="#FFFFFF"
-        android:visibility="visible"
-        app:layout_constraintTop_toTopOf="parent"
+        android:enabled="false"
+        android:visibility="invisible"
+        app:layout_constraintTop_toBottomOf="@+id/imageview_gallery"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
 

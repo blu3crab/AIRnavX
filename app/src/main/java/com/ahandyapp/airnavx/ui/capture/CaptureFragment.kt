@@ -372,6 +372,7 @@ class CaptureFragment : Fragment() {
         captureViewModel.gridLabelArray.add("thumb${captureViewModel.gridCount}")
         captureViewModel.origBitmapArray.add(blankBitmap)
         captureViewModel.zoomBitmapArray.add(blankBitmap)
+        captureViewModel.zoomDirtyArray.add(false)
         captureViewModel.overBitmapArray.add(blankBitmap)
         captureViewModel.airCaptureArray.add(airCapture)
         // initialize gridViewAdapter

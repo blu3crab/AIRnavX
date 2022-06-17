@@ -41,6 +41,7 @@ class CaptureViewModel : ViewModel() {
 
     var origBitmapArray = ArrayList<Bitmap>()
     var zoomBitmapArray = ArrayList<Bitmap>()
+    var zoomDirtyArray = ArrayList<Boolean>()
     var overBitmapArray = ArrayList<Bitmap>()
     var airCaptureArray = ArrayList<AirCapture>()
     ///////////////////////////////////////////////////////////////////////////

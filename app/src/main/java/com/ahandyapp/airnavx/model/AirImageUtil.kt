@@ -157,6 +157,7 @@ class AirImageUtil {
         captureViewModel.gridLabelArray.clear()
         captureViewModel.origBitmapArray.clear()
         captureViewModel.zoomBitmapArray.clear()
+        captureViewModel.zoomDirtyArray.clear()
         captureViewModel.overBitmapArray.clear()
         captureViewModel.airCaptureArray.clear()
 
@@ -328,6 +329,7 @@ class AirImageUtil {
         // add full bitmap into array
         captureViewModel.origBitmapArray.add(0, fullBitmap)
         // if zoom & overlay are copies of the full bitmap, assign rotated full bitmap
+        captureViewModel.zoomDirtyArray.add(false)
         if (zoomBitmap == null) {
             captureViewModel.zoomBitmapArray.add(0, fullBitmap)
         }

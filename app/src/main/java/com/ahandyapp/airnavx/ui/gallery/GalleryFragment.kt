@@ -5,6 +5,8 @@ import android.graphics.*
 import android.os.Bundle
 import android.util.Log
 import android.view.*
+import android.view.View.INVISIBLE
+import android.view.View.VISIBLE
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.Toast
@@ -68,24 +70,26 @@ class GalleryFragment : Fragment() {
         galleryViewModel.airCapture = captureViewModel.airCaptureArray[captureViewModel.gridPosition]
         Log.d(TAG, "onCreateView captureViewModel airCapture $galleryViewModel.airCapture")
 
-        // TODO: refreshGalleryView()
         // set gallery image to selected capture thumb
         Log.d(TAG, "onCreateView captureViewModel grid position ${captureViewModel.gridPosition}")
         airImageUtil.refreshGalleryView(galleryViewModel, captureViewModel)
-//        galleryViewModel.captureBitmap = captureViewModel.origBitmapArray[captureViewModel.gridPosition]
-//        galleryViewModel.zoomBitmap = captureViewModel.zoomBitmapArray[captureViewModel.gridPosition]
-//        galleryViewModel.overBitmap = captureViewModel.overBitmapArray[captureViewModel.gridPosition]
-//        galleryViewModel.galleryImageView.setImageBitmap(galleryViewModel.overBitmap)
 
         Log.d(TAG,"onCreateView captureBitmap w/h ${galleryViewModel.captureBitmap.width}/${galleryViewModel.captureBitmap.height}" )
         Log.d(TAG,"onCreateView imageViewGallery w/h ${galleryViewModel.galleryImageView.width}/${galleryViewModel.galleryImageView.height}")
 
-        // set button on-click listener
+        // if zoom dirty, enable button
         val buttonRefresh = root.findViewById(R.id.button_refresh) as Button
+        if (captureViewModel.zoomDirtyArray[captureViewModel.gridPosition]) {
+            buttonRefresh.visibility = VISIBLE
+            buttonRefresh.isEnabled = true
+        }
+        // set button on-click listener
         buttonRefresh.setOnClickListener {
             Toast.makeText(this.context, "refreshing overlay...", Toast.LENGTH_SHORT).show()
             Log.d(TAG, "buttonRefresh.setOnClickListener refresh...")
             refresh()
+            buttonRefresh.visibility = INVISIBLE
+            buttonRefresh.isEnabled = false
         }
 
         // connect to inspectViewModel
@@ -127,6 +131,7 @@ class GalleryFragment : Fragment() {
         if (success) {
             // update capture viewmodel overlay bitmap array
             captureViewModel.overBitmapArray[captureViewModel.gridPosition] = galleryViewModel.overBitmap
+            captureViewModel.zoomDirtyArray[captureViewModel.gridPosition] = false
             Log.d(TAG,"refresh captureViewModel overBitmapArray position ${captureViewModel.gridPosition} updated with $imageFilename")
         }
     }
