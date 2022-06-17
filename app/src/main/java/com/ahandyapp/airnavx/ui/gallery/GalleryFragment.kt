@@ -8,6 +8,7 @@ import android.view.*
 import android.view.View.INVISIBLE
 import android.view.View.VISIBLE
 import android.widget.Button
+import android.widget.CheckBox
 import android.widget.ImageView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
@@ -47,6 +48,9 @@ class GalleryFragment : Fragment() {
 
     private var airImageUtil = AirImageUtil()
     private var airCaptureJson: AirCaptureJson = AirCaptureJson()
+
+    private lateinit var detailsCheckbox: CheckBox
+    private lateinit var colortextCheckbox: CheckBox
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -90,6 +94,23 @@ class GalleryFragment : Fragment() {
             refresh()
             buttonRefresh.visibility = INVISIBLE
             buttonRefresh.isEnabled = false
+        }
+
+        // overlay details checkbox
+        detailsCheckbox = root.findViewById(R.id.checkbox_details) as CheckBox
+        // set on-click listener
+        detailsCheckbox.setOnClickListener {
+            Toast.makeText(this.context, "refreshing overlay details...", Toast.LENGTH_SHORT).show()
+            Log.d(TAG, "detailsCheckbox.setOnClickListener...")
+            refresh()
+        }
+        // overlay colortext checkbox
+        colortextCheckbox = root.findViewById(R.id.checkbox_colortext) as CheckBox
+        // set on-click listener
+        colortextCheckbox.setOnClickListener {
+            Toast.makeText(this.context, "refreshing overlay colored text...", Toast.LENGTH_SHORT).show()
+            Log.d(TAG, "colortextCheckbox.setOnClickListener...")
+            refresh()
         }
 
         // connect to inspectViewModel
@@ -151,21 +172,28 @@ class GalleryFragment : Fragment() {
         // draw zoom border
         canvas.drawRect(0F, (bmp1.height-1024).toFloat(),1024F,  bmp1.height.toFloat(), paint);
         // test altitude for border color code
+        var colortext = Color.BLACK
         paint.setColor(Color.CYAN)
         if (galleryViewModel.airCapture.airObjectAltitude > 1000) {
             paint.setColor(Color.GREEN)
+            colortext = Color.GREEN
         }
         else if (galleryViewModel.airCapture.airObjectAltitude < 1000 && galleryViewModel.airCapture.airObjectAltitude > 500) {
             paint.setColor(Color.YELLOW)
+            colortext = Color.YELLOW
         }
         else if (galleryViewModel.airCapture.airObjectAltitude < 500) {
             paint.setColor(Color.RED)
+            colortext = Color.RED
         }
         paint.setStrokeWidth(48F)
         // overlay border
         canvas.drawRect(0F, 0F, bmp1.width.toFloat(), bmp1.height.toFloat(), paint);
         // draw measure results
         paint.setColor(Color.BLACK)
+        if (colortextCheckbox.isChecked) {
+            paint.setColor(colortext)
+        }
         paint.setStyle(Paint.Style.FILL_AND_STROKE)
         paint.setStrokeWidth(8F)
         // initial offsets, size
@@ -197,28 +225,31 @@ class GalleryFragment : Fragment() {
         val cameraDistText = "CameraAngle->  $cameraAngle deg   Distance->  $dist feet"
         canvas.drawText("$cameraDistText", offsetX, offsetY, paint)
 
-        // craft dimensions
-        offsetY = (bmp1.height-1024) - (textsize * 2)
-        val craftWingspan = galleryViewModel.airCapture.craftWingspan
-        val craftLength = galleryViewModel.airCapture.craftLength
-        val craftDimsText = "wingspan $craftWingspan feet X length $craftLength feet"
-        canvas.drawText("$craftDimsText", offsetX, offsetY, paint)
+        if (detailsCheckbox.isChecked) {
+            // craft dimensions
+            offsetY = (bmp1.height - 1024) - (textsize * 2)
+            val craftWingspan = galleryViewModel.airCapture.craftWingspan
+            val craftLength = galleryViewModel.airCapture.craftLength
+            val craftDimsText = "wingspan $craftWingspan feet X length $craftLength feet"
+            canvas.drawText("$craftDimsText", offsetX, offsetY, paint)
 
-        // measure WINGSPAN | LENGTH, HORIZONTAL | VERTICAL
-        offsetY += textsize
-        val craftOrientation = galleryViewModel.airCapture.craftOrientation  // WINGSPAN | LENGTH
-        val measureDimension = galleryViewModel.airCapture.measureDimension  // HORIZONTAL | VERTICAL
-        val measureText = "Measure->  $craftOrientation $measureDimension"
-        canvas.drawText("$measureText", offsetX, offsetY, paint)
+            // measure WINGSPAN | LENGTH, HORIZONTAL | VERTICAL
+            offsetY += textsize
+            val craftOrientation =
+                galleryViewModel.airCapture.craftOrientation  // WINGSPAN | LENGTH
+            val measureDimension =
+                galleryViewModel.airCapture.measureDimension  // HORIZONTAL | VERTICAL
+            val measureText = "Measure->  $craftOrientation $measureDimension"
+            canvas.drawText("$measureText", offsetX, offsetY, paint)
 
-        // zoom w x h
-        offsetX = 1024F + 128F
-        offsetY += (textsize * 2)
-        val zoomWidth = galleryViewModel.airCapture.zoomWidth
-        val zoomHeight = galleryViewModel.airCapture.zoomHeight
-        val zoomText = "Zoom w X h ->  $zoomWidth X $zoomHeight pixels"
-        canvas.drawText("$zoomText", offsetX, offsetY, paint)
-
+            // zoom w x h
+            offsetX = 1024F + 128F
+            offsetY += (textsize * 2)
+            val zoomWidth = galleryViewModel.airCapture.zoomWidth
+            val zoomHeight = galleryViewModel.airCapture.zoomHeight
+            val zoomText = "Zoom w X h ->  $zoomWidth X $zoomHeight pixels"
+            canvas.drawText("$zoomText", offsetX, offsetY, paint)
+        }
         return bmOverlay
     }
 

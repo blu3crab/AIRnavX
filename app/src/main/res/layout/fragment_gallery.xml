@@ -20,6 +20,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 -->
+
     <ImageView
         android:id="@+id/imageview_gallery"
         android:layout_width="match_parent"
@@ -29,8 +30,10 @@
         android:src="@drawable/baseline_flight_takeoff_24"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.168" />
 
     <Button
         android:id="@+id/button_refresh"
@@ -46,6 +49,34 @@
         android:enabled="false"
         android:visibility="invisible"
         app:layout_constraintTop_toBottomOf="@+id/imageview_gallery"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+    <CheckBox
+        android:id="@+id/checkbox_details"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:text="@string/checkbox_details"
+        android:textColor="#000000"
+        android:checked="false"
+        app:layout_constraintTop_toBottomOf="@+id/button_refresh"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+    <CheckBox
+        android:id="@+id/checkbox_colortext"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:text="@string/checkbox_colortext"
+        android:textColor="#000000"
+        android:checked="false"
+        app:layout_constraintTop_toBottomOf="@+id/checkbox_details"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
 
