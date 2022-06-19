@@ -1,30 +1,31 @@
 package com.ahandyapp.airnavx.ui.inspect
 
+import android.app.AlertDialog
 import android.content.Context
+import android.content.DialogInterface
 import android.graphics.Bitmap
-import android.media.ThumbnailUtils
 import android.os.Bundle
 import android.os.Environment
 import android.util.Log
 import android.view.*
+import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.ViewModelProvider
-import com.ahandyapp.airnavx.databinding.FragmentInspectBinding
-import com.ahandyapp.airnavx.ui.capture.CaptureViewModel
-import android.view.MotionEvent
-import android.widget.Button
-import android.widget.Toast
+import androidx.test.core.app.ApplicationProvider
+import androidx.test.core.app.ApplicationProvider.getApplicationContext
 import com.ahandyapp.airnavx.R
+import com.ahandyapp.airnavx.databinding.FragmentInspectBinding
 import com.ahandyapp.airnavx.model.AirCapture
 import com.ahandyapp.airnavx.model.AirCaptureJson
 import com.ahandyapp.airnavx.model.AirConstant
 import com.ahandyapp.airnavx.model.AirConstant.SWIPE_MIN_DISTANCE
 import com.ahandyapp.airnavx.model.AirConstant.SWIPE_THRESHOLD_VELOCITY
 import com.ahandyapp.airnavx.model.AirImageUtil
-import java.util.ArrayList
+import com.ahandyapp.airnavx.ui.capture.CaptureViewModel
 import kotlin.math.roundToInt
 import kotlin.math.sin
 
@@ -222,6 +223,7 @@ class InspectFragment : Fragment() {
         identifyButton = root.findViewById(R.id.button_identity) as Button
         identifyButton.text = craftIdentList[inspectViewModel.craftIdentListInx]
         identifyButton.setOnClickListener {
+            // TODO: present aircraft ident list
             ++inspectViewModel.craftIdentListInx
             if (inspectViewModel.craftIdentListInx > craftIdentList.size-1) {
                 inspectViewModel.craftIdentListInx = 0
@@ -663,22 +665,23 @@ class InspectFragment : Fragment() {
         super.onPause()
         Log.d(TAG, "onPause...")
     }
-    /////////////////////////unused///////////////////////////
-    private fun scaleImage(imageBitmap: Bitmap, scaleFactor: Int): Bitmap {
-        val width = (imageBitmap.width)?.times(scaleFactor)
-        val height = (imageBitmap.height)?.times(scaleFactor)
-        val thumbBitmap = ThumbnailUtils.extractThumbnail(
-            imageBitmap,
-            width,
-            height
-        )
-        if (thumbBitmap != null) {
-            Log.d(TAG, "extractThumbnail source image width $imageBitmap.width x height $imageBitmap.height")
-            Log.d(TAG, "extractThumbnail $thumbBitmap at scale factor $scaleFactor")
-        } else {
-            Log.e(TAG, "extractThumbnail NULL (at scale factor $scaleFactor)")
-        }
-        return thumbBitmap
-    }
+
+//    private fun showIdentifyAlertDialog() {
+//        val alertDialogBuilder: AlertDialog.Builder = AlertDialog.Builder(ApplicationProvider.getApplicationContext())
+//        //airCapture.craftId = craftIdentList[inspectViewModel.craftIdentListInx]
+////        val identList = craftIdentList.map { it as CharSequence }
+//        val identList = craftIdentList
+//        alertDialogBuilder.setTitle("Select Aircraft Identification")
+//        alertDialogBuilder.setSingleChoiceItems(identList, -1,
+//            DialogInterface.OnClickListener { dialog, item ->
+//                Toast.makeText(
+//                    ApplicationProvider.getApplicationContext(),
+//                    "Aircraft Identity " + identList.get(item), Toast.LENGTH_SHORT
+//                ).show()
+//                dialog.dismiss() // dismiss the alertbox after chose option
+//            })
+//        val alert: AlertDialog = alertDialogBuilder.create()
+//        alert.show()
+//    }
     /////////////////////////EOF///////////////////////////
 }

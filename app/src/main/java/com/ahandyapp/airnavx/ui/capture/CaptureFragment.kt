@@ -245,6 +245,9 @@ class CaptureFragment : Fragment() {
                         airImageUtil.addViewModelSet(captureViewModel, captureViewModel.gridView, captureViewModel.imageViewPreview,
                             airCaptureBitmap, thumbBitmap, null, null, airCapture)
 
+                        // update grid view adapter
+                        updateGridViewAdapter(captureViewModel.gridView, captureViewModel.gridLabelArray, captureViewModel.gridBitmapArray)
+
                         // write AirCapture
                         val storageDir = context?.getExternalFilesDir(Environment.DIRECTORY_PICTURES)!!
                         val captureRecorded = airCaptureJson.write(storageDir, captureTimestamp, airCapture)

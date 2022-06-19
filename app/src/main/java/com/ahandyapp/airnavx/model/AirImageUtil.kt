@@ -86,6 +86,10 @@ class AirImageUtil {
                             AirConstant.DEFAULT_FILE_PREFIX + airCapture.timestamp  +
                             AirConstant.DEFAULT_ZOOM_SUFFIX + AirConstant.DEFAULT_EXTENSION_SEPARATOR +
                             AirConstant.DEFAULT_IMAGEFILE_EXT)
+                    val overPath = Paths.get(storageDir.toString() + File.separator +
+                            AirConstant.DEFAULT_FILE_PREFIX + airCapture.timestamp  +
+                            AirConstant.DEFAULT_OVER_SUFFIX + AirConstant.DEFAULT_EXTENSION_SEPARATOR +
+                            AirConstant.DEFAULT_IMAGEFILE_EXT)
                     Log.d("TAG", "showDeleteAlertDialog deleting files \n$imagePath \n$dataPath \n$zoomPath")
                     // Files.deleteIfExists(path)
                     var result = Files.deleteIfExists(imagePath)
@@ -105,6 +109,12 @@ class AirImageUtil {
                         Log.d("TAG", "showDeleteAlertDialog delete zoomimage $zoomPath success...")
                     } else {
                         Log.d("TAG", "showDeleteAlertDialog delete zoomimage $zoomPath failed...")
+                    }
+                    result = Files.deleteIfExists(overPath)
+                    if (result) {
+                        Log.d("TAG", "showDeleteAlertDialog delete overimage $overPath success...")
+                    } else {
+                        Log.d("TAG", "showDeleteAlertDialog delete zoomimage $overPath failed...")
                     }
 
                 } catch (ioException: IOException) {
@@ -218,6 +228,9 @@ class AirImageUtil {
                 }
             }
         }
+        if (captureViewModel.gridCount <= 0) {
+            return false
+        }
         return true
     }
 
@@ -287,6 +300,8 @@ class AirImageUtil {
         Log.d(TAG, "refreshGalleryView grid position ${captureViewModel.gridPosition}, grid count ${captureViewModel.gridCount}")
         // TODO: refactor grid position validation
         if (captureViewModel.gridCount <= 0) {
+            val emptyBitmap = createBlankBitmap(galleryViewModel.galleryImageView.width, galleryViewModel.galleryImageView.height)
+            galleryViewModel.galleryImageView.setImageBitmap(emptyBitmap)
             return false;
         }
         // adjust grid position to valid range
@@ -440,6 +455,23 @@ class AirImageUtil {
             return false
         }
         return true
+    }
+    /////////////////////////unused///////////////////////////
+    private fun scaleImage(imageBitmap: Bitmap, scaleFactor: Int): Bitmap {
+        val width = (imageBitmap.width)?.times(scaleFactor)
+        val height = (imageBitmap.height)?.times(scaleFactor)
+        val thumbBitmap = ThumbnailUtils.extractThumbnail(
+            imageBitmap,
+            width,
+            height
+        )
+        if (thumbBitmap != null) {
+            Log.d(TAG, "extractThumbnail source image width $imageBitmap.width x height $imageBitmap.height")
+            Log.d(TAG, "extractThumbnail $thumbBitmap at scale factor $scaleFactor")
+        } else {
+            Log.e(TAG, "extractThumbnail NULL (at scale factor $scaleFactor)")
+        }
+        return thumbBitmap
     }
 
 }

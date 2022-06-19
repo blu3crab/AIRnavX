@@ -1,11 +1,5 @@
 package com.ahandyapp.airnavx.model
 
-//val DEFAULT_STRING = "nada"
-//val DEFAULT_DOUBLE = 0.0
-//val DEFAULT_INT = 0
-//val DEFAULT_FLOAT_ARRAY: FloatArray = floatArrayOf(0.0F, 0.0F)
-//val DEFAULT_FLOAT = 0.0F
-//
 data class AirCapture(
     var version: String = AirConstant.AIR_VERSION,
     var timestamp: String = AirConstant.DEFAULT_STRING,
