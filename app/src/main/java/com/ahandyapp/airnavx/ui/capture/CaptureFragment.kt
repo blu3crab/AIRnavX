@@ -64,6 +64,7 @@ class CaptureFragment : Fragment() {
     // image capture ->
     //      dispatchTakePictureIntent - create image capture file & timestamp
     //      onActivityResult - pipeline image capture data stream
+    // TODO: move to constants
     private val REQUEST_IMAGE_CAPTURE = 1001
     private lateinit var captureFile: File                  // capture file
     private var captureTimestamp: String = AirConstant.DEFAULT_STRING   // capture file creation timestamp

@@ -1,22 +1,22 @@
 package com.ahandyapp.airnavx.ui.inspect
 
+import android.R.attr
+import android.app.Activity
 import android.app.AlertDialog
 import android.content.Context
 import android.content.DialogInterface
+import android.content.Intent
 import android.graphics.Bitmap
 import android.os.Bundle
 import android.os.Environment
+import android.speech.RecognizerIntent
+import android.text.InputType
 import android.util.Log
 import android.view.*
-import android.widget.Button
-import android.widget.ImageView
-import android.widget.TextView
-import android.widget.Toast
+import android.widget.*
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.ViewModelProvider
-import androidx.test.core.app.ApplicationProvider
-import androidx.test.core.app.ApplicationProvider.getApplicationContext
 import com.ahandyapp.airnavx.R
 import com.ahandyapp.airnavx.databinding.FragmentInspectBinding
 import com.ahandyapp.airnavx.model.AirCapture
@@ -26,6 +26,7 @@ import com.ahandyapp.airnavx.model.AirConstant.SWIPE_MIN_DISTANCE
 import com.ahandyapp.airnavx.model.AirConstant.SWIPE_THRESHOLD_VELOCITY
 import com.ahandyapp.airnavx.model.AirImageUtil
 import com.ahandyapp.airnavx.ui.capture.CaptureViewModel
+import java.util.*
 import kotlin.math.roundToInt
 import kotlin.math.sin
 
@@ -33,6 +34,8 @@ import kotlin.math.sin
 class InspectFragment : Fragment() {
 
     private val TAG = "InspectFragment"
+    // TODO: move to constants
+    private val REQUEST_SPOKEN_CRAFT_TAG = 1001
 
     private var airCaptureJson: AirCaptureJson = AirCaptureJson()
 
@@ -157,6 +160,7 @@ class InspectFragment : Fragment() {
 
         return root
     }
+    // TODO: refactor button handlers to methds
     // establish button listeners
     private fun setButtonListeners(root: View, context: Context) {
         // measure image dimension by HORIZONTAL | VERTICAL
@@ -224,10 +228,11 @@ class InspectFragment : Fragment() {
         identifyButton.text = craftIdentList[inspectViewModel.craftIdentListInx]
         identifyButton.setOnClickListener {
             // TODO: present aircraft ident list
-            ++inspectViewModel.craftIdentListInx
-            if (inspectViewModel.craftIdentListInx > craftIdentList.size-1) {
-                inspectViewModel.craftIdentListInx = 0
-            }
+            showIdentifyAlertDialog()
+//            ++inspectViewModel.craftIdentListInx
+//            if (inspectViewModel.craftIdentListInx > craftIdentList.size-1) {
+//                inspectViewModel.craftIdentListInx = 0
+//            }
             Log.d(TAG, "buttonIdentify.setOnClickListener->Identify aircraft list size ${craftIdentList.size-1}->${craftIdentList}")
 
             identifyButton.text = craftIdentList[inspectViewModel.craftIdentListInx]
@@ -666,22 +671,122 @@ class InspectFragment : Fragment() {
         Log.d(TAG, "onPause...")
     }
 
-//    private fun showIdentifyAlertDialog() {
+    private fun showIdentifyAlertDialog() {
 //        val alertDialogBuilder: AlertDialog.Builder = AlertDialog.Builder(ApplicationProvider.getApplicationContext())
-//        //airCapture.craftId = craftIdentList[inspectViewModel.craftIdentListInx]
-////        val identList = craftIdentList.map { it as CharSequence }
+        val alertDialogBuilder: AlertDialog.Builder = AlertDialog.Builder(context)
+        //airCapture.craftId = craftIdentList[inspectViewModel.craftIdentListInx]
+//        val identList = craftIdentList.map { it as CharSequence }
 //        val identList = craftIdentList
-//        alertDialogBuilder.setTitle("Select Aircraft Identification")
-//        alertDialogBuilder.setSingleChoiceItems(identList, -1,
-//            DialogInterface.OnClickListener { dialog, item ->
-//                Toast.makeText(
-//                    ApplicationProvider.getApplicationContext(),
-//                    "Aircraft Identity " + identList.get(item), Toast.LENGTH_SHORT
-//                ).show()
-//                dialog.dismiss() // dismiss the alertbox after chose option
-//            })
-//        val alert: AlertDialog = alertDialogBuilder.create()
-//        alert.show()
-//    }
-    /////////////////////////EOF///////////////////////////
+        val listItems = arrayOfNulls<String>(craftIdentList.size)
+        for (i in 0 until craftIdentList.size) {
+            val craftIdentListItem = craftIdentList[i]
+            listItems[i] = craftIdentListItem
+        }
+
+        alertDialogBuilder.setTitle("Select Aircraft Identification")
+        alertDialogBuilder.setSingleChoiceItems(listItems, -1,
+            DialogInterface.OnClickListener { dialog, item ->
+                Toast.makeText(
+                    context,
+                    "Aircraft Identity " + listItems[item], Toast.LENGTH_SHORT
+                ).show()
+                Log.d(TAG, "showIdentifyAlertDialog selected Aircraft Identity $item")
+//                inspectViewModel.craftIdentListInx = item
+//                identifyButton.text = craftIdentList[inspectViewModel.craftIdentListInx]
+//                Log.d(TAG, "showIdentifyAlertDialog selected aircraft ${inspectViewModel.craftIdentListInx}" +
+//                        "${craftIdentList[inspectViewModel.craftIdentListInx]}")
+//                Log.d(TAG, "showIdentifyAlertDialog aircraft list size ${craftIdentList.size-1}->${craftIdentList}")
+                if (item == listItems.size-2) {
+                    // New(type)
+                    enterIdentDialog()
+                }
+                else if (item == listItems.size-1) {
+                    // New(speak)
+                    dispatchSpokenTagIntent()
+//                    val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
+//                    intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+//                        RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+//                    intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
+//                    intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak Each Letter of the Craft Identity Tag")
+//                    startActivityForResult(intent, REQUEST_SPOKEN_CRAFT_TAG)
+                }
+                else {
+                    // item in current craftIdentList
+                    inspectViewModel.craftIdentListInx = item
+                    identifyButton.text = craftIdentList[inspectViewModel.craftIdentListInx]
+                    Log.d(TAG, "showIdentifyAlertDialog selected craft ${inspectViewModel.craftIdentListInx}" +
+                            "${craftIdentList[inspectViewModel.craftIdentListInx]}")
+                    Log.d(TAG, "showIdentifyAlertDialog aircraft list size ${craftIdentList.size-1}->${craftIdentList}")
+                }
+
+                dialog.dismiss() // dismiss the alertbox after chose option
+            })
+        val alert: AlertDialog = alertDialogBuilder.create()
+        alert.show()
+    }
+
+    fun enterIdentDialog() {
+        val builder: AlertDialog.Builder = android.app.AlertDialog.Builder(context)
+        builder.setTitle("Title")
+
+        // Set up the input
+        val input = EditText(context)
+        // Specify the type of input expected; this, for example, sets the input as a password, and will mask the text
+        input.setHint("Enter Aircraft Identity Tag")
+        input.inputType = InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS  //.TYPE_CLASS_TEXT
+        builder.setView(input)
+
+        // Set up the buttons
+        builder.setPositiveButton("OK", DialogInterface.OnClickListener { dialog, which ->
+            // Here you get get input text from the Edittext
+            identifyButton.text = input.text.toString()
+            addCraftIdent(input.text.toString())
+            Log.d(TAG, "enterIdentDialog craft entry-> ${identifyButton.text}")
+        })
+        builder.setNegativeButton("Cancel", DialogInterface.OnClickListener { dialog, which -> dialog.cancel() })
+
+        builder.show()
+    }
+    // TODO: tune for single letter/number recognition
+    fun dispatchSpokenTagIntent() {
+        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+            RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
+        intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak Each Letter of the Craft Identity Tag")
+        startActivityForResult(intent, REQUEST_SPOKEN_CRAFT_TAG)
+    }
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        Log.d(
+            TAG,
+            "dispatchTakePictureIntent onActivityResult requestCode ${requestCode}, resultCode $resultCode"
+        )
+        // request code match & result OK
+        if (requestCode == REQUEST_SPOKEN_CRAFT_TAG && resultCode == Activity.RESULT_OK) {
+            Log.d(TAG, "dispatchSpokenTagIntent onActivityResult OK...")
+            val spokenTag: String? =
+                data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.get(0)
+            Log.d(TAG, "dispatchSpokenTagIntent onActivityResult spokenTag ->$spokenTag...")
+            Toast.makeText(this.context, "spokenTag ->$spokenTag...", Toast.LENGTH_SHORT).show()
+
+        } else if (requestCode == REQUEST_SPOKEN_CRAFT_TAG && resultCode == Activity.RESULT_CANCELED) {
+            Log.d(TAG, "dispatchSpokenTagIntent onActivityResult canceled...")
+            Toast.makeText(this.context, "spokenTag canceled...", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun addCraftIdent(craftIdent: String): Boolean {
+        // shift 1st entry after UNKNOWN down
+        craftIdentList[2] = craftIdentList[1]
+        // insert incoming craft ident at position UNKNOWN+1
+        inspectViewModel.craftIdentListInx = 1  // UNKNOWN+1
+        craftIdentList[inspectViewModel.craftIdentListInx] = craftIdent
+
+        // assign craft ident to models & button
+        airCapture.craftId = craftIdentList[inspectViewModel.craftIdentListInx]
+        identifyButton.text = craftIdentList[inspectViewModel.craftIdentListInx]
+
+        return true
+    }
+            /////////////////////////EOF///////////////////////////
 }

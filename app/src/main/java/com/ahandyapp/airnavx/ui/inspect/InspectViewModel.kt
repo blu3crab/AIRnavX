@@ -54,8 +54,8 @@ class InspectViewModel : ViewModel() {
 
     var craftIdentListInx = 0
 
-    var craftIdentC172List: ArrayList<String> = arrayListOf("UNKNOWN", "N2621Z", "N20283", "N5215E")
-    var craftIdentPA28List: ArrayList<String> = arrayListOf("UNKNOWN", "N21803", "N38657", "N8445S")
-    var craftIdentPA34List: ArrayList<String> = arrayListOf("UNKNOWN", "N142GD")
+    var craftIdentC172List: ArrayList<String> = arrayListOf("UNKNOWN", "N2621Z", "N20283", "N5215E", "New(type)", "New(speak)")
+    var craftIdentPA28List: ArrayList<String> = arrayListOf("UNKNOWN", "N21803", "N38657", "N8445S", "New(type)", "New(speak)")
+    var craftIdentPA34List: ArrayList<String> = arrayListOf("UNKNOWN", "N142GD", "New(type)", "New(speak)")
 
 }
