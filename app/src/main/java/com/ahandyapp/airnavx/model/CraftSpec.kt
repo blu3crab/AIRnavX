@@ -1,8 +1,8 @@
 package com.ahandyapp.airnavx.model
 
 data class CraftSpec(
-    var type: String,
-    var selectedTypeInx: Int,
+//    var type: String,
+    var typeInx: Int = 0,
     var typeList: ArrayList<String> = arrayListOf("C172", "PA28", "PA34"),
 
     var craftDimsC172: CraftDims = CraftDims(craftType = "C172", wingspan = 36.0, length = 27.17),
@@ -15,6 +15,7 @@ data class CraftSpec(
     var craftTagPA28List: java.util.ArrayList<String> = arrayListOf("UNKNOWN", "N21803", "N38657", "New(type)", "New(speak)"),
     var craftTagPA34List: java.util.ArrayList<String> = arrayListOf("UNKNOWN", "N142GD", "N12345", "New(type)", "New(speak)"),
 
+    var tagInx: Int = 0,
     var tagList: ArrayList<ArrayList<String>> = arrayListOf(craftTagC172List, craftTagPA28List, craftTagPA34List)
 
 )
