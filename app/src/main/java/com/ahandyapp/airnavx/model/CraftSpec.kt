@@ -1,5 +1,17 @@
 package com.ahandyapp.airnavx.model
 
+import android.content.Context
+import android.os.Environment
+import android.util.Log
+import com.ahandyapp.airnavx.model.AirConstant.DEFAULT_CRAFTSPEC_NAME
+import com.ahandyapp.airnavx.model.AirConstant.DEFAULT_DATAFILE_EXT
+import com.ahandyapp.airnavx.model.AirConstant.DEFAULT_EXTENSION_SEPARATOR
+import com.ahandyapp.airnavx.model.AirConstant.DEFAULT_FILE_PREFIX
+import com.ahandyapp.airnavx.ui.capture.CaptureViewModel
+import com.google.gson.Gson
+import java.io.File
+import java.io.IOException
+
 data class CraftSpec(
 //    var type: String,
     var typeInx: Int = 0,
@@ -17,5 +29,58 @@ data class CraftSpec(
 
     var tagInx: Int = 0,
     var tagList: ArrayList<ArrayList<String>> = arrayListOf(craftTagC172List, craftTagPA28List, craftTagPA34List)
-
 )
+{
+    private val TAG = "CraftSpec"
+
+    fun readFromJson(context: Context): CraftSpec {
+        val storageDir = context?.getExternalFilesDir(Environment.DIRECTORY_PICTURES)!!
+        val filename = DEFAULT_FILE_PREFIX + DEFAULT_CRAFTSPEC_NAME + DEFAULT_EXTENSION_SEPARATOR + DEFAULT_DATAFILE_EXT
+        val filePath = storageDir.toString() + File.separator + filename
+        Log.d(TAG, "readFromJson filename $filename...")
+        try {
+            val craftSpecFile = File(filePath)
+            Log.d(TAG, "readFromJson File filePath $filePath")
+            //   extract CraftSpec json string
+            var jsonString = AirConstant.DEFAULT_STRING
+            try {
+                jsonString = craftSpecFile.bufferedReader().use { it.readText() }
+            } catch (ioException: IOException) {
+                ioException.printStackTrace()
+            } finally {
+                craftSpecFile.bufferedReader().close()
+            }
+            Log.d(TAG, "fromJson craftSpec json $jsonString...")
+            // decode json string into craftSpec
+            val craftSpec = Gson().fromJson(jsonString, CraftSpec::class.java)
+            Log.d(TAG, "fromJson CraftSpec $craftSpec")
+            return craftSpec
+        } catch (ioException: IOException) {
+            ioException.printStackTrace()
+        }
+        // exceptions occurred - return initialized object
+        val craftSpec: CraftSpec = CraftSpec()
+        return craftSpec
+    }
+
+    fun writeToJson(context: Context, craftSpec: CraftSpec): Boolean {
+        try {
+            // transform CraftSpec data class to json
+            val jsonCapture = Gson().toJson(craftSpec)
+            Log.d(TAG, "writeToJson $jsonCapture")
+
+            // format CraftSpec name & write json file
+            val storageDir = context?.getExternalFilesDir(Environment.DIRECTORY_PICTURES)!!
+            val name = DEFAULT_FILE_PREFIX + DEFAULT_CRAFTSPEC_NAME + DEFAULT_EXTENSION_SEPARATOR + DEFAULT_DATAFILE_EXT
+            Log.d(TAG, "writeToJson storageDir->$storageDir, name->$name")
+            File(storageDir, name).printWriter().use { out ->
+                out.println(jsonCapture)
+            }
+        } catch (ex: Exception) {
+            Log.e(TAG, "writeToJson Exception ${ex.stackTrace}")
+            return false
+        }
+        return true
+    }
+
+}

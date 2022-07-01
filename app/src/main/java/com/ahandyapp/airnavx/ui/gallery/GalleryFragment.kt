@@ -16,7 +16,6 @@ import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.ViewModelProvider
 import com.ahandyapp.airnavx.R
 import com.ahandyapp.airnavx.databinding.FragmentGalleryBinding
-import com.ahandyapp.airnavx.model.AirCapture
 import com.ahandyapp.airnavx.model.AirCaptureJson
 import com.ahandyapp.airnavx.model.AirConstant
 import com.ahandyapp.airnavx.model.AirConstant.SWIPE_MIN_DISTANCE
@@ -217,7 +216,7 @@ class GalleryFragment : Fragment() {
 
         offsetY += textsize
         val craftType = galleryViewModel.airCapture.craftType
-        val craftId = galleryViewModel.airCapture.craftId
+        val craftId = galleryViewModel.airCapture.craftTag
         val craftTypeText = "Aircraft->  $craftType   Id-> $craftId"
         canvas.drawText("$craftTypeText", offsetX, offsetY, paint)
 

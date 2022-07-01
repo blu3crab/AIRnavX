@@ -26,7 +26,7 @@ data class AirCapture(
     var airObjectDistance: Double = AirConstant.DEFAULT_DOUBLE,
     var airObjectAltitude: Double = AirConstant.DEFAULT_DOUBLE,
 
-    var craftId: String = AirConstant.DEFAULT_STRING,
+    var craftTag: String = AirConstant.DEFAULT_STRING,
     var craftType: String = AirConstant.DEFAULT_STRING,
     var craftWingspan: Double = AirConstant.DEFAULT_DOUBLE,
     var craftLength: Double = AirConstant.DEFAULT_DOUBLE,

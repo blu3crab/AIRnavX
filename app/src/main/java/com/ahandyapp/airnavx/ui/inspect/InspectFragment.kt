@@ -94,7 +94,8 @@ class InspectFragment : Fragment() {
         }
 
         // TODO: CraftSpec - enable tag entry, read/write json file
-        craftSpec = CraftSpec()
+        craftSpec = CraftSpec().readFromJson(context!!)
+        Log.d(TAG, "onCreateView readFromJson craftSpec->\n $craftSpec...")
 
         dimensionTextView = binding.textDimension
         //orientTextView = binding.textDimension
@@ -121,8 +122,11 @@ class InspectFragment : Fragment() {
         referenceBitmap = captureBitmap
         //inspectBitmap = captureBitmap
         inspectBitmap = captureViewModel.zoomBitmapArray[captureViewModel.gridPosition]
+        // set view model to incoming aircapture
         inspectViewModel.zoomWidth = inspectBitmap.width
         inspectViewModel.zoomHeight = inspectBitmap.height
+        inspectViewModel.measureDimension = airCapture.measureDimension
+        inspectViewModel.craftOrientation = airCapture.craftOrientation
 
         //inspectImageView.setImageBitmap(captureBitmap)
         inspectImageView.setImageBitmap(inspectBitmap)
@@ -199,14 +203,25 @@ class InspectFragment : Fragment() {
         }
 
         // TODO: enable craft type entry & dimensions
-        // TODO: CraftSpec - enable tag entry, read/write json file
-        //craftSpec = CraftSpec()
-
         // BUTTON: select craft type: C172, PA28, P34 plus associated craft dimension text
         craftTypeButton = root.findViewById(R.id.button_crafttype) as Button
-        craftTypeButton.text = craftSpec.dimsList[craftSpec.typeInx].craftType
-        craftTypeTextView.text = "wing x length->${craftSpec.dimsList[craftSpec.typeInx].wingspan} x " +
-                "${craftSpec.dimsList[craftSpec.typeInx].length}"
+//        craftTypeButton.text = craftSpec.dimsList[craftSpec.typeInx].craftType
+//        craftTypeTextView.text = "wing x length->${craftSpec.dimsList[craftSpec.typeInx].wingspan} x " +
+//                "${craftSpec.dimsList[craftSpec.typeInx].length}"
+        craftTypeButton.text = airCapture.craftType
+        craftTypeTextView.text = "wing x length->${airCapture.craftWingspan} x " +
+                "${airCapture.craftLength}"
+        // scan for craft type & assign type index
+        craftSpec.typeInx = 0
+        var typeInx = 0
+        for (type in craftSpec.typeList) {
+            if (type.equals(airCapture.craftType)) {
+                craftSpec.typeInx = typeInx
+            }
+        }
+        Log.d(TAG, "setButtonListeners incoming aircraft type ${craftSpec.typeInx}, " +
+                "${craftSpec.typeList[craftSpec.typeInx]}...")
+
         craftTypeButton.setOnClickListener {
             //Toast.makeText(this.context, "Select aircraft type...", Toast.LENGTH_SHORT).show()
             ++craftSpec.typeInx
@@ -228,8 +243,19 @@ class InspectFragment : Fragment() {
 
         // BUTTON: identify aircraft tag
         craftTagButton = root.findViewById(R.id.button_identity) as Button
-        craftSpec.tagList[craftSpec.typeInx]
-        craftTagButton.text = craftSpec.tagList[craftSpec.typeInx][craftSpec.tagInx]
+//        craftSpec.tagList[craftSpec.typeInx]
+//        craftTagButton.text = craftSpec.tagList[craftSpec.typeInx][craftSpec.tagInx]
+        craftTagButton.text = airCapture.craftTag
+
+        // scan for craft tag & assign tag index
+        craftSpec.tagInx = 0
+        var tagInx = 0
+        for (tag in craftSpec.tagList[craftSpec.typeInx]) {
+            if (tag.equals(airCapture.craftTag)) {
+                craftSpec.tagInx = tagInx
+            }
+        }
+
         craftTagButton.setOnClickListener {
             // TODO: present aircraft ident list
             showIdentifyAlertDialog()
@@ -395,7 +421,7 @@ class InspectFragment : Fragment() {
         airCapture.zoomWidth = inspectBitmap.width
         airCapture.zoomHeight = inspectBitmap.height
 //        airCapture.craftId = inspectViewModel.craftTagList[craftSpec.tagInx]
-        airCapture.craftId = craftSpec.tagList[craftSpec.typeInx].get(craftSpec.tagInx)
+        airCapture.craftTag = craftSpec.tagList[craftSpec.typeInx].get(craftSpec.tagInx)
         airCapture.craftType = craftSpec.dimsList[craftSpec.typeInx].craftType
         airCapture.craftWingspan = craftSpec.dimsList[craftSpec.typeInx].wingspan
         airCapture.craftLength = craftSpec.dimsList[craftSpec.typeInx].length
@@ -688,10 +714,10 @@ class InspectFragment : Fragment() {
                     context,
                     "Aircraft Identity " + listItems[item], Toast.LENGTH_SHORT
                 ).show()
-                Log.d(TAG, "showIdentifyAlertDialog selected Aircraft Identity $item")
+                Log.d(TAG, "showIdentifyAlertDialog selected item $item")
                 if (item == listItems.size-2) {
                     // New(type)
-                    enterIdentDialog()
+                    enterTagDialog()
                 }
                 else if (item == listItems.size-1) {
                     // New(speak)
@@ -701,7 +727,7 @@ class InspectFragment : Fragment() {
                     // item in current craftIdentList
                     craftSpec.tagInx = item
                     craftTagButton.text = craftSpec.tagList[craftSpec.typeInx][craftSpec.tagInx]
-                    Log.d(TAG, "showIdentifyAlertDialog selected craft ${craftSpec.tagInx}" +
+                    Log.d(TAG, "showIdentifyAlertDialog selected tag (${craftSpec.tagInx}) " +
                             "${craftSpec.tagList[craftSpec.typeInx][craftSpec.tagInx]}")
                     Log.d(TAG, "showIdentifyAlertDialog aircraft tag list size " +
                         "${craftSpec.tagList[craftSpec.typeInx].size-1}->${craftSpec.tagList[craftSpec.typeInx]}")
@@ -713,7 +739,7 @@ class InspectFragment : Fragment() {
         alert.show()
     }
 
-    fun enterIdentDialog() {
+    fun enterTagDialog() {
         val builder: AlertDialog.Builder = android.app.AlertDialog.Builder(context)
         builder.setTitle("Title")
 
@@ -770,8 +796,12 @@ class InspectFragment : Fragment() {
         craftSpec.tagInx = 1  // UNKNOWN+1
         craftSpec.tagList[craftSpec.typeInx][1] = craftTag
 
+        // write updated craftspec to json file
+        val success = CraftSpec().writeToJson(context!!, craftSpec)
+        Log.d(TAG, "onCreateView writeToJson ($success) craftSpec->\n $craftSpec...")
+
         // assign craft tag to models & button
-        airCapture.craftId = craftSpec.tagList[craftSpec.typeInx][craftSpec.tagInx]
+        airCapture.craftTag = craftSpec.tagList[craftSpec.typeInx][craftSpec.tagInx]
         craftTagButton.text = craftSpec.tagList[craftSpec.typeInx][craftSpec.tagInx]
 
         return true

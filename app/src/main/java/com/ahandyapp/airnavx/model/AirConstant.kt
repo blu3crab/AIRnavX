@@ -29,6 +29,8 @@ object AirConstant
     val DEFAULT_OVER_SUFFIX = "-over"
     val DEFAULT_EXTENSION_SEPARATOR = "."
 
+    val DEFAULT_CRAFTSPEC_NAME = "CraftSpec"
+
     val SWIPE_MIN_DISTANCE = 120
     val SWIPE_THRESHOLD_VELOCITY = 200
 
