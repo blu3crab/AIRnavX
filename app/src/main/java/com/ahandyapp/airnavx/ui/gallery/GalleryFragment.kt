@@ -16,7 +16,6 @@ import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.ViewModelProvider
 import com.ahandyapp.airnavx.R
 import com.ahandyapp.airnavx.databinding.FragmentGalleryBinding
-import com.ahandyapp.airnavx.model.AirCaptureJson
 import com.ahandyapp.airnavx.model.AirConstant
 import com.ahandyapp.airnavx.model.AirConstant.SWIPE_MIN_DISTANCE
 import com.ahandyapp.airnavx.model.AirConstant.SWIPE_THRESHOLD_VELOCITY
@@ -35,20 +34,11 @@ class GalleryFragment : Fragment() {
     // This property is only valid between onCreateView and onDestroyView.
     private val binding get() = _binding!!
 
-//    private lateinit var galleryImageView: ImageView
-
     private lateinit var captureViewModel: CaptureViewModel
     private lateinit var inspectViewModel: InspectViewModel
 
-//    private lateinit var airCapture: AirCapture
-
-//    private lateinit var captureBitmap: Bitmap  // original capture bitmap
-//    private lateinit var zoomBitmap: Bitmap     // paired zoom bitmap
-//    private lateinit var overBitmap: Bitmap     // paired zoom bitmap
-//    private lateinit var galleryBitmap: Bitmap  // gallery view image bitmap
-
     private var airImageUtil = AirImageUtil()
-    private var airCaptureJson: AirCaptureJson = AirCaptureJson()
+//    private var airCaptureJson: AirCaptureJson = AirCaptureJson()
 
     private lateinit var detailsCheckbox: CheckBox
     private lateinit var colortextCheckbox: CheckBox
@@ -290,9 +280,6 @@ class GalleryFragment : Fragment() {
                 event1: MotionEvent?, event2: MotionEvent?,
                 velocityX: Float, velocityY: Float
             ): Boolean {
-//                val SWIPE_MIN_DISTANCE = 120
-//                val SWIPE_THRESHOLD_VELOCITY = 200
-
                 Log.d("TAG", "establishGestureDetector onFling: velocityX $velocityX velocityY $velocityY")
                 if (event1 != null && event2 != null) {
                     var newImageDisplayed = false
@@ -312,9 +299,6 @@ class GalleryFragment : Fragment() {
                     else if (event1.getY() - event2.getY() > SWIPE_MIN_DISTANCE && Math.abs(velocityY) > SWIPE_THRESHOLD_VELOCITY) {
                         // UP SWIPE - delete image set
                         Log.d("TAG", "establishGestureDetector onFling: UP SWIPE")
-//                        activity?.let {
-//                            airImageUtil.showDeleteAlertDialog(context, it, captureViewModel)
-//                        }
                         airImageUtil.showDeleteAlertDialog(context, activity!!, galleryViewModel, captureViewModel)
                         // TODO: refresh gallery image
                         refresh() // overlay measurement details!

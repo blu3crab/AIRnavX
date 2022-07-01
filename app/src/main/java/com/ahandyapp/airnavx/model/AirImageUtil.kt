@@ -157,8 +157,6 @@ class AirImageUtil {
     // fetch air image sets from storage
     fun fetchViewModel(context: Context, activity: Activity, captureViewModel: CaptureViewModel): Boolean {
 
-        var airCaptureJson: AirCaptureJson = AirCaptureJson()
-
         Toast.makeText(context, "Fetching AIR capture files from storage...", Toast.LENGTH_SHORT).show()
 
         // reset viewmodel grid
@@ -199,7 +197,8 @@ class AirImageUtil {
                 Log.d(TAG, "fetchViewModel airImageName $airImageName...")
                 val airImageFile = File(airImagePath)
                 // read json into airCapture
-                val airCapture = airCaptureJson.read(airCaptureFile)
+                var airCapture = AirCapture()
+                airCapture = airCapture.read(airCaptureFile)
 
                 //   read air image into bitmap
                 val uri = Uri.fromFile(airImageFile)

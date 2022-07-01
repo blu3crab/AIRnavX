@@ -26,14 +26,11 @@ import java.util.*
 import kotlin.math.roundToInt
 import kotlin.math.sin
 
-
 class InspectFragment : Fragment() {
 
     private val TAG = "InspectFragment"
     // TODO: move to constants
     private val REQUEST_SPOKEN_CRAFT_TAG = 1001
-
-    private var airCaptureJson: AirCaptureJson = AirCaptureJson()
 
     private lateinit var inspectViewModel: InspectViewModel
     private var _binding: FragmentInspectBinding? = null
@@ -128,7 +125,6 @@ class InspectFragment : Fragment() {
         inspectViewModel.measureDimension = airCapture.measureDimension
         inspectViewModel.craftOrientation = airCapture.craftOrientation
 
-        //inspectImageView.setImageBitmap(captureBitmap)
         inspectImageView.setImageBitmap(inspectBitmap)
         Log.d(TAG, "onCreateView captureBitmap w/h ${captureBitmap.width}/${captureBitmap.height}")
         Log.d(TAG, "onCreateView imageViewInspect w/h ${inspectImageView.width}/${inspectImageView.height}")
@@ -205,22 +201,12 @@ class InspectFragment : Fragment() {
         // TODO: enable craft type entry & dimensions
         // BUTTON: select craft type: C172, PA28, P34 plus associated craft dimension text
         craftTypeButton = root.findViewById(R.id.button_crafttype) as Button
-//        craftTypeButton.text = craftSpec.dimsList[craftSpec.typeInx].craftType
-//        craftTypeTextView.text = "wing x length->${craftSpec.dimsList[craftSpec.typeInx].wingspan} x " +
-//                "${craftSpec.dimsList[craftSpec.typeInx].length}"
         craftTypeButton.text = airCapture.craftType
         craftTypeTextView.text = "wing x length->${airCapture.craftWingspan} x " +
                 "${airCapture.craftLength}"
-        // scan for craft type & assign type index
-        craftSpec.typeInx = 0
-        var typeInx = 0
-        for (type in craftSpec.typeList) {
-            if (type.equals(airCapture.craftType)) {
-                craftSpec.typeInx = typeInx
-            }
-        }
-        Log.d(TAG, "setButtonListeners incoming aircraft type ${craftSpec.typeInx}, " +
-                "${craftSpec.typeList[craftSpec.typeInx]}...")
+
+        // sync CraftSpec to AirCapture
+        craftSpec.syncTypeTag(airCapture.craftType, airCapture.craftTag)
 
         craftTypeButton.setOnClickListener {
             //Toast.makeText(this.context, "Select aircraft type...", Toast.LENGTH_SHORT).show()
@@ -243,18 +229,7 @@ class InspectFragment : Fragment() {
 
         // BUTTON: identify aircraft tag
         craftTagButton = root.findViewById(R.id.button_identity) as Button
-//        craftSpec.tagList[craftSpec.typeInx]
-//        craftTagButton.text = craftSpec.tagList[craftSpec.typeInx][craftSpec.tagInx]
         craftTagButton.text = airCapture.craftTag
-
-        // scan for craft tag & assign tag index
-        craftSpec.tagInx = 0
-        var tagInx = 0
-        for (tag in craftSpec.tagList[craftSpec.typeInx]) {
-            if (tag.equals(airCapture.craftTag)) {
-                craftSpec.tagInx = tagInx
-            }
-        }
 
         craftTagButton.setOnClickListener {
             // TODO: present aircraft ident list
@@ -361,13 +336,6 @@ class InspectFragment : Fragment() {
         imageView.setOnTouchListener { _, event -> gestureDetector.onTouchEvent(event) }
     }
 
-//    private fun setCraftTagList(): ArrayList<String> {
-//        // clear tag index
-//        //craftSpec.tagInx = 0
-//        Log.d(TAG, "setCraftIdentList $inspectViewModel.craftIdentList")
-//        return craftSpec.tagList[craftSpec.typeInx]
-//    }
-
     private fun measure() {
         var actualSize: Double = 0.0
         if (inspectViewModel.craftOrientation == AirConstant.CraftOrientation.WINGSPAN) {
@@ -391,12 +359,10 @@ class InspectFragment : Fragment() {
         var apparentSize: Double = 0.0
         if (inspectViewModel.measureDimension == AirConstant.MeasureDimension.HORIZONTAL) {
             imageSize = captureBitmap.width.toDouble()
-//            apparentSize = inspectViewModel.zoomWidth.toDouble()
             apparentSize = inspectBitmap.width.toDouble()
         }
         else {
             imageSize = captureBitmap.height.toDouble()
-//            apparentSize = inspectViewModel.zoomHeight.toDouble()
             apparentSize = inspectBitmap.height.toDouble()
         }
         Log.d(TAG, "measure-> imageSize $imageSize, apparentSize $apparentSize")
@@ -420,14 +386,13 @@ class InspectFragment : Fragment() {
         airCapture.measureDimension = inspectViewModel.measureDimension
         airCapture.zoomWidth = inspectBitmap.width
         airCapture.zoomHeight = inspectBitmap.height
-//        airCapture.craftId = inspectViewModel.craftTagList[craftSpec.tagInx]
         airCapture.craftTag = craftSpec.tagList[craftSpec.typeInx].get(craftSpec.tagInx)
         airCapture.craftType = craftSpec.dimsList[craftSpec.typeInx].craftType
         airCapture.craftWingspan = craftSpec.dimsList[craftSpec.typeInx].wingspan
         airCapture.craftLength = craftSpec.dimsList[craftSpec.typeInx].length
         // write airCapture update
         val storageDir = context?.getExternalFilesDir(Environment.DIRECTORY_PICTURES)!!
-        val captureRecorded = airCaptureJson.write(storageDir, airCapture.timestamp, airCapture)
+        val captureRecorded = airCapture.write(storageDir, airCapture.timestamp, airCapture)
         Log.d(TAG,"measure captureRecorded $captureRecorded")
         // save AirCapture measured image
         val imageFilename = AirConstant.DEFAULT_FILE_PREFIX + airCapture.timestamp + AirConstant.DEFAULT_ZOOM_SUFFIX

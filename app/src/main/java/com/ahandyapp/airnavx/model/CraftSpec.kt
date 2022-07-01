@@ -33,6 +33,32 @@ data class CraftSpec(
 {
     private val TAG = "CraftSpec"
 
+    fun syncTypeTag(craftType: String, craftTag: String): Boolean {
+        // scan for craft type & assign type index
+        this.typeInx = 0
+        var typeInx = 0
+        for (type in this.typeList) {
+            if (type.equals(craftType)) {
+                this.typeInx = typeInx
+            }
+        }
+        Log.d(TAG, "syncTypeTag aircraft type ${this.typeInx}, " +
+                "${this.typeList[this.typeInx]}...")
+
+        // scan for craft tag & assign tag index
+        this.tagInx = 0
+        var tagInx = 0
+        for (tag in this.tagList[this.typeInx]) {
+            if (tag.equals(craftTag)) {
+                this.tagInx = tagInx
+            }
+        }
+        Log.d(TAG, "syncTypeTag aircraft tag ${this.tagInx}, " +
+                "${this.tagList[this.tagInx]}...")
+
+        return true
+    }
+
     fun readFromJson(context: Context): CraftSpec {
         val storageDir = context?.getExternalFilesDir(Environment.DIRECTORY_PICTURES)!!
         val filename = DEFAULT_FILE_PREFIX + DEFAULT_CRAFTSPEC_NAME + DEFAULT_EXTENSION_SEPARATOR + DEFAULT_DATAFILE_EXT

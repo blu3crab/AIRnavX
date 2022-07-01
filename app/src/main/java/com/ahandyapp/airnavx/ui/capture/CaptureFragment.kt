@@ -2,11 +2,8 @@ package com.ahandyapp.airnavx.ui.capture
 
 import android.app.Activity.RESULT_CANCELED
 import android.app.Activity.RESULT_OK
-import android.app.AlertDialog
-import android.content.DialogInterface
 import android.content.Intent
 import android.graphics.Bitmap
-import android.media.ThumbnailUtils
 import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
@@ -20,22 +17,14 @@ import com.ahandyapp.airnavx.ui.sense.SoundMeter
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
-import android.graphics.BitmapFactory
-import android.graphics.Matrix
-import android.media.ExifInterface
 import android.view.*
 import android.widget.*
 import androidx.fragment.app.activityViewModels
 import com.ahandyapp.airnavx.R
 import com.ahandyapp.airnavx.databinding.FragmentCaptureBinding
-import com.ahandyapp.airnavx.model.AirCaptureJson
 import com.ahandyapp.airnavx.model.AirConstant
 import com.ahandyapp.airnavx.model.AirImageUtil
 import com.ahandyapp.airnavx.ui.grid.GridViewAdapter
-import java.io.FileNotFoundException
-import java.io.IOException
-import java.nio.file.Files
-import java.nio.file.Paths
 import kotlin.math.roundToInt
 
 
@@ -68,7 +57,6 @@ class CaptureFragment : Fragment() {
     private val REQUEST_IMAGE_CAPTURE = 1001
     private lateinit var captureFile: File                  // capture file
     private var captureTimestamp: String = AirConstant.DEFAULT_STRING   // capture file creation timestamp
-    private var airCaptureJson: AirCaptureJson = AirCaptureJson()
 
     private var airImageUtil = AirImageUtil()
 
@@ -167,8 +155,9 @@ class CaptureFragment : Fragment() {
             val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
             try {
                 // create the photo File
+                val airCapture = AirCapture()
                 captureTimestamp = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())
-                val imageName = airCaptureJson.getAirFilename(CaptureViewModel.AirFileType.IMAGE, captureTimestamp)
+                val imageName = airCapture.getAirFilename(CaptureViewModel.AirFileType.IMAGE, captureTimestamp)
                 val storageDir = context?.getExternalFilesDir(Environment.DIRECTORY_PICTURES)!!
                 val imageFile = airImageUtil.createImageFile(storageDir, imageName)
 
@@ -218,13 +207,11 @@ class CaptureFragment : Fragment() {
                     )
                     if (airCaptureBitmap != null) {
                         // create initialized aircapture object
-                        //val airCapture = createAirCapture()
-                        val airCapture: AirCapture = AirCapture()
-                        //airCapture = AirCapture()
+                        val airCapture = AirCapture()
                         // capture image attributes
                         airCapture.timestamp = captureTimestamp
                         airCapture.imagePath = Environment.DIRECTORY_PICTURES
-                        airCapture.imageName = airCaptureJson.getAirFilename(CaptureViewModel.AirFileType.IMAGE, captureTimestamp)
+                        airCapture.imageName = airCapture.getAirFilename(CaptureViewModel.AirFileType.IMAGE, captureTimestamp)
 
                         // update image length & width prior to thumbnail extraction
                         airCapture.imageWidth = airCaptureBitmap.width
@@ -251,7 +238,7 @@ class CaptureFragment : Fragment() {
 
                         // write AirCapture
                         val storageDir = context?.getExternalFilesDir(Environment.DIRECTORY_PICTURES)!!
-                        val captureRecorded = airCaptureJson.write(storageDir, captureTimestamp, airCapture)
+                        val captureRecorded = airCapture.write(storageDir, captureTimestamp, airCapture)
                         Log.d(TAG,"dispatchTakePictureIntent onActivityResult captureRecorded $captureRecorded")
 
                         // refresh viewmodel
