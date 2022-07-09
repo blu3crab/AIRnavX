@@ -40,6 +40,7 @@ data class CraftSpec(
         for (type in this.typeList) {
             if (type.equals(craftType)) {
                 this.typeInx = typeInx
+                continue
             }
         }
         Log.d(TAG, "syncTypeTag aircraft type ${this.typeInx}, " +

@@ -202,13 +202,16 @@ class InspectFragment : Fragment() {
 
         // TODO: enable craft type entry & dimensions
         // BUTTON: select craft type: C172, PA28, P34 plus associated craft dimension text
+        // sync CraftSpec to AirCapture
+        craftSpec.syncTypeTag(airCapture.craftType, airCapture.craftTag)
+        airCapture.craftType = craftSpec.typeList[craftSpec.typeInx]
+        airCapture.craftWingspan = craftSpec.dimsList[craftSpec.typeInx].wingspan
+        airCapture.craftLength = craftSpec.dimsList[craftSpec.typeInx].length
+
         craftTypeButton = root.findViewById(R.id.button_crafttype) as Button
         craftTypeButton.text = airCapture.craftType
         craftTypeTextView.text = "wing x length->${airCapture.craftWingspan} x " +
                 "${airCapture.craftLength}"
-
-        // sync CraftSpec to AirCapture
-        craftSpec.syncTypeTag(airCapture.craftType, airCapture.craftTag)
 
         craftTypeButton.setOnClickListener {
             //Toast.makeText(this.context, "Select aircraft type...", Toast.LENGTH_SHORT).show()
@@ -231,7 +234,8 @@ class InspectFragment : Fragment() {
 
         // BUTTON: identify aircraft tag
         craftTagButton = root.findViewById(R.id.button_identity) as Button
-        craftTagButton.text = airCapture.craftTag
+//        craftTagButton.text = airCapture.craftTag
+        craftTagButton.text = craftSpec.tagList[craftSpec.typeInx][craftSpec.tagInx]
 
         craftTagButton.setOnClickListener {
             // present aircraft identification tag list
