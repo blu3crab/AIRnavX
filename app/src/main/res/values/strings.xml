@@ -11,7 +11,6 @@
     <string name="menu_sense">Sense</string>
     <string name="menu_gallery">Gallery</string>
     <string name="menu_inspect">Inspect</string>
-    <!--TODO: CAMERA -> CAPTURE?-->
     <string name="button_camera">CAMERA</string>
     <string name="button_refresh">REFRESH</string>
     <string name="checkbox_details">Overlay measurement details.</string>

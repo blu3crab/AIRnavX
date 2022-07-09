@@ -9,33 +9,29 @@ import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.media.ExifInterface
 import android.media.ThumbnailUtils
-import android.media.ThumbnailUtils.extractThumbnail
 import android.net.Uri
 import android.os.Environment
 import android.provider.MediaStore
 import android.util.Log
-import android.widget.AdapterView
 import android.widget.GridView
 import android.widget.ImageView
 import android.widget.Toast
 import com.ahandyapp.airnavx.model.AirConstant.DEFAULT_EXTENSION_SEPARATOR
 import com.ahandyapp.airnavx.ui.capture.CaptureViewModel
 import com.ahandyapp.airnavx.ui.gallery.GalleryViewModel
-import com.ahandyapp.airnavx.ui.grid.GridViewAdapter
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.FileOutputStream
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Paths
-import java.util.ArrayList
 
 class AirImageUtil {
     private val TAG = "AirImageUtil"
 
     ///////////////////////////////////////////////////////////////////////////
     // convert bitmap & store to file
-    fun convertBitmapToFile(context: Context, bitmap: Bitmap, imageFilename: String ): Boolean {
+    fun writeBitmapToFile(context: Context, bitmap: Bitmap, imageFilename: String ): Boolean {
         val storageDir = context?.getExternalFilesDir(Environment.DIRECTORY_PICTURES)!!
 
         try {
@@ -46,10 +42,10 @@ class AirImageUtil {
             bitmap.compress(Bitmap.CompressFormat.JPEG, 85, output)
             output.flush()
             output.close()
-            Log.d(TAG, "convertBitmapToFile -> AirImage: stored $filepath...")
+            Log.d(TAG, "writeBitmapToFile -> AirImage: stored $filepath...")
         } catch (ex: Exception) {
             Toast.makeText(context, "AirImage: unable to store $imageFilename...", Toast.LENGTH_SHORT).show()
-            Log.e(TAG, "convertBitmapToFile -> AirImage: unable to store $imageFilename...\n${ex.message}...")
+            Log.e(TAG, "writeBitmapToFile -> AirImage: unable to store $imageFilename...\n${ex.message}...")
             return false
         }
 
@@ -57,7 +53,6 @@ class AirImageUtil {
     }
     ///////////////////////////////////////////////////////////////////////////
     // show alert dialog & delete file set if confirmed
-    // TODO: untangle dialog & file ops
     fun showDeleteAlertDialog(context: Context, activity: Activity, galleryViewModel: GalleryViewModel?, captureViewModel: CaptureViewModel) {
         // build alert dialog
         val dialogBuilder = AlertDialog.Builder(context)
@@ -69,76 +64,8 @@ class AirImageUtil {
             // positive button text and action
             .setPositiveButton("Delete", DialogInterface.OnClickListener {
                     dialog, id ->
-                val deletedGridPosition = captureViewModel.gridPosition
-                val airCapture = captureViewModel.airCaptureArray[captureViewModel.gridPosition]
-                Toast.makeText(context, "Deleting AIR capture files for ${airCapture.timestamp}...", Toast.LENGTH_SHORT).show()
-                Log.d("TAG", "showDeleteAlertDialog deleting AIR capture files for ${airCapture.timestamp}")
-                try {
-                    // set path = storage dir + time.jpg
-                    val storageDir = context?.getExternalFilesDir(Environment.DIRECTORY_PICTURES)!!
-                    val imagePath = Paths.get(storageDir.toString() + File.separator +
-                            AirConstant.DEFAULT_FILE_PREFIX + airCapture.timestamp  +
-                            AirConstant.DEFAULT_EXTENSION_SEPARATOR + AirConstant.DEFAULT_IMAGEFILE_EXT)
-                    val dataPath = Paths.get(storageDir.toString() + File.separator +
-                            AirConstant.DEFAULT_FILE_PREFIX + airCapture.timestamp  +
-                            AirConstant.DEFAULT_EXTENSION_SEPARATOR + AirConstant.DEFAULT_DATAFILE_EXT)
-                    val zoomPath = Paths.get(storageDir.toString() + File.separator +
-                            AirConstant.DEFAULT_FILE_PREFIX + airCapture.timestamp  +
-                            AirConstant.DEFAULT_ZOOM_SUFFIX + AirConstant.DEFAULT_EXTENSION_SEPARATOR +
-                            AirConstant.DEFAULT_IMAGEFILE_EXT)
-                    val overPath = Paths.get(storageDir.toString() + File.separator +
-                            AirConstant.DEFAULT_FILE_PREFIX + airCapture.timestamp  +
-                            AirConstant.DEFAULT_OVER_SUFFIX + AirConstant.DEFAULT_EXTENSION_SEPARATOR +
-                            AirConstant.DEFAULT_IMAGEFILE_EXT)
-                    Log.d("TAG", "showDeleteAlertDialog deleting files \n$imagePath \n$dataPath \n$zoomPath")
-                    // Files.deleteIfExists(path)
-                    var result = Files.deleteIfExists(imagePath)
-                    if (result) {
-                        Log.d("TAG", "showDeleteAlertDialog delete image $imagePath success...")
-                    } else {
-                        Log.d("TAG", "showDeleteAlertDialog delete image $imagePath failed...")
-                    }
-                    result = Files.deleteIfExists(dataPath)
-                    if (result) {
-                        Log.d("TAG", "showDeleteAlertDialog delete datafile $dataPath success...")
-                    } else {
-                        Log.d("TAG", "showDeleteAlertDialog delete datafile $dataPath failed...")
-                    }
-                    result = Files.deleteIfExists(zoomPath)
-                    if (result) {
-                        Log.d("TAG", "showDeleteAlertDialog delete zoomimage $zoomPath success...")
-                    } else {
-                        Log.d("TAG", "showDeleteAlertDialog delete zoomimage $zoomPath failed...")
-                    }
-                    result = Files.deleteIfExists(overPath)
-                    if (result) {
-                        Log.d("TAG", "showDeleteAlertDialog delete overimage $overPath success...")
-                    } else {
-                        Log.d("TAG", "showDeleteAlertDialog delete zoomimage $overPath failed...")
-                    }
-
-                } catch (ioException: IOException) {
-                    ioException.printStackTrace()
-                } finally {
-                    Log.d("TAG", "showDeleteAlertDialog refreshing gallery...")
-                    val airImageUtil = AirImageUtil()
-                    airImageUtil.fetchViewModel(context, activity, captureViewModel)
-                    // TODO: refactor grid position validation
-                    // if valid grid position in range
-                    if (deletedGridPosition >= 0 && deletedGridPosition < captureViewModel.gridCount) {
-                        captureViewModel.gridPosition = deletedGridPosition
-                    }
-                    else if (deletedGridPosition >= captureViewModel.gridCount) {
-                        captureViewModel.gridPosition = captureViewModel.gridCount-1
-                    }
-                    Log.d("TAG", "showDeleteAlertDialog grid position set to $captureViewModel.gridPosition")
-                    // refresh gallery view if defined
-                    if (galleryViewModel != null) {
-                        airImageUtil.refreshGalleryView(galleryViewModel, captureViewModel)
-                    }
-
-                }
-
+                // delete AirCapture data set
+                deleteAirCaptureSet(context, activity, galleryViewModel, captureViewModel)
                 dialog.dismiss()
             })
             // negative button text and action
@@ -153,6 +80,96 @@ class AirImageUtil {
         // show alert dialog
         alert.show()
     }
+
+    ///////////////////////////////////////////////////////////////////////////
+    // fetch air image sets from storage
+    private fun deleteAirCaptureSet(context: Context, activity: Activity, galleryViewModel: GalleryViewModel?, captureViewModel: CaptureViewModel) {
+        val airCapture = captureViewModel.airCaptureArray[captureViewModel.gridPosition]
+        Toast.makeText(
+            context,
+            "Deleting AIR capture files for ${airCapture.timestamp}...",
+            Toast.LENGTH_SHORT
+        ).show()
+        Log.d("TAG", "showDeleteAlertDialog deleting AIR capture files for ${airCapture.timestamp}")
+        try {
+            // set path = storage dir + time.jpg
+            val storageDir = context?.getExternalFilesDir(Environment.DIRECTORY_PICTURES)!!
+            val imagePath = Paths.get(
+                storageDir.toString() + File.separator +
+                        AirConstant.DEFAULT_FILE_PREFIX + airCapture.timestamp +
+                        AirConstant.DEFAULT_EXTENSION_SEPARATOR + AirConstant.DEFAULT_IMAGEFILE_EXT
+            )
+            val dataPath = Paths.get(
+                storageDir.toString() + File.separator +
+                        AirConstant.DEFAULT_FILE_PREFIX + airCapture.timestamp +
+                        AirConstant.DEFAULT_EXTENSION_SEPARATOR + AirConstant.DEFAULT_DATAFILE_EXT
+            )
+            val zoomPath = Paths.get(
+                storageDir.toString() + File.separator +
+                        AirConstant.DEFAULT_FILE_PREFIX + airCapture.timestamp +
+                        AirConstant.DEFAULT_ZOOM_SUFFIX + AirConstant.DEFAULT_EXTENSION_SEPARATOR +
+                        AirConstant.DEFAULT_IMAGEFILE_EXT
+            )
+            val overPath = Paths.get(
+                storageDir.toString() + File.separator +
+                        AirConstant.DEFAULT_FILE_PREFIX + airCapture.timestamp +
+                        AirConstant.DEFAULT_OVER_SUFFIX + AirConstant.DEFAULT_EXTENSION_SEPARATOR +
+                        AirConstant.DEFAULT_IMAGEFILE_EXT
+            )
+            Log.d(
+                "TAG",
+                "showDeleteAlertDialog deleting files \n$imagePath \n$dataPath \n$zoomPath"
+            )
+            // Files.deleteIfExists(path)
+            var result = Files.deleteIfExists(imagePath)
+            if (result) {
+                Log.d("TAG", "showDeleteAlertDialog delete image $imagePath success...")
+            } else {
+                Log.d("TAG", "showDeleteAlertDialog delete image $imagePath failed...")
+            }
+            result = Files.deleteIfExists(dataPath)
+            if (result) {
+                Log.d("TAG", "showDeleteAlertDialog delete datafile $dataPath success...")
+            } else {
+                Log.d("TAG", "showDeleteAlertDialog delete datafile $dataPath failed...")
+            }
+            result = Files.deleteIfExists(zoomPath)
+            if (result) {
+                Log.d("TAG", "showDeleteAlertDialog delete zoomimage $zoomPath success...")
+            } else {
+                Log.d("TAG", "showDeleteAlertDialog delete zoomimage $zoomPath failed...")
+            }
+            result = Files.deleteIfExists(overPath)
+            if (result) {
+                Log.d("TAG", "showDeleteAlertDialog delete overimage $overPath success...")
+            } else {
+                Log.d("TAG", "showDeleteAlertDialog delete zoomimage $overPath failed...")
+            }
+
+        } catch (ioException: IOException) {
+            ioException.printStackTrace()
+        } finally {
+            Log.d("TAG", "showDeleteAlertDialog refreshing gallery...")
+            val airImageUtil = AirImageUtil()
+            airImageUtil.fetchViewModel(context, activity, captureViewModel)
+            // validate grid position
+            Log.e(
+                TAG,
+                "refreshGalleryView validating grid position ${captureViewModel.gridPosition} with gridcount ${captureViewModel.gridCount}"
+            )
+            val success = validateGridPosition(captureViewModel)
+            Log.d(
+                "TAG",
+                "showDeleteAlertDialog grid position set to ${captureViewModel.gridPosition}"
+            )
+            // refresh gallery view if defined
+            if (galleryViewModel != null) {
+                airImageUtil.refreshGalleryView(galleryViewModel, captureViewModel)
+            }
+
+        }
+    }
+
     ///////////////////////////////////////////////////////////////////////////
     // fetch air image sets from storage
     fun fetchViewModel(context: Context, activity: Activity, captureViewModel: CaptureViewModel): Boolean {
@@ -209,12 +226,12 @@ class AirImageUtil {
                 // add view model set
                 if (airCaptureBitmap != null) {
                     // attempt to open associated zoom image file
-                    var zoomBitmap = fetchBitmap(context, activity, name, AirConstant.DEFAULT_ZOOM_SUFFIX)
+                    var zoomBitmap = readBitmapFromFile(context, activity, name, AirConstant.DEFAULT_ZOOM_SUFFIX)
                     if (zoomBitmap != null) {
                         Log.d(TAG,"fetchViewModel zoomBitmap w x h = ${zoomBitmap.width} x ${zoomBitmap.height}")
                     }
                     // attempt to open associated over image file
-                    var overBitmap = fetchBitmap(context, activity, name, AirConstant.DEFAULT_OVER_SUFFIX)
+                    var overBitmap = readBitmapFromFile(context, activity, name, AirConstant.DEFAULT_OVER_SUFFIX)
                     if (overBitmap != null) {
                         Log.d(TAG,"fetchViewModel overBitmap w x h = ${overBitmap.width} x ${overBitmap.height}")
                     }
@@ -241,38 +258,37 @@ class AirImageUtil {
     }
     ///////////////////////////////////////////////////////////////////////////
     // convert image file to bitmap
-    // TODO: rename to compliment convertBitmapToFile
-    private fun fetchBitmap(context: Context, activity: Activity, name: String, suffix: String): Bitmap? {
-        var zoomBitmap: Bitmap? = null
+    private fun readBitmapFromFile(context: Context, activity: Activity, name: String, suffix: String): Bitmap? {
+        var bitmap: Bitmap? = null
         try {
             val storageDir = context?.getExternalFilesDir(Environment.DIRECTORY_PICTURES)!!
             val airImageName =
                 name + suffix + AirConstant.DEFAULT_EXTENSION_SEPARATOR + AirConstant.DEFAULT_IMAGEFILE_EXT
-            Log.d(TAG, "fetchBitmap airImageName $airImageName...")
+            Log.d(TAG, "readBitmapFromFile airImageName $airImageName...")
             val airImagePath = storageDir.toString() + File.separator + airImageName
-            Log.d(TAG, "fetchBitmap airImagePath $airImagePath...")
+            Log.d(TAG, "readBitmapFromFile airImagePath $airImagePath...")
             val airImageFile = File(airImagePath)
 
             //   read air image into bitmap
             val uri = Uri.fromFile(airImageFile)
-            zoomBitmap = MediaStore.Images.Media.getBitmap(
+            bitmap = MediaStore.Images.Media.getBitmap(
                 activity?.applicationContext?.contentResolver,
                 uri
             )
-            if (zoomBitmap != null) {
+            if (bitmap != null) {
                 Log.d(
                     TAG,
-                    "fetchBitmap zoomBitmap w x h = ${zoomBitmap.width} x ${zoomBitmap.height}"
+                    "readBitmapFromFile zoomBitmap w x h = ${bitmap.width} x ${bitmap.height}"
                 )
             }
         }
         catch (ex: FileNotFoundException) {
-            Log.d(TAG, "fetchBitmap FileNotFoundException...")
+            Log.d(TAG, "readBitmapFromFile FileNotFoundException...")
         }
         catch (ex: Exception) {
-            Log.e(TAG, "fetchBitmap exception ${ex.message}")
+            Log.e(TAG, "readBitmapFromFile exception ${ex.message}")
         }
-        return zoomBitmap
+        return bitmap
     }
     ///////////////////////////////////////////////////////////////////////////
     // extract thumbnail from bitmap
@@ -297,12 +313,23 @@ class AirImageUtil {
     // set gallery image to selected capture thumb
     fun refreshGalleryView(galleryViewModel: GalleryViewModel, captureViewModel: CaptureViewModel): Boolean {
         Log.d(TAG, "refreshGalleryView grid position ${captureViewModel.gridPosition}, grid count ${captureViewModel.gridCount}")
-        // TODO: refactor grid position validation
         if (captureViewModel.gridCount <= 0) {
             val emptyBitmap = createBlankBitmap(galleryViewModel.galleryImageView.width, galleryViewModel.galleryImageView.height)
             galleryViewModel.galleryImageView.setImageBitmap(emptyBitmap)
             return false;
         }
+        // validate grid position
+        Log.d(TAG, "refreshGalleryView validating grid position ${captureViewModel.gridPosition} with gridcount ${captureViewModel.gridCount}")
+        val success = validateGridPosition(captureViewModel)
+
+        galleryViewModel.captureBitmap = captureViewModel.origBitmapArray[captureViewModel.gridPosition]
+        galleryViewModel.zoomBitmap = captureViewModel.zoomBitmapArray[captureViewModel.gridPosition]
+        galleryViewModel.overBitmap = captureViewModel.overBitmapArray[captureViewModel.gridPosition]
+        galleryViewModel.galleryImageView.setImageBitmap(galleryViewModel.overBitmap)
+        return true
+    }
+
+    private fun validateGridPosition(captureViewModel: CaptureViewModel): Boolean {
         // adjust grid position to valid range
         if (captureViewModel.gridPosition < 0) {
             captureViewModel.gridPosition = 0
@@ -312,10 +339,6 @@ class AirImageUtil {
             captureViewModel.gridPosition = captureViewModel.gridCount - 1
             Log.e(TAG, "refreshGalleryView invalid grid positive position adjusted to ${captureViewModel.gridPosition}")
         }
-        galleryViewModel.captureBitmap = captureViewModel.origBitmapArray[captureViewModel.gridPosition]
-        galleryViewModel.zoomBitmap = captureViewModel.zoomBitmapArray[captureViewModel.gridPosition]
-        galleryViewModel.overBitmap = captureViewModel.overBitmapArray[captureViewModel.gridPosition]
-        galleryViewModel.galleryImageView.setImageBitmap(galleryViewModel.overBitmap)
         return true
     }
     ///////////////////////////////////////////////////////////////////////////

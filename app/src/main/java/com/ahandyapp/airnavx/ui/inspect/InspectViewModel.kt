@@ -33,7 +33,6 @@ class InspectViewModel : ViewModel() {
                 "LONG PRESS to CENTER.\n" +
                 "TAP to zoom IN, DOUBLE TAP to zoom OUT, \n" +
                 "Select measurement settings - Measure Altitude!"
-        // TODO: value = R.id.guide_text
     }
     val guideText: LiveData<String> = _guideText
 

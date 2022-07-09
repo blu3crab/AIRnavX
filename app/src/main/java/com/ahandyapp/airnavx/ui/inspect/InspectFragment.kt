@@ -29,8 +29,6 @@ import kotlin.math.sin
 class InspectFragment : Fragment() {
 
     private val TAG = "InspectFragment"
-    // TODO: move to constants
-    private val REQUEST_SPOKEN_CRAFT_TAG = 1001
 
     private lateinit var inspectViewModel: InspectViewModel
     private var _binding: FragmentInspectBinding? = null
@@ -90,7 +88,7 @@ class InspectFragment : Fragment() {
             guideTextView.text = it
         }
 
-        // TODO: CraftSpec - enable tag entry, read/write json file
+        // read craft specs
         craftSpec = CraftSpec().readFromJson(context!!)
         Log.d(TAG, "onCreateView readFromJson craftSpec->\n $craftSpec...")
 
@@ -116,7 +114,7 @@ class InspectFragment : Fragment() {
         // set inspect image to selected capture thumb
         Log.d(TAG, "onCreateView captureViewModel grid position ${captureViewModel.gridPosition}")
         captureBitmap = captureViewModel.origBitmapArray[captureViewModel.gridPosition]
-        referenceBitmap = captureBitmap
+//        referenceBitmap = captureBitmap
         //inspectBitmap = captureBitmap
         inspectBitmap = captureViewModel.zoomBitmapArray[captureViewModel.gridPosition]
         // set view model to incoming aircapture
@@ -140,11 +138,15 @@ class InspectFragment : Fragment() {
         // establish measure button listeners
         this.context?.let { setButtonListeners(root, it) }
 
-        // set image attributes
-        referenceUpperLeftX = 0
-        referenceUpperLeftY = 0
-        referenceCenterX = captureBitmap.width / 2
-        referenceCenterY = captureBitmap.height / 2
+        // TODO: reference data class w/ init
+        // reset reference bitmap
+        setReferenceData(captureBitmap)
+//        // set image attributes
+//        referenceBitmap = captureBitmap
+//        referenceUpperLeftX = 0
+//        referenceUpperLeftY = 0
+//        referenceCenterX = captureBitmap.width / 2
+//        referenceCenterY = captureBitmap.height / 2
         Log.d(TAG, "onCreateView center X/Y $referenceCenterX/$referenceCenterY")
 
         if (captureBitmap.width < captureBitmap.height) {
@@ -232,7 +234,7 @@ class InspectFragment : Fragment() {
         craftTagButton.text = airCapture.craftTag
 
         craftTagButton.setOnClickListener {
-            // TODO: present aircraft ident list
+            // present aircraft identification tag list
             showIdentifyAlertDialog()
             Log.d(TAG, "buttonIdentify.setOnClickListener->Identify aircraft list size " +
                     "${craftSpec.tagList[craftSpec.typeInx].size-1}->${craftSpec.tagList[craftSpec.typeInx]}")
@@ -397,7 +399,7 @@ class InspectFragment : Fragment() {
         // save AirCapture measured image
         val imageFilename = AirConstant.DEFAULT_FILE_PREFIX + airCapture.timestamp + AirConstant.DEFAULT_ZOOM_SUFFIX
         var airImageUtil = AirImageUtil()
-        val success = airImageUtil.convertBitmapToFile(context!!, inspectBitmap, imageFilename)
+        val success = airImageUtil.writeBitmapToFile(context!!, inspectBitmap, imageFilename)
         Log.d(TAG,"measure convertBitmapToFile $success for $imageFilename")
 
         if (success) {
@@ -634,11 +636,12 @@ class InspectFragment : Fragment() {
         }
         // TODO: reference data class w/ init
         // reset reference bitmap
-        referenceBitmap = inspectBitmap
-        referenceUpperLeftX = 0
-        referenceUpperLeftY = 0
-        referenceCenterX = (width / 2)
-        referenceCenterY = (height / 2)
+        setReferenceData(inspectBitmap)
+//        referenceBitmap = inspectBitmap
+//        referenceUpperLeftX = 0
+//        referenceUpperLeftY = 0
+//        referenceCenterX = (width / 2)
+//        referenceCenterY = (height / 2)
 
         inspectImageView.setImageBitmap(inspectBitmap)
         Log.d(TAG, "centerZoomBitmap inspectBitmap w/h ${inspectBitmap.width}/${inspectBitmap.height}")
@@ -648,6 +651,14 @@ class InspectFragment : Fragment() {
         zoomStepY = ArrayList<Int>()
     }
 
+    private fun setReferenceData(bitmap: Bitmap) {
+        // reset reference bitmap
+        referenceBitmap = bitmap
+        referenceUpperLeftX = 0
+        referenceUpperLeftY = 0
+        referenceCenterX = (bitmap.width / 2)
+        referenceCenterY = (bitmap.height / 2)
+    }
     /////////////////////////lifecycle///////////////////////////
     override fun onDestroyView() {
         super.onDestroyView()
@@ -733,7 +744,7 @@ class InspectFragment : Fragment() {
             RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
         intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak Each Letter of the Craft Identity Tag")
-        startActivityForResult(intent, REQUEST_SPOKEN_CRAFT_TAG)
+        startActivityForResult(intent, AirConstant.REQUEST_SPOKEN_CRAFT_TAG)
     }
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         Log.d(
@@ -741,14 +752,14 @@ class InspectFragment : Fragment() {
             "dispatchTakePictureIntent onActivityResult requestCode ${requestCode}, resultCode $resultCode"
         )
         // request code match & result OK
-        if (requestCode == REQUEST_SPOKEN_CRAFT_TAG && resultCode == Activity.RESULT_OK) {
+        if (requestCode == AirConstant.REQUEST_SPOKEN_CRAFT_TAG && resultCode == Activity.RESULT_OK) {
             Log.d(TAG, "dispatchSpokenTagIntent onActivityResult OK...")
             val spokenTag: String? =
                 data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.get(0)
             Log.d(TAG, "dispatchSpokenTagIntent onActivityResult spokenTag ->$spokenTag...")
             Toast.makeText(this.context, "spokenTag ->$spokenTag...", Toast.LENGTH_SHORT).show()
 
-        } else if (requestCode == REQUEST_SPOKEN_CRAFT_TAG && resultCode == Activity.RESULT_CANCELED) {
+        } else if (requestCode == AirConstant.REQUEST_SPOKEN_CRAFT_TAG && resultCode == Activity.RESULT_CANCELED) {
             Log.d(TAG, "dispatchSpokenTagIntent onActivityResult canceled...")
             Toast.makeText(this.context, "spokenTag canceled...", Toast.LENGTH_SHORT).show()
         }

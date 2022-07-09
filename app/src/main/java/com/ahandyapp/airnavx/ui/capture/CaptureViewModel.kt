@@ -10,8 +10,6 @@ import com.ahandyapp.airnavx.model.AirCapture
 import java.util.ArrayList
 
 class CaptureViewModel : ViewModel() {
-
-    // TODO: public MutableLiveData<var>
     ///////////////////////////////////////////////////////////////////////////
     // AirCapture enums, constants, defaults
     enum class AirFileType {

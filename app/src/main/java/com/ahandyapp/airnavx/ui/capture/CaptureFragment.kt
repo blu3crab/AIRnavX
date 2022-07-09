@@ -53,8 +53,6 @@ class CaptureFragment : Fragment() {
     // image capture ->
     //      dispatchTakePictureIntent - create image capture file & timestamp
     //      onActivityResult - pipeline image capture data stream
-    // TODO: move to constants
-    private val REQUEST_IMAGE_CAPTURE = 1001
     private lateinit var captureFile: File                  // capture file
     private var captureTimestamp: String = AirConstant.DEFAULT_STRING   // capture file creation timestamp
 
@@ -170,7 +168,7 @@ class CaptureFragment : Fragment() {
                     )
 
                     takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri)
-                    startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE)
+                    startActivityForResult(takePictureIntent, AirConstant.REQUEST_IMAGE_CAPTURE)
                 }
             } catch (ex: Exception) {
                 Toast.makeText(this.context, "NO camera launch...", Toast.LENGTH_SHORT).show()
@@ -180,7 +178,7 @@ class CaptureFragment : Fragment() {
             // for thumbnail only, do NOT supply image file URI
             val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
             try {
-                startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE)
+                startActivityForResult(takePictureIntent, AirConstant.REQUEST_IMAGE_CAPTURE)
             } catch (ex: Exception) {
                 Toast.makeText(this.context, "NO camera launch...", Toast.LENGTH_SHORT).show()
                 Log.e(TAG, "dispatchTakePictureIntent -> NO camera launch Exception ${ex.stackTrace}...")
@@ -191,7 +189,7 @@ class CaptureFragment : Fragment() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         Log.d(TAG,"dispatchTakePictureIntent onActivityResult requestCode ${requestCode}, resultCode $resultCode")
         // request code match & result OK
-        if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
+        if (requestCode == AirConstant.REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
             Toast.makeText(this.context, "camera image captured...", Toast.LENGTH_SHORT).show()
             Log.d(TAG, "dispatchTakePictureIntent onActivityResult camera image captured...")
             if (!TEST_THUMBNAIL_ONLY) {
@@ -266,7 +264,7 @@ class CaptureFragment : Fragment() {
             // loop dispatch until cancelled
             Log.d(TAG, "dispatchTakePictureIntent onActivityResult launching camera...")
             dispatchTakePictureIntent()
-        } else if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_CANCELED) {
+        } else if (requestCode == AirConstant.REQUEST_IMAGE_CAPTURE && resultCode == RESULT_CANCELED) {
             Toast.makeText(this.context, "camera canceled...", Toast.LENGTH_SHORT).show()
             Log.d(TAG, "dispatchTakePictureIntent onActivityResult camera canceled...")
             // stop angle meter

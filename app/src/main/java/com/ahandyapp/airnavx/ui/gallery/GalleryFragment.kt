@@ -139,7 +139,7 @@ class GalleryFragment : Fragment() {
         // save overlay image
         val imageFilename = AirConstant.DEFAULT_FILE_PREFIX + galleryViewModel.airCapture.timestamp + AirConstant.DEFAULT_OVER_SUFFIX
         //var airImageUtil = AirImageUtil()
-        val success = airImageUtil.convertBitmapToFile(context!!, galleryViewModel.overBitmap, imageFilename)
+        val success = airImageUtil.writeBitmapToFile(context!!, galleryViewModel.overBitmap, imageFilename)
         if (success) {
             // update capture viewmodel overlay bitmap array
             captureViewModel.overBitmapArray[captureViewModel.gridPosition] = galleryViewModel.overBitmap
@@ -300,7 +300,7 @@ class GalleryFragment : Fragment() {
                         // UP SWIPE - delete image set
                         Log.d("TAG", "establishGestureDetector onFling: UP SWIPE")
                         airImageUtil.showDeleteAlertDialog(context, activity!!, galleryViewModel, captureViewModel)
-                        // TODO: refresh gallery image
+                        // refresh gallery image
                         refresh() // overlay measurement details!
                     }
                     else if (event2.getY() - event1.getY() > SWIPE_MIN_DISTANCE && Math.abs(velocityY) > SWIPE_THRESHOLD_VELOCITY) {
