@@ -42,6 +42,7 @@ data class CraftSpec(
                 this.typeInx = typeInx
                 continue
             }
+            ++typeInx
         }
         Log.d(TAG, "syncTypeTag aircraft type ${this.typeInx}, " +
                 "${this.typeList[this.typeInx]}...")
