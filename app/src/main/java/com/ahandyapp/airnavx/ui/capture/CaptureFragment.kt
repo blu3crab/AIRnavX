@@ -32,7 +32,7 @@ class CaptureFragment : Fragment() {
 
     private val TAG = "CaptureFragment"
     // test thumb only image capture
-    private val TEST_THUMBNAIL_ONLY = false
+//    private val TEST_THUMBNAIL_ONLY = false
 
     // property is only valid between onCreateView and onDestroyView.
     private val binding get() = _binding!!
@@ -148,42 +148,41 @@ class CaptureFragment : Fragment() {
         val startMeters = startMeters(angleMeter, soundMeter)
         Log.d(TAG, "dispatchTakePictureIntent startExerciseMeters $startMeters")
 
-        if (!TEST_THUMBNAIL_ONLY) {
-            // for full image capture, supply created image file URI
-            val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-            try {
-                // create the photo File
-                val airCapture = AirCapture()
-                captureTimestamp = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())
-                val imageName = airCapture.getAirFilename(CaptureViewModel.AirFileType.IMAGE, captureTimestamp)
-                val storageDir = context?.getExternalFilesDir(Environment.DIRECTORY_PICTURES)!!
-                val imageFile = airImageUtil.createImageFile(storageDir, imageName)
+        // for full image capture, supply created image file URI
+        val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+        try {
+            // create the photo File
+            val airCapture = AirCapture()
+            captureTimestamp = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())
+            val imageName = airCapture.getAirFilename(CaptureViewModel.AirFileType.IMAGE, captureTimestamp)
+            val storageDir = context?.getExternalFilesDir(Environment.DIRECTORY_PICTURES)!!
+            val imageFile = airImageUtil.createImageFile(storageDir, imageName)
 
-                imageFile?.let {
-                    captureFile = imageFile
-                    val photoUri = FileProvider.getUriForFile(
-                        requireContext(),
-                        "com.ahandyapp.airnavx",
-                        captureFile
-                    )
+            imageFile?.let {
+                captureFile = imageFile
+                val photoUri = FileProvider.getUriForFile(
+                    requireContext(),
+                    "com.ahandyapp.airnavx",
+                    captureFile
+                )
 
-                    takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri)
-                    startActivityForResult(takePictureIntent, AirConstant.REQUEST_IMAGE_CAPTURE)
-                }
-            } catch (ex: Exception) {
-                Toast.makeText(this.context, "NO camera launch...", Toast.LENGTH_SHORT).show()
-                Log.e(TAG, "dispatchTakePictureIntent -> NO camera launch Exception ${ex.message}...")
-            }
-        } else {  // THUMBNAIL_ONLY
-            // for thumbnail only, do NOT supply image file URI
-            val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-            try {
+                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri)
                 startActivityForResult(takePictureIntent, AirConstant.REQUEST_IMAGE_CAPTURE)
-            } catch (ex: Exception) {
-                Toast.makeText(this.context, "NO camera launch...", Toast.LENGTH_SHORT).show()
-                Log.e(TAG, "dispatchTakePictureIntent -> NO camera launch Exception ${ex.stackTrace}...")
             }
+        } catch (ex: Exception) {
+            Toast.makeText(this.context, "NO camera launch...", Toast.LENGTH_SHORT).show()
+            Log.e(TAG, "dispatchTakePictureIntent -> NO camera launch Exception ${ex.message}...")
         }
+//        else {  // THUMBNAIL_ONLY
+//            // for thumbnail only, do NOT supply image file URI
+//            val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+//            try {
+//                startActivityForResult(takePictureIntent, AirConstant.REQUEST_IMAGE_CAPTURE)
+//            } catch (ex: Exception) {
+//                Toast.makeText(this.context, "NO camera launch...", Toast.LENGTH_SHORT).show()
+//                Log.e(TAG, "dispatchTakePictureIntent -> NO camera launch Exception ${ex.stackTrace}...")
+//            }
+//        }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -192,10 +191,10 @@ class CaptureFragment : Fragment() {
         if (requestCode == AirConstant.REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
             Toast.makeText(this.context, "camera image captured...", Toast.LENGTH_SHORT).show()
             Log.d(TAG, "dispatchTakePictureIntent onActivityResult camera image captured...")
-            if (!TEST_THUMBNAIL_ONLY) {
+            if (captureFile != null) {
                 // generate thumbnail from file uri if not available as thumbnail in data
                 // photo file is file EXTRA_OUTPUT location of actual camera image
-                Log.d(TAG, "dispatchTakePictureIntent onActivityResult generate thumbnail...")
+                Log.d(TAG, "dispatchTakePictureIntent onActivityResult generate capture set...")
                 val uri = Uri.fromFile(captureFile)
                 val currentPhotoPath = captureFile.absolutePath
                 try {
@@ -246,20 +245,37 @@ class CaptureFragment : Fragment() {
                 } catch (ex: Exception) {
                     Log.e(TAG, "dispatchTakePictureIntent createImageFile Exception ${ex.stackTrace}")
                 }
+                finally {
+                    if (angleMeter != null) {
+                        // stop angle meter
+                        angleMeter.stop()
+                    }
+                    else {
+                        Log.e(TAG, "dispatchTakePictureIntent angleMeter NULL...")
+                    }
+                    if (soundMeter != null) {
+                        // stop sound meter
+                        soundMeter.stop()
+                    }
+                    else {
+                        Log.e(TAG, "dispatchTakePictureIntent soundMeter NULL...")
+                    }
+                }
            } else {
-               data?.let {
-                   // extra will contain thumbnail image if image capture not in play
-                   data.extras?.let {
-                       val extraPhotoUri: Uri = data.extras?.get(MediaStore.EXTRA_OUTPUT) as Uri
-                       Log.d(TAG, "dispatchTakePictureIntent onActivityResult thumb URI $extraPhotoUri")
-
-                       var thumbBitmap = data.extras?.get("data") as Bitmap
-                   } ?: run {
-                       Log.e(TAG, "dispatchTakePictureIntent onActivityResult data.extras NULL.")
-                   }
-               } ?: run {
-                   Log.e(TAG, "dispatchTakePictureIntent onActivityResult data NULL.")
-               }
+                Log.e(TAG, "dispatchTakePictureIntent captureFile NULL...")
+//               data?.let {
+//                   // extra will contain thumbnail image if image capture not in play
+//                   data.extras?.let {
+//                       val extraPhotoUri: Uri = data.extras?.get(MediaStore.EXTRA_OUTPUT) as Uri
+//                       Log.d(TAG, "dispatchTakePictureIntent onActivityResult thumb URI $extraPhotoUri")
+//
+//                       var thumbBitmap = data.extras?.get("data") as Bitmap
+//                   } ?: run {
+//                       Log.e(TAG, "dispatchTakePictureIntent onActivityResult data.extras NULL.")
+//                   }
+//               } ?: run {
+//                   Log.e(TAG, "dispatchTakePictureIntent onActivityResult data NULL.")
+//               }
            }
             // loop dispatch until cancelled
             Log.d(TAG, "dispatchTakePictureIntent onActivityResult launching camera...")
@@ -267,10 +283,10 @@ class CaptureFragment : Fragment() {
         } else if (requestCode == AirConstant.REQUEST_IMAGE_CAPTURE && resultCode == RESULT_CANCELED) {
             Toast.makeText(this.context, "camera canceled...", Toast.LENGTH_SHORT).show()
             Log.d(TAG, "dispatchTakePictureIntent onActivityResult camera canceled...")
-            // stop angle meter
-            angleMeter.stop()
-            // stop sound meter
-            soundMeter.stop()
+//            // stop angle meter
+//            angleMeter.stop()
+//            // stop sound meter
+//            soundMeter.stop()
         }
     }
     /////////////////////////////life-cycle////////////////////////////////////

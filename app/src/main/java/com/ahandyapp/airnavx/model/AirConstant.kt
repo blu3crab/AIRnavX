@@ -15,6 +15,15 @@ object AirConstant
         LENGTH("CRAFT LENGTH")
     }
 
+    // pixel6:
+    // distance for 100% FOV of 12" object for portrait & landscape
+    // ratio = dist/12
+    val distFor100PerCentFOVof1FootObjectPixel6Portrait = 11.625    // 11 5/8"
+    val distRatioFor100PerCentFOVat1FootPixel6Landscape = 8.5       // 8 1/2"
+    val ratioFor100PerCentFOVat1FootPixel6Portrait = distFor100PerCentFOVof1FootObjectPixel6Portrait/12.0   // 0.96875
+    val ratioFor100PerCentFOVat1FootPixel6Landscape = distRatioFor100PerCentFOVat1FootPixel6Landscape/12.0  // 0.70833
+    //val distFor100PerCentFOVat1FootPixel4 = 1.065     // 12 3/4"
+
     val AIR_VERSION: String = "v1-27mar22"
     val DEFAULT_STRING: String = "nada"
     val DEFAULT_DOUBLE: Double = 0.0

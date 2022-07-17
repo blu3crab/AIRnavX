@@ -21,6 +21,8 @@ import com.ahandyapp.airnavx.databinding.FragmentInspectBinding
 import com.ahandyapp.airnavx.model.*
 import com.ahandyapp.airnavx.model.AirConstant.SWIPE_MIN_DISTANCE
 import com.ahandyapp.airnavx.model.AirConstant.SWIPE_THRESHOLD_VELOCITY
+import com.ahandyapp.airnavx.model.AirConstant.ratioFor100PerCentFOVat1FootPixel6Landscape
+import com.ahandyapp.airnavx.model.AirConstant.ratioFor100PerCentFOVat1FootPixel6Portrait
 import com.ahandyapp.airnavx.ui.capture.CaptureViewModel
 import java.util.*
 import kotlin.math.roundToInt
@@ -352,13 +354,14 @@ class InspectFragment : Fragment() {
         }
         Log.d(TAG, "measure-> actualSize $actualSize ")
 
-        // TODO: collection for FOV at 1 foot per device for portrait | landscape
-        //val distFor100PerCentFOVat1FootPixel4 = 1.065
-        //Log.d(TAG, "buttonMeasure.setOnClickListener->Measuring Pixel4 $distFor100PerCentFOVat1FootPixel4")
-        val distFor100PerCentFOVat1FootPixel6 = 0.96875
-        Log.d(TAG, "buttonMeasure.setOnClickListener->Measuring Pixel6 $distFor100PerCentFOVat1FootPixel6")
+        // TODO: derive ratio for FOV at 1 foot from device/camera characteristics for portrait | landscape
+        var ratioFor100PerCentFOVat1FootPixel6 = ratioFor100PerCentFOVat1FootPixel6Portrait // portrait
+        if (captureBitmap.width > captureBitmap.height) {
+            ratioFor100PerCentFOVat1FootPixel6 = ratioFor100PerCentFOVat1FootPixel6Landscape // landscape 0.71
+        }
+        Log.d(TAG, "buttonMeasure.setOnClickListener->Measuring Pixel6 $ratioFor100PerCentFOVat1FootPixel6")
 
-        val distObjectAt100PerCentFOV = actualSize * distFor100PerCentFOVat1FootPixel6
+        val distObjectAt100PerCentFOV = actualSize * ratioFor100PerCentFOVat1FootPixel6
         Log.d(TAG, "measure-> distObjectAt100PerCentFOV $distObjectAt100PerCentFOV ")
 
         var imageSize: Double = 0.0
