@@ -25,6 +25,8 @@ import java.io.FileOutputStream
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Paths
+import java.util.*
+import kotlin.collections.ArrayList
 
 class AirImageUtil {
     private val TAG = "AirImageUtil"
@@ -195,11 +197,22 @@ class AirImageUtil {
             Log.d(TAG, "fetchViewModel listFiles file name $name")
         }
         // for each name with JPG extension
+        var fileList = ArrayList<File>()
         File(storageDir.toString()).walk().filter { file-> hasRequiredSuffix(file) }.forEach { it ->
+            fileList.add(it)
+        }
+        // sort jpg file list by descending time
+        val fileArray = arrayOfNulls<File>(fileList.size)
+        fileList.toArray(fileArray)
+
+//        Arrays.sort(fileArray, Comparator.comparingLong(File::lastModified).reversed())
+        Arrays.sort(fileArray, Comparator.comparingLong(File::lastModified))
+
+        for (file in fileArray) {
             //println(it)
             //val name = it.name    // full name w/ ext jpg
-            val name = it.nameWithoutExtension
-            val ext = it.extension
+            val name = file!!.nameWithoutExtension
+            val ext = file!!.extension
             Log.d(TAG, "fetchViewModel walk file name $name ext $ext")
             val airCaptureName = name  + AirConstant.DEFAULT_EXTENSION_SEPARATOR + AirConstant.DEFAULT_DATAFILE_EXT
             val airCapturePath = storageDir.toString() + File.separator + airCaptureName
