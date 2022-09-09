@@ -181,9 +181,9 @@ class GalleryFragment : Fragment() {
         // overlay border
         canvas.drawRect(0F, 0F, bmp1.width.toFloat(), bmp1.height.toFloat(), paint);
         // draw measure results
-        paint.setColor(Color.BLACK)
+        paint.setColor(colortext)
         if (colortextCheckbox.isChecked) {
-            paint.setColor(colortext)
+            paint.setColor(Color.BLACK)
         }
         paint.setStyle(Paint.Style.FILL_AND_STROKE)
         paint.setStrokeWidth(8F)
@@ -241,6 +241,13 @@ class GalleryFragment : Fragment() {
             val zoomText = "Zoom w X h ->  $zoomWidth X $zoomHeight pixels"
             canvas.drawText("$zoomText", offsetX, offsetY, paint)
         }
+        // draw timestamp
+        offsetX = 1024F + 128F
+        offsetY = bmp1.height - (textsize * 2)
+        val timestamp = galleryViewModel.airCapture.timestamp
+        val timeText = "Timestamp: $timestamp"
+        canvas.drawText("$timeText", offsetX, offsetY, paint)
+
         return bmOverlay
     }
 

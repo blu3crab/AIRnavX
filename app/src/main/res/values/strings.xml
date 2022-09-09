@@ -14,7 +14,7 @@
     <string name="button_camera">CAMERA</string>
     <string name="button_refresh">REFRESH</string>
     <string name="checkbox_details">Overlay measurement details.</string>
-    <string name="checkbox_colortext">Overlay colored text.</string>
+    <string name="checkbox_blacktext">Overlay black text.</string>
 
     <!-- measure buttons   -->
     <string name="button_dimension">DIMENSION</string>

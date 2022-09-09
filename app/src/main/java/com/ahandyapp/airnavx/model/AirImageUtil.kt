@@ -63,6 +63,14 @@ class AirImageUtil {
         dialogBuilder.setMessage("Delete AIR capture files?")
             // if the dialog is cancelable
             .setCancelable(false)
+            // neutral button text and action
+            .setNegativeButton("Delete All*", DialogInterface.OnClickListener {
+                    dialog, id ->
+                //dialog.cancel()
+                Log.d(TAG, "showDeleteAlertDialog -> Delete All* selected...")
+                // delete all* AirCapture data set
+                deleteAllAirCaptureSet(context, activity, galleryViewModel, captureViewModel)
+            })
             // positive button text and action
             .setPositiveButton("Delete", DialogInterface.OnClickListener {
                     dialog, id ->
@@ -71,7 +79,7 @@ class AirImageUtil {
                 dialog.dismiss()
             })
             // negative button text and action
-            .setNegativeButton("Cancel", DialogInterface.OnClickListener {
+            .setNeutralButton("Cancel", DialogInterface.OnClickListener {
                     dialog, id -> dialog.cancel()
             })
 
@@ -84,7 +92,17 @@ class AirImageUtil {
     }
 
     ///////////////////////////////////////////////////////////////////////////
-    // fetch air image sets from storage
+    // delete air image sets from storage
+    private fun deleteAllAirCaptureSet(context: Context, activity: Activity, galleryViewModel: GalleryViewModel?, captureViewModel: CaptureViewModel) {
+        //for (i in 0..captureViewModel.gridCount) {
+        while (captureViewModel.gridCount > 0) {
+            captureViewModel.gridPosition = 0
+            // delete AirCapture data set
+            deleteAirCaptureSet(context, activity, galleryViewModel, captureViewModel)
+        }
+    }
+    ///////////////////////////////////////////////////////////////////////////
+    // delete selected air image set from storage
     private fun deleteAirCaptureSet(context: Context, activity: Activity, galleryViewModel: GalleryViewModel?, captureViewModel: CaptureViewModel) {
         val airCapture = captureViewModel.airCaptureArray[captureViewModel.gridPosition]
         Toast.makeText(
