@@ -22,6 +22,7 @@ import com.ahandyapp.airnavx.model.AirConstant.SWIPE_THRESHOLD_VELOCITY
 import com.ahandyapp.airnavx.model.AirImageUtil
 import com.ahandyapp.airnavx.ui.capture.CaptureViewModel
 import com.ahandyapp.airnavx.ui.inspect.InspectViewModel
+import kotlin.math.abs
 import kotlin.math.roundToInt
 
 class GalleryFragment : Fragment() {
@@ -47,7 +48,7 @@ class GalleryFragment : Fragment() {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         // establish galleryViewModel bindings
         galleryViewModel =
             ViewModelProvider(this).get(GalleryViewModel::class.java)
@@ -156,44 +157,44 @@ class GalleryFragment : Fragment() {
             Rect(0, 0, bmp2.width, bmp2.height),
             Rect(0, bmp1.height-1024, 1024, bmp1.height), null)
         // draw overlay & zoom borders
-        var paint = Paint()
-        paint.setStyle(Paint.Style.STROKE)  // border - no fill
-        paint.setColor(Color.BLACK)
-        paint.setStrokeWidth(16F)
+        val paint = Paint()
+        paint.style = Paint.Style.STROKE  // border - no fill
+        paint.color = Color.BLACK
+        paint.strokeWidth = 16F
         // draw zoom border
-        canvas.drawRect(0F, (bmp1.height-1024).toFloat(),1024F,  bmp1.height.toFloat(), paint);
+        canvas.drawRect(0F, (bmp1.height-1024).toFloat(),1024F,  bmp1.height.toFloat(), paint)
         // test altitude for border color code
         var colortext = Color.BLACK
-        paint.setColor(Color.CYAN)
+        paint.color = Color.CYAN
         if (galleryViewModel.airCapture.airObjectAltitude > 1000) {
-            paint.setColor(Color.GREEN)
+            paint.color = Color.GREEN
             colortext = Color.GREEN
         }
         else if (galleryViewModel.airCapture.airObjectAltitude < 1000 && galleryViewModel.airCapture.airObjectAltitude > 500) {
-            paint.setColor(Color.YELLOW)
+            paint.color = Color.YELLOW
             colortext = Color.YELLOW
         }
         else if (galleryViewModel.airCapture.airObjectAltitude < 500) {
-            paint.setColor(Color.RED)
+            paint.color = Color.RED
             colortext = Color.RED
         }
-        paint.setStrokeWidth(48F)
+        paint.strokeWidth = 48F
         // overlay border
-        canvas.drawRect(0F, 0F, bmp1.width.toFloat(), bmp1.height.toFloat(), paint);
+        canvas.drawRect(0F, 0F, bmp1.width.toFloat(), bmp1.height.toFloat(), paint)
         // draw measure results
-        paint.setColor(colortext)
+        paint.color = colortext
         if (colortextCheckbox.isChecked) {
-            paint.setColor(Color.BLACK)
+            paint.color = Color.BLACK
         }
-        paint.setStyle(Paint.Style.FILL_AND_STROKE)
-        paint.setStrokeWidth(8F)
+        paint.style = Paint.Style.FILL_AND_STROKE
+        paint.strokeWidth = 8F
         // initial offsets, size
         var offsetX = 128F
         var offsetY = 512F
-        var textsize = 256F
+        val textsize = 256F
 
         // primary group: altitude, decibels
-        paint.setTextSize(textsize)
+        paint.textSize = textsize
 
         val altitude = galleryViewModel.airCapture.airObjectAltitude.toInt()
         canvas.drawText("Altitude->  $altitude  feet", offsetX, offsetY, paint)
@@ -202,19 +203,19 @@ class GalleryFragment : Fragment() {
         val decibel = galleryViewModel.airCapture.decibel.toInt()
         canvas.drawText("Decibels->  $decibel  dB", offsetX, offsetY, paint)
         // corollary group: camera angle - distance
-        paint.setTextSize(textsize/2)
+        paint.textSize = textsize/2
 
         offsetY += textsize
         val craftType = galleryViewModel.airCapture.craftType
         val craftId = galleryViewModel.airCapture.craftTag
         val craftTypeText = "Aircraft->  $craftType   Id-> $craftId"
-        canvas.drawText("$craftTypeText", offsetX, offsetY, paint)
+        canvas.drawText(craftTypeText, offsetX, offsetY, paint)
 
         offsetY += textsize
         val cameraAngle = galleryViewModel.airCapture.cameraAngle
         val dist = galleryViewModel.airCapture.airObjectDistance.toInt()
         val cameraDistText = "CameraAngle->  $cameraAngle deg   Distance->  $dist feet"
-        canvas.drawText("$cameraDistText", offsetX, offsetY, paint)
+        canvas.drawText(cameraDistText, offsetX, offsetY, paint)
 
         if (detailsCheckbox.isChecked) {
             // craft dimensions
@@ -222,7 +223,7 @@ class GalleryFragment : Fragment() {
             val craftWingspan = galleryViewModel.airCapture.craftWingspan
             val craftLength = galleryViewModel.airCapture.craftLength
             val craftDimsText = "wingspan $craftWingspan feet X length $craftLength feet"
-            canvas.drawText("$craftDimsText", offsetX, offsetY, paint)
+            canvas.drawText(craftDimsText, offsetX, offsetY, paint)
 
             // measure WINGSPAN | LENGTH, HORIZONTAL | VERTICAL
             offsetY += textsize
@@ -231,7 +232,7 @@ class GalleryFragment : Fragment() {
             val measureDimension =
                 galleryViewModel.airCapture.measureDimension  // HORIZONTAL | VERTICAL
             val measureText = "Measure->  $craftOrientation $measureDimension"
-            canvas.drawText("$measureText", offsetX, offsetY, paint)
+            canvas.drawText(measureText, offsetX, offsetY, paint)
 
             // zoom w x h
             offsetX = 1024F + 128F
@@ -239,14 +240,14 @@ class GalleryFragment : Fragment() {
             val zoomWidth = galleryViewModel.airCapture.zoomWidth
             val zoomHeight = galleryViewModel.airCapture.zoomHeight
             val zoomText = "Zoom w X h ->  $zoomWidth X $zoomHeight pixels"
-            canvas.drawText("$zoomText", offsetX, offsetY, paint)
+            canvas.drawText(zoomText, offsetX, offsetY, paint)
         }
         // draw timestamp
         offsetX = 1024F + 128F
         offsetY = bmp1.height - (textsize * 2)
         val timestamp = galleryViewModel.airCapture.timestamp
         val timeText = "Timestamp: $timestamp"
-        canvas.drawText("$timeText", offsetX, offsetY, paint)
+        canvas.drawText(timeText, offsetX, offsetY, paint)
 
         return bmOverlay
     }
@@ -289,28 +290,28 @@ class GalleryFragment : Fragment() {
             ): Boolean {
                 Log.d("TAG", "establishGestureDetector onFling: velocityX $velocityX velocityY $velocityY")
                 if (event1 != null && event2 != null) {
-                    var newImageDisplayed = false
-                    if (event1.getX() - event2.getX() > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
+                    val newImageDisplayed: Boolean
+                    if (event1.x - event2.x > SWIPE_MIN_DISTANCE && abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
                         Log.d("TAG", "establishGestureDetector onFling: LEFT SWIPE")
                         newImageDisplayed = navigateOverlay(1)      // next
                         if (!newImageDisplayed ) {
                             Toast.makeText(context, "End of Gallery", Toast.LENGTH_SHORT).show()
                         }
-                    }  else if (event2.getX() - event1.getX() > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
+                    }  else if (event2.x - event1.x > SWIPE_MIN_DISTANCE && abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
                         Log.d("TAG", "establishGestureDetector onFling: RIGHT SWIPE")
                         newImageDisplayed = navigateOverlay(-1) // prev
                         if (!newImageDisplayed ) {
                             Toast.makeText(context, "Start of Gallery", Toast.LENGTH_SHORT).show()
                         }
                     }
-                    else if (event1.getY() - event2.getY() > SWIPE_MIN_DISTANCE && Math.abs(velocityY) > SWIPE_THRESHOLD_VELOCITY) {
+                    else if (event1.y - event2.y > SWIPE_MIN_DISTANCE && abs(velocityY) > SWIPE_THRESHOLD_VELOCITY) {
                         // UP SWIPE - delete image set
                         Log.d("TAG", "establishGestureDetector onFling: UP SWIPE")
                         airImageUtil.showDeleteAlertDialog(context, activity!!, galleryViewModel, captureViewModel)
                         // refresh gallery image
                         refresh() // overlay measurement details!
                     }
-                    else if (event2.getY() - event1.getY() > SWIPE_MIN_DISTANCE && Math.abs(velocityY) > SWIPE_THRESHOLD_VELOCITY) {
+                    else if (((event2.y - event1.y) > SWIPE_MIN_DISTANCE) && (abs(velocityY) > SWIPE_THRESHOLD_VELOCITY)) {
                         // DOWN SWIPE - refresh overlay
                         Log.d("TAG", "establishGestureDetector onFling: DOWN SWIPE")
                         Log.d("TAG", "establishGestureDetector refreshing overlay...")

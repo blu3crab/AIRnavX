@@ -191,102 +191,69 @@ class CaptureFragment : Fragment() {
         if (requestCode == AirConstant.REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
             Toast.makeText(this.context, "camera image captured...", Toast.LENGTH_SHORT).show()
             Log.d(TAG, "dispatchTakePictureIntent onActivityResult camera image captured...")
-            if (captureFile != null) {
-                // generate thumbnail from file uri if not available as thumbnail in data
-                // photo file is file EXTRA_OUTPUT location of actual camera image
-                Log.d(TAG, "dispatchTakePictureIntent onActivityResult generate capture set...")
-                val uri = Uri.fromFile(captureFile)
-                val currentPhotoPath = captureFile.absolutePath
-                try {
-                    val airCaptureBitmap = MediaStore.Images.Media.getBitmap(
-                        activity?.applicationContext?.contentResolver,
-                        uri
-                    )
-                    if (airCaptureBitmap != null) {
-                        // create initialized aircapture object
-                        val airCapture = AirCapture()
-                        // capture image attributes
-                        airCapture.timestamp = captureTimestamp
-                        airCapture.imagePath = Environment.DIRECTORY_PICTURES
-                        airCapture.imageName = airCapture.getAirFilename(CaptureViewModel.AirFileType.IMAGE, captureTimestamp)
+            // generate thumbnail from file uri if not available as thumbnail in data
+            // photo file is file EXTRA_OUTPUT location of actual camera image
+            Log.d(TAG, "dispatchTakePictureIntent onActivityResult generate capture set...")
+            val uri = Uri.fromFile(captureFile)
+            val currentPhotoPath = captureFile.absolutePath
+            try {
+                val airCaptureBitmap = MediaStore.Images.Media.getBitmap(
+                    activity?.applicationContext?.contentResolver,
+                    uri
+                )
+                if (airCaptureBitmap != null) {
+                    // create initialized aircapture object
+                    val airCapture = AirCapture()
+                    // capture image attributes
+                    airCapture.timestamp = captureTimestamp
+                    airCapture.imagePath = Environment.DIRECTORY_PICTURES
+                    airCapture.imageName = airCapture.getAirFilename(CaptureViewModel.AirFileType.IMAGE, captureTimestamp)
 
-                        // update image length & width prior to thumbnail extraction
-                        airCapture.imageWidth = airCaptureBitmap.width
-                        airCapture.imageHeight = airCaptureBitmap.height
-                        Log.d(TAG,"dispatchTakePictureIntent onActivityResult width ${airCapture.imageWidth} X height ${airCapture.imageHeight}")
+                    // update image length & width prior to thumbnail extraction
+                    airCapture.imageWidth = airCaptureBitmap.width
+                    airCapture.imageHeight = airCaptureBitmap.height
+                    Log.d(TAG,"dispatchTakePictureIntent onActivityResult width ${airCapture.imageWidth} X height ${airCapture.imageHeight}")
 
-                        /////////////////////////////////////
-                        // extractEXIF(photoFile): Boolean
-                        val exifExtracted = airImageUtil.extractExif(captureFile, airCapture)
-                        Log.d(TAG, "dispatchTakePictureIntent onActivityResult exifExtracted $exifExtracted")
+                    /////////////////////////////////////
+                    // extractEXIF(photoFile): Boolean
+                    val exifExtracted = airImageUtil.extractExif(captureFile, airCapture)
+                    Log.d(TAG, "dispatchTakePictureIntent onActivityResult exifExtracted $exifExtracted")
 
-                        // captureMeters(airCapture): Boolean
-                        val metersCaptured = captureMeters(airCapture)
-                        Log.d(TAG,"dispatchTakePictureIntent onActivityResult metersCaptured $metersCaptured")
+                    // captureMeters(airCapture): Boolean
+                    val metersCaptured = captureMeters(airCapture)
+                    Log.d(TAG,"dispatchTakePictureIntent onActivityResult metersCaptured $metersCaptured")
 
-                        // extract thumbnail at scale factor
-                        val thumbBitmap = airImageUtil.extractThumbnail(currentPhotoPath, airCaptureBitmap, captureViewModel.THUMB_SCALE_FACTOR)
-                        // add set to view model
-                        airImageUtil.addViewModelSet(captureViewModel, captureViewModel.gridView, captureViewModel.imageViewPreview,
-                            airCaptureBitmap, thumbBitmap, null, null, airCapture)
+                    // extract thumbnail at scale factor
+                    val thumbBitmap = airImageUtil.extractThumbnail(currentPhotoPath, airCaptureBitmap, captureViewModel.THUMB_SCALE_FACTOR)
+                    // add set to view model
+                    airImageUtil.addViewModelSet(captureViewModel, captureViewModel.gridView, captureViewModel.imageViewPreview,
+                        airCaptureBitmap, thumbBitmap, null, null, airCapture)
 
-                        // update grid view adapter
-                        updateGridViewAdapter(captureViewModel.gridView, captureViewModel.gridLabelArray, captureViewModel.gridBitmapArray)
+                    // update grid view adapter
+                    updateGridViewAdapter(captureViewModel.gridView, captureViewModel.gridLabelArray, captureViewModel.gridBitmapArray)
 
-                        // write AirCapture
-                        val storageDir = context?.getExternalFilesDir(Environment.DIRECTORY_PICTURES)!!
-                        val captureRecorded = airCapture.write(storageDir, captureTimestamp, airCapture)
-                        Log.d(TAG,"dispatchTakePictureIntent onActivityResult captureRecorded $captureRecorded")
+                    // write AirCapture
+                    val storageDir = context?.getExternalFilesDir(Environment.DIRECTORY_PICTURES)!!
+                    val captureRecorded = airCapture.write(storageDir, captureTimestamp, airCapture)
+                    Log.d(TAG,"dispatchTakePictureIntent onActivityResult captureRecorded $captureRecorded")
 
-                        // refresh viewmodel
-                        val refreshResult = refreshViewModel(airCapture)
-                        Log.d(TAG,"dispatchTakePictureIntent onActivityResult refreshViewModel $refreshResult")
-                   }
-                } catch (ex: Exception) {
-                    Log.e(TAG, "dispatchTakePictureIntent createImageFile Exception ${ex.stackTrace}")
-                }
-                finally {
-                    if (angleMeter != null) {
-                        // stop angle meter
-                        angleMeter.stop()
-                    }
-                    else {
-                        Log.e(TAG, "dispatchTakePictureIntent angleMeter NULL...")
-                    }
-                    if (soundMeter != null) {
-                        // stop sound meter
-                        soundMeter.stop()
-                    }
-                    else {
-                        Log.e(TAG, "dispatchTakePictureIntent soundMeter NULL...")
-                    }
-                }
-           } else {
-                Log.e(TAG, "dispatchTakePictureIntent captureFile NULL...")
-//               data?.let {
-//                   // extra will contain thumbnail image if image capture not in play
-//                   data.extras?.let {
-//                       val extraPhotoUri: Uri = data.extras?.get(MediaStore.EXTRA_OUTPUT) as Uri
-//                       Log.d(TAG, "dispatchTakePictureIntent onActivityResult thumb URI $extraPhotoUri")
-//
-//                       var thumbBitmap = data.extras?.get("data") as Bitmap
-//                   } ?: run {
-//                       Log.e(TAG, "dispatchTakePictureIntent onActivityResult data.extras NULL.")
-//                   }
-//               } ?: run {
-//                   Log.e(TAG, "dispatchTakePictureIntent onActivityResult data NULL.")
-//               }
-           }
+                    // refresh viewmodel
+                    val refreshResult = refreshViewModel(airCapture)
+                    Log.d(TAG,"dispatchTakePictureIntent onActivityResult refreshViewModel $refreshResult")
+               }
+            } catch (ex: Exception) {
+                Log.e(TAG, "dispatchTakePictureIntent createImageFile Exception ${ex.stackTrace}")
+            }
+            finally {
+                angleMeter.stop()
+                soundMeter.stop()
+            }
             // loop dispatch until cancelled
             Log.d(TAG, "dispatchTakePictureIntent onActivityResult launching camera...")
             dispatchTakePictureIntent()
         } else if (requestCode == AirConstant.REQUEST_IMAGE_CAPTURE && resultCode == RESULT_CANCELED) {
             Toast.makeText(this.context, "camera canceled...", Toast.LENGTH_SHORT).show()
             Log.d(TAG, "dispatchTakePictureIntent onActivityResult camera canceled...")
-//            // stop angle meter
-//            angleMeter.stop()
-//            // stop sound meter
-//            soundMeter.stop()
         }
     }
     /////////////////////////////life-cycle////////////////////////////////////
@@ -368,7 +335,7 @@ class CaptureFragment : Fragment() {
         )
         // initialize AirCapture to seed grid
         //val airCapture = createAirCapture()
-        val airCapture: AirCapture = AirCapture()
+        val airCapture = AirCapture()
         //airCapture = AirCapture()
 
         // initialize view

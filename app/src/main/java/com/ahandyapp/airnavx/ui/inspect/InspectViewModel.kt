@@ -4,28 +4,13 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.ahandyapp.airnavx.model.AirConstant
-import com.ahandyapp.airnavx.model.CraftDims
-import java.util.ArrayList
 
 class InspectViewModel : ViewModel() {
     ///////////////ENUM////////////////
-    enum class ZoomDirection(val direction: Int) {
-        IN(-1),
-        OUT(1)
+    enum class ZoomDirection {
+        IN,
+        OUT
     }
-//    enum class ImageOrientation(val orientation: Int) {
-//        PORTRAIT(0),
-//        LANDSCAPE(1)
-//    }
-//
-//    enum class MeasureDimension(val dimension: String) {
-//        HORIZONTAL("HORIZONTAL"),
-//        VERTICAL("VERTICAL")
-//    }
-//    enum class CraftOrientation(val orientation: String) {
-//        WINGSPAN("CRAFT WINGSPAN"),
-//        LENGTH("CRAFT LENGTH")
-//    }
 
     ///////////////////MODEL DATA////////////////////////
     private val _guideText = MutableLiveData<String>().apply {

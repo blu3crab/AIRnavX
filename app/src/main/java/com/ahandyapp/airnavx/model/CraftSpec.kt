@@ -7,7 +7,6 @@ import com.ahandyapp.airnavx.model.AirConstant.DEFAULT_CRAFTSPEC_NAME
 import com.ahandyapp.airnavx.model.AirConstant.DEFAULT_DATAFILE_EXT
 import com.ahandyapp.airnavx.model.AirConstant.DEFAULT_EXTENSION_SEPARATOR
 import com.ahandyapp.airnavx.model.AirConstant.DEFAULT_FILE_PREFIX
-import com.ahandyapp.airnavx.ui.capture.CaptureViewModel
 import com.google.gson.Gson
 import java.io.File
 import java.io.IOException
@@ -42,7 +41,7 @@ data class CraftSpec(
         this.typeInx = 0
         var typeInx = 0
         for (type in this.typeList) {
-            if (type.equals(craftType)) {
+            if (type == craftType) {
                 this.typeInx = typeInx
                 continue
             }
@@ -53,9 +52,9 @@ data class CraftSpec(
 
         // scan for craft tag & assign tag index
         this.tagInx = 0
-        var tagInx = 0
+        val tagInx = 0
         for (tag in this.tagList[this.typeInx]) {
-            if (tag.equals(craftTag)) {
+            if (tag == craftTag) {
                 this.tagInx = tagInx
             }
         }
@@ -66,7 +65,7 @@ data class CraftSpec(
     }
 
     fun readFromJson(context: Context): CraftSpec {
-        val storageDir = context?.getExternalFilesDir(Environment.DIRECTORY_PICTURES)!!
+        val storageDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)!!
         val filename = DEFAULT_FILE_PREFIX + DEFAULT_CRAFTSPEC_NAME + DEFAULT_EXTENSION_SEPARATOR + DEFAULT_DATAFILE_EXT
         val filePath = storageDir.toString() + File.separator + filename
         Log.d(TAG, "readFromJson filename $filename...")
@@ -91,7 +90,7 @@ data class CraftSpec(
             ioException.printStackTrace()
         }
         // exceptions occurred - return initialized object
-        val craftSpec: CraftSpec = CraftSpec()
+        val craftSpec = CraftSpec()
         return craftSpec
     }
 
@@ -102,7 +101,7 @@ data class CraftSpec(
             Log.d(TAG, "writeToJson $jsonCapture")
 
             // format CraftSpec name & write json file
-            val storageDir = context?.getExternalFilesDir(Environment.DIRECTORY_PICTURES)!!
+            val storageDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)!!
             val name = DEFAULT_FILE_PREFIX + DEFAULT_CRAFTSPEC_NAME + DEFAULT_EXTENSION_SEPARATOR + DEFAULT_DATAFILE_EXT
             Log.d(TAG, "writeToJson storageDir->$storageDir, name->$name")
             File(storageDir, name).printWriter().use { out ->

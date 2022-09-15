@@ -36,7 +36,7 @@ internal class GridViewAdapter(
         position: Int,
         convertView: View?,
         parent: ViewGroup
-    ): View? {
+    ): View {
         var convertView = convertView
         if (layoutInflater == null) {
             layoutInflater =

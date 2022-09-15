@@ -37,10 +37,8 @@ class AngleMeter: SensorEventListener {
     // start sensor listener
     //fun start() {
     fun start(activity: FragmentActivity) {
-//        if (sensorManager == null) {
-            sensorManager = activity?.getSystemService(Context.SENSOR_SERVICE) as SensorManager
-            Log.d(TAG, "start get sensorManager service $sensorManager")
-//        }
+        sensorManager = activity.getSystemService(Context.SENSOR_SERVICE) as SensorManager
+        Log.d(TAG, "start get sensorManager service $sensorManager")
         // get updates from the accelerometer and magnetometer at a constant rate.
         // https://developer.android.com/guide/topics/sensors/sensors_position
         // https://developer.android.com/reference/android/hardware/SensorEventListener
@@ -106,7 +104,7 @@ class AngleMeter: SensorEventListener {
         //Log.d(TAG, "updateOrientationAngles orientationAngles->" + orientationAngles.contentToString())
 
         // convert orientation angles (radians) to degrees
-        for ((index, angle) in orientationAngles.withIndex()) {
+        for ((index) in orientationAngles.withIndex()) {
             // orientationDegrees[index] = orientationAngles[index] * 57.2958f
             orientationDegrees[index] = (orientationAngles[index] * (180/ PI)).toFloat()
         }

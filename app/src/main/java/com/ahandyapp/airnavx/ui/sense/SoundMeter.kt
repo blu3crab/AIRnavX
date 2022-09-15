@@ -13,8 +13,6 @@ class SoundMeter {
     // https://developer.android.com/reference/android/media/MediaRecorder
     // https://developer.android.com/reference/android/media/MediaRecorder#getMaxAmplitude()
     private val TAG = "SoundMeter"
-    // accessed via fun deriveDecibel
-    private var decibel: Double = 0.0
 
     private var recorder: MediaRecorder? = null
     private var recorderStarted = false
@@ -64,7 +62,7 @@ class SoundMeter {
             if (decibel < 0.0) decibel = 0.0
             decibel = truncate(decibel)
         }
-        Log.d(TAG, "SoundMeter.deriveDecibel ref->${ref.toString()}, amp->${amplitude.toString()}, db->${decibel.toString()}")
+        Log.d(TAG, "SoundMeter.deriveDecibel ref->$ref, amp->$amplitude, db->$decibel")
         return decibel
     }
 

@@ -72,14 +72,14 @@ class MainActivity : AppCompatActivity() {
         Log.d(TAG, "onCreate storageDir = $storageDir...")
 
         if(storageDir.exists()) {
-            binding.appBarMain.fab.setOnClickListener { view ->
+            binding.appBarMain.fab.setOnClickListener {
                 val authority = this.applicationContext.packageName.toString()
                 Log.d(TAG, "onShare authority = $authority...")
 
                 val fileList = storageDir.listFiles()
-                var uriList = ArrayList<Uri>()
+                val uriList = ArrayList<Uri>()
                 for (file in fileList!!) {
-                    var name = file.name
+                    val name = file.name
                     Log.d(TAG, "onShare listFiles file name $name")
                     val airPath = "$storageDir/$name"
                     Log.d(TAG, "onCreate airPath = $airPath...")

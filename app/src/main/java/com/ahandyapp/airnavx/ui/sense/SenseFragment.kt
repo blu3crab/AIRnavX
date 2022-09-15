@@ -2,13 +2,7 @@
 package com.ahandyapp.airnavx.ui.sense
 
 import android.Manifest
-import android.content.Context
-import android.content.pm.PackageManager.*
-import android.hardware.Sensor
-import android.hardware.SensorEvent
-import android.hardware.SensorEventListener
-import android.hardware.SensorManager
-import android.media.MediaRecorder
+import android.content.pm.PackageManager.PERMISSION_GRANTED
 import android.os.Bundle
 import android.os.CountDownTimer
 import android.text.Editable
@@ -21,13 +15,8 @@ import android.widget.EditText
 import android.widget.TextView
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.ahandyapp.airnavx.databinding.FragmentSenseBinding
-import java.io.File
-import kotlin.math.PI
-import kotlin.math.log10
-import kotlin.math.truncate
 
 
 class SenseFragment : Fragment() {
@@ -54,7 +43,7 @@ class SenseFragment : Fragment() {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         senseViewModel =
             ViewModelProvider(this).get(SenseViewModel::class.java)
 
@@ -62,18 +51,18 @@ class SenseFragment : Fragment() {
         val root: View = binding.root
 
         val textViewTitle: TextView = binding.textSense
-        senseViewModel.textTitle.observe(viewLifecycleOwner, Observer {
+        senseViewModel.textTitle.observe(viewLifecycleOwner) {
             textViewTitle.text = it
-        })
+        }
 
         val editTextAngle: EditText = binding.editCameraAngle
-        senseViewModel.editCameraAngle.observe(viewLifecycleOwner, Observer {
+        senseViewModel.editCameraAngle.observe(viewLifecycleOwner) {
             editTextAngle.text = it.toString().toEditable()
-        })
+        }
         val editTextDecibel: EditText = binding.editDecibelLevel
-        senseViewModel.editDecibelLevel.observe(viewLifecycleOwner, Observer {
+        senseViewModel.editDecibelLevel.observe(viewLifecycleOwner) {
             editTextDecibel.text = it.toString().toEditable()
-        })
+        }
 
         editTextAngle.addTextChangedListener(object : TextWatcher {
 
@@ -89,7 +78,7 @@ class SenseFragment : Fragment() {
                     val angleText = s.toString()
                     Log.d(TAG, "onTextChanged incoming angle = $angleText")
                     // constrain infinite loop!
-                    if (!senseViewModel.editCameraAngle.value.toString().equals(angleText)) {
+                    if (senseViewModel.editCameraAngle.value.toString() != angleText) {
                         senseViewModel.editCameraAngle.value = angleText.toInt()
                     }
                     val viewModelText = senseViewModel.editCameraAngle.value.toString()
@@ -106,7 +95,7 @@ class SenseFragment : Fragment() {
         return root
     }
 
-    fun String.toEditable(): Editable =  Editable.Factory.getInstance().newEditable(this)
+    private fun String.toEditable(): Editable =  Editable.Factory.getInstance().newEditable(this)
 
     override fun onDestroyView() {
         super.onDestroyView()
@@ -146,7 +135,7 @@ class SenseFragment : Fragment() {
     private val timer = object: CountDownTimer(8000, 500) {
         override fun onTick(millisUntilFinished: Long) {
             onTimerUpdateView()
-            Log.d(TAG, "timer onTick ${millisUntilFinished.toString()} millisUntilFinished...")
+            Log.d(TAG, "timer onTick $millisUntilFinished millisUntilFinished...")
         }
 
         override fun onFinish() {
@@ -157,21 +146,21 @@ class SenseFragment : Fragment() {
 
     fun onTimerUpdateView() {
         // update angle UI
-        var angle = angleMeter.getAngle()
-        Log.d(TAG, "onTimerUpdateView angleMeter.getAngle ->${angle.toString()}")
+        val angle = angleMeter.getAngle()
+        Log.d(TAG, "onTimerUpdateView angleMeter.getAngle ->$angle")
         senseViewModel.editCameraAngle.value = angle
 
         // update decibel UI
         if (isPermissionAudioGranted()) {
-            var db = soundMeter.deriveDecibel(forceFormat = true)
-            Log.d(TAG, "onTimerUpdateView soundMeter.deriveDecibel db->${db.toString()}")
+            val db = soundMeter.deriveDecibel(forceFormat = true)
+            Log.d(TAG, "onTimerUpdateView soundMeter.deriveDecibel db->$db")
             senseViewModel.editDecibelLevel.value = db
         }
 
     }
     //////////////////////
     // permissions
-    fun isPermissionAudioGranted(): Boolean {
+    private fun isPermissionAudioGranted(): Boolean {
         if (this.context?.let { ActivityCompat.checkSelfPermission(it, Manifest.permission.RECORD_AUDIO) }
             != PERMISSION_GRANTED
         ) {

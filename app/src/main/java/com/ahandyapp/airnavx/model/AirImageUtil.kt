@@ -3,7 +3,6 @@ package com.ahandyapp.airnavx.model
 import android.app.Activity
 import android.app.AlertDialog
 import android.content.Context
-import android.content.DialogInterface
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
@@ -16,7 +15,7 @@ import android.util.Log
 import android.widget.GridView
 import android.widget.ImageView
 import android.widget.Toast
-import com.ahandyapp.airnavx.model.AirConstant.DEFAULT_EXTENSION_SEPARATOR
+//import com.ahandyapp.airnavx.model.AirConstant.DEFAULT_EXTENSION_SEPARATOR
 import com.ahandyapp.airnavx.ui.capture.CaptureViewModel
 import com.ahandyapp.airnavx.ui.gallery.GalleryViewModel
 import java.io.File
@@ -34,10 +33,11 @@ class AirImageUtil {
     ///////////////////////////////////////////////////////////////////////////
     // convert bitmap & store to file
     fun writeBitmapToFile(context: Context, bitmap: Bitmap, imageFilename: String ): Boolean {
-        val storageDir = context?.getExternalFilesDir(Environment.DIRECTORY_PICTURES)!!
+        val storageDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)!!
 
         try {
-            val filepath = storageDir.toString() + File.separator + imageFilename + DEFAULT_EXTENSION_SEPARATOR + AirConstant.DEFAULT_IMAGEFILE_EXT
+            val filepath = storageDir.toString() + File.separator + imageFilename +
+                    AirConstant.DEFAULT_EXTENSION_SEPARATOR + AirConstant.DEFAULT_IMAGEFILE_EXT
             val imageFile = File(filepath)
             imageFile.createNewFile()
             val output = FileOutputStream(imageFile)
@@ -64,24 +64,22 @@ class AirImageUtil {
             // if the dialog is cancelable
             .setCancelable(false)
             // neutral button text and action
-            .setNegativeButton("Delete All*", DialogInterface.OnClickListener {
-                    dialog, id ->
+            .setNegativeButton("Delete All*") { _, _ ->
                 //dialog.cancel()
                 Log.d(TAG, "showDeleteAlertDialog -> Delete All* selected...")
                 // delete all* AirCapture data set
                 deleteAllAirCaptureSet(context, activity, galleryViewModel, captureViewModel)
-            })
+            }
             // positive button text and action
-            .setPositiveButton("Delete", DialogInterface.OnClickListener {
-                    dialog, id ->
+            .setPositiveButton("Delete") { dialog, _ ->
                 // delete AirCapture data set
                 deleteAirCaptureSet(context, activity, galleryViewModel, captureViewModel)
                 dialog.dismiss()
-            })
+            }
             // negative button text and action
-            .setNeutralButton("Cancel", DialogInterface.OnClickListener {
-                    dialog, id -> dialog.cancel()
-            })
+            .setNeutralButton("Cancel") { dialog, _ ->
+                dialog.cancel()
+            }
 
         // create dialog box
         val alert = dialogBuilder.create()
@@ -113,7 +111,7 @@ class AirImageUtil {
         Log.d("TAG", "showDeleteAlertDialog deleting AIR capture files for ${airCapture.timestamp}")
         try {
             // set path = storage dir + time.jpg
-            val storageDir = context?.getExternalFilesDir(Environment.DIRECTORY_PICTURES)!!
+            val storageDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)!!
             val imagePath = Paths.get(
                 storageDir.toString() + File.separator +
                         AirConstant.DEFAULT_FILE_PREFIX + airCapture.timestamp +
@@ -207,7 +205,7 @@ class AirImageUtil {
         captureViewModel.airCaptureArray.clear()
 
         // get jpg file list by descending time
-        val storageDir = context?.getExternalFilesDir(Environment.DIRECTORY_PICTURES)!!
+        val storageDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)!!
         Log.d(TAG, "fetchViewModel storageDir $storageDir")
         val files = storageDir.listFiles()
         for (file in files) {
@@ -215,8 +213,8 @@ class AirImageUtil {
             Log.d(TAG, "fetchViewModel listFiles file name $name")
         }
         // for each name with JPG extension
-        var fileList = ArrayList<File>()
-        File(storageDir.toString()).walk().filter { file-> hasRequiredSuffix(file) }.forEach { it ->
+        val fileList = ArrayList<File>()
+        File(storageDir.toString()).walk().filter { file-> hasRequiredSuffix(file) }.forEach {
             fileList.add(it)
         }
         // sort jpg file list by descending time
@@ -230,7 +228,7 @@ class AirImageUtil {
             //println(it)
             //val name = it.name    // full name w/ ext jpg
             val name = file!!.nameWithoutExtension
-            val ext = file!!.extension
+            val ext = file.extension
             Log.d(TAG, "fetchViewModel walk file name $name ext $ext")
             val airCaptureName = name  + AirConstant.DEFAULT_EXTENSION_SEPARATOR + AirConstant.DEFAULT_DATAFILE_EXT
             val airCapturePath = storageDir.toString() + File.separator + airCaptureName
@@ -251,18 +249,18 @@ class AirImageUtil {
                 //   read air image into bitmap
                 val uri = Uri.fromFile(airImageFile)
                 val airCaptureBitmap = MediaStore.Images.Media.getBitmap(
-                    activity?.applicationContext?.contentResolver,
+                    activity.applicationContext?.contentResolver,
                     uri
                 )
                 // add view model set
                 if (airCaptureBitmap != null) {
                     // attempt to open associated zoom image file
-                    var zoomBitmap = readBitmapFromFile(context, activity, name, AirConstant.DEFAULT_ZOOM_SUFFIX)
+                    val zoomBitmap = readBitmapFromFile(context, activity, name, AirConstant.DEFAULT_ZOOM_SUFFIX)
                     if (zoomBitmap != null) {
                         Log.d(TAG,"fetchViewModel zoomBitmap w x h = ${zoomBitmap.width} x ${zoomBitmap.height}")
                     }
                     // attempt to open associated over image file
-                    var overBitmap = readBitmapFromFile(context, activity, name, AirConstant.DEFAULT_OVER_SUFFIX)
+                    val overBitmap = readBitmapFromFile(context, activity, name, AirConstant.DEFAULT_OVER_SUFFIX)
                     if (overBitmap != null) {
                         Log.d(TAG,"fetchViewModel overBitmap w x h = ${overBitmap.width} x ${overBitmap.height}")
                     }
@@ -292,7 +290,7 @@ class AirImageUtil {
     private fun readBitmapFromFile(context: Context, activity: Activity, name: String, suffix: String): Bitmap? {
         var bitmap: Bitmap? = null
         try {
-            val storageDir = context?.getExternalFilesDir(Environment.DIRECTORY_PICTURES)!!
+            val storageDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)!!
             val airImageName =
                 name + suffix + AirConstant.DEFAULT_EXTENSION_SEPARATOR + AirConstant.DEFAULT_IMAGEFILE_EXT
             Log.d(TAG, "readBitmapFromFile airImageName $airImageName...")
@@ -303,7 +301,7 @@ class AirImageUtil {
             //   read air image into bitmap
             val uri = Uri.fromFile(airImageFile)
             bitmap = MediaStore.Images.Media.getBitmap(
-                activity?.applicationContext?.contentResolver,
+                activity.applicationContext?.contentResolver,
                 uri
             )
             if (bitmap != null) {
@@ -347,7 +345,7 @@ class AirImageUtil {
         if (captureViewModel.gridCount <= 0) {
             val emptyBitmap = createBlankBitmap(galleryViewModel.galleryImageView.width, galleryViewModel.galleryImageView.height)
             galleryViewModel.galleryImageView.setImageBitmap(emptyBitmap)
-            return false;
+            return false
         }
         // validate grid position
         Log.d(TAG, "refreshGalleryView validating grid position ${captureViewModel.gridPosition} with gridcount ${captureViewModel.gridCount}")
@@ -511,8 +509,8 @@ class AirImageUtil {
     }
     /////////////////////////unused///////////////////////////
     private fun scaleImage(imageBitmap: Bitmap, scaleFactor: Int): Bitmap {
-        val width = (imageBitmap.width)?.times(scaleFactor)
-        val height = (imageBitmap.height)?.times(scaleFactor)
+        val width = (imageBitmap.width).times(scaleFactor)
+        val height = (imageBitmap.height).times(scaleFactor)
         val thumbBitmap = ThumbnailUtils.extractThumbnail(
             imageBitmap,
             width,

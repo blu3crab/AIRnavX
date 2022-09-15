@@ -2,8 +2,6 @@ package com.ahandyapp.airnavx.ui.inspect
 
 import android.app.Activity
 import android.app.AlertDialog
-import android.content.Context
-import android.content.DialogInterface
 import android.content.Intent
 import android.graphics.Bitmap
 import android.os.Bundle
@@ -18,13 +16,17 @@ import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.ViewModelProvider
 import com.ahandyapp.airnavx.R
 import com.ahandyapp.airnavx.databinding.FragmentInspectBinding
-import com.ahandyapp.airnavx.model.*
+import com.ahandyapp.airnavx.model.AirCapture
+import com.ahandyapp.airnavx.model.AirConstant
 import com.ahandyapp.airnavx.model.AirConstant.SWIPE_MIN_DISTANCE
 import com.ahandyapp.airnavx.model.AirConstant.SWIPE_THRESHOLD_VELOCITY
 import com.ahandyapp.airnavx.model.AirConstant.ratioFor100PerCentFOVat1FootPixel6Landscape
 import com.ahandyapp.airnavx.model.AirConstant.ratioFor100PerCentFOVat1FootPixel6Portrait
+import com.ahandyapp.airnavx.model.AirImageUtil
+import com.ahandyapp.airnavx.model.CraftSpec
 import com.ahandyapp.airnavx.ui.capture.CaptureViewModel
 import java.util.*
+import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlin.math.sin
 
@@ -138,7 +140,7 @@ class InspectFragment : Fragment() {
         Log.d(TAG, "onCreateView imageOrientation ${inspectViewModel.imageOrientation}")
 
         // establish measure button listeners
-        this.context?.let { setButtonListeners(root, it) }
+        this.context?.let { setButtonListeners(root) }
 
         // TODO: reference data class w/ init
         // reset reference bitmap
@@ -168,7 +170,7 @@ class InspectFragment : Fragment() {
     }
     // TODO: refactor button handlers to methods
     // establish button listeners
-    private fun setButtonListeners(root: View, context: Context) {
+    private fun setButtonListeners(root: View) {
         // BUTTON: measure image dimension by HORIZONTAL | VERTICAL
         dimensionButton = root.findViewById(R.id.button_dimension) as Button
         dimensionButton.text = inspectViewModel.measureDimension.toString()
@@ -199,7 +201,7 @@ class InspectFragment : Fragment() {
             }
             //updateCraftOrientationText()
             orientButton.text = inspectViewModel.craftOrientation.toString()
-            Log.d(TAG, "buttonOrient.setOnClickListener->Set orientation ${inspectViewModel.craftOrientation.toString()}...")
+            Log.d(TAG, "buttonOrient.setOnClickListener->Set orientation ${inspectViewModel.craftOrientation}...")
         }
 
         // TODO: enable craft type entry & dimensions
@@ -309,18 +311,17 @@ class InspectFragment : Fragment() {
             ): Boolean {
                 Log.d("TAG", "establishGestureDetector onFling: velocityX $velocityX velocityY $velocityY")
 
-                if (event1 != null && event2 != null) {
-                    var newImageDisplayed = false
-                    if (event1.getX() - event2.getX() > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
+                if (event1 != null && event2 != null)
+                    if (((event1.x - event2.x) > SWIPE_MIN_DISTANCE) && (abs(velocityX) > SWIPE_THRESHOLD_VELOCITY)) {
                         Log.d("TAG", "establishGestureDetector onFling: LEFT SWIPE")
-                    }  else if (event2.getX() - event1.getX() > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
+                    }  else if (event2.x - event1.x > SWIPE_MIN_DISTANCE && abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
                         Log.d("TAG", "establishGestureDetector onFling: RIGHT SWIPE")
                     }
-                    else if (event1.getY() - event2.getY() > SWIPE_MIN_DISTANCE && Math.abs(velocityY) > SWIPE_THRESHOLD_VELOCITY) {
+                    else if (event1.y - event2.y > SWIPE_MIN_DISTANCE && abs(velocityY) > SWIPE_THRESHOLD_VELOCITY) {
                         // UP SWIPE
                         Log.d("TAG", "establishGestureDetector onFling: UP SWIPE")
                     }
-                    else if (event2.getY() - event1.getY() > SWIPE_MIN_DISTANCE && Math.abs(velocityY) > SWIPE_THRESHOLD_VELOCITY) {
+                    else if (event2.y - event1.y > SWIPE_MIN_DISTANCE && abs(velocityY) > SWIPE_THRESHOLD_VELOCITY) {
                         // DOWN SWIPE - refresh overlay
                         // show original air capture image
                         captureBitmap = captureViewModel.origBitmapArray[captureViewModel.gridPosition]
@@ -330,8 +331,6 @@ class InspectFragment : Fragment() {
                         Log.d(TAG, "onFling captureBitmap w/h ${captureBitmap.width}/${captureBitmap.height}")
                         Log.d(TAG, "onFling imageViewInspect w/h ${inspectImageView.width}/${inspectImageView.height}")
                     }
-
-                }
 
                 return true
             }
@@ -345,16 +344,14 @@ class InspectFragment : Fragment() {
     }
 
     private fun measure() {
-        var actualSize: Double = 0.0
-        if (inspectViewModel.craftOrientation == AirConstant.CraftOrientation.WINGSPAN) {
-            actualSize = craftSpec.dimsList[craftSpec.typeInx].wingspan
-        }
-        else {  // LENGTH
-            actualSize = craftSpec.dimsList[craftSpec.typeInx].length
+        val actualSize: Double = if (inspectViewModel.craftOrientation == AirConstant.CraftOrientation.WINGSPAN) {
+            craftSpec.dimsList[craftSpec.typeInx].wingspan
+        } else {  // LENGTH
+            craftSpec.dimsList[craftSpec.typeInx].length
         }
         Log.d(TAG, "measure-> actualSize $actualSize ")
 
-        // TODO: derive ratio for FOV at 1 foot from device/camera characteristics for portrait | landscape
+        // assign ratio for FOV at 1 foot from device/camera characteristics for portrait | landscape
         var ratioFor100PerCentFOVat1FootPixel6 = ratioFor100PerCentFOVat1FootPixel6Portrait // portrait
         if (captureBitmap.width > captureBitmap.height) {
             ratioFor100PerCentFOVat1FootPixel6 = ratioFor100PerCentFOVat1FootPixel6Landscape // landscape 0.71
@@ -364,8 +361,8 @@ class InspectFragment : Fragment() {
         val distObjectAt100PerCentFOV = actualSize * ratioFor100PerCentFOVat1FootPixel6
         Log.d(TAG, "measure-> distObjectAt100PerCentFOV $distObjectAt100PerCentFOV ")
 
-        var imageSize: Double = 0.0
-        var apparentSize: Double = 0.0
+        val imageSize: Double
+        val apparentSize: Double
         if (inspectViewModel.measureDimension == AirConstant.MeasureDimension.HORIZONTAL) {
             imageSize = captureBitmap.width.toDouble()
             apparentSize = inspectBitmap.width.toDouble()
@@ -375,27 +372,27 @@ class InspectFragment : Fragment() {
             apparentSize = inspectBitmap.height.toDouble()
         }
         Log.d(TAG, "measure-> imageSize $imageSize, apparentSize $apparentSize")
-        var sizeRatio = apparentSize/imageSize
+        val sizeRatio = apparentSize/imageSize
         Log.d(TAG, "measure-> sizeRatio $sizeRatio")
 
         //val distFor100PerCentFOVat1FootPixel6 = 0.96875
-        var dist: Double = distObjectAt100PerCentFOV / sizeRatio
+        val dist: Double = distObjectAt100PerCentFOV / sizeRatio
         Log.d(TAG, "measure-> dist $dist")
-        var cameraAngle: Double = airCapture.cameraAngle.toDouble()
+        val cameraAngle: Double = airCapture.cameraAngle.toDouble()
         Log.d(TAG, "measure-> cameraAngle $cameraAngle")
-        var angleRadians = cameraAngle * 0.01745329251994329576923690768489
+        val angleRadians = cameraAngle * 0.01745329251994329576923690768489
         Log.d(TAG, "measure-> sin(angleRadians) ${sin(angleRadians)}")
-        var altitude: Double = sin(angleRadians) * dist
+        val altitude: Double = sin(angleRadians) * dist
         Log.d(TAG, "measure-> altitude $altitude !!!!")
 
         // update & write AirCapture measures
-        airCapture.airObjectAltitude = altitude.toDouble()
-        airCapture.airObjectDistance = dist.toDouble()
+        airCapture.airObjectAltitude = altitude
+        airCapture.airObjectDistance = dist
         airCapture.craftOrientation = inspectViewModel.craftOrientation
         airCapture.measureDimension = inspectViewModel.measureDimension
         airCapture.zoomWidth = inspectBitmap.width
         airCapture.zoomHeight = inspectBitmap.height
-        airCapture.craftTag = craftSpec.tagList[craftSpec.typeInx].get(craftSpec.tagInx)
+        airCapture.craftTag = craftSpec.tagList[craftSpec.typeInx][craftSpec.tagInx]
         airCapture.craftType = craftSpec.dimsList[craftSpec.typeInx].craftType
         airCapture.craftWingspan = craftSpec.dimsList[craftSpec.typeInx].wingspan
         airCapture.craftLength = craftSpec.dimsList[craftSpec.typeInx].length
@@ -405,7 +402,7 @@ class InspectFragment : Fragment() {
         Log.d(TAG,"measure captureRecorded $captureRecorded")
         // save AirCapture measured image
         val imageFilename = AirConstant.DEFAULT_FILE_PREFIX + airCapture.timestamp + AirConstant.DEFAULT_ZOOM_SUFFIX
-        var airImageUtil = AirImageUtil()
+        val airImageUtil = AirImageUtil()
         val success = airImageUtil.writeBitmapToFile(context!!, inspectBitmap, imageFilename)
         Log.d(TAG,"measure convertBitmapToFile $success for $imageFilename")
 
@@ -441,19 +438,19 @@ class InspectFragment : Fragment() {
                 zoomBase = inspectBitmap.height
             }
             if (zoomBase > 2048) {
-                zoomBase = zoomBase / 2
+                zoomBase /= 2
             }
             else if (zoomBase > 1024) {
-                zoomBase = zoomBase / 3
+                zoomBase /= 3
             }
             else if (zoomBase > 512) {
-                zoomBase = zoomBase / 4
+                zoomBase /= 4
             }
             else if (zoomBase > 256) {
-                zoomBase = zoomBase / 5
+                zoomBase /= 5
             }
             else if (zoomBase > 128) {
-                zoomBase = zoomBase / 6
+                zoomBase /= 6
             }
             else {
                 zoomBase = 8
@@ -691,61 +688,67 @@ class InspectFragment : Fragment() {
         }
 
         alertDialogBuilder.setTitle("Select Aircraft Identification")
-        alertDialogBuilder.setSingleChoiceItems(listItems, -1,
-            DialogInterface.OnClickListener { dialog, item ->
-                Toast.makeText(
-                    context,
-                    "Aircraft Identity " + listItems[item], Toast.LENGTH_SHORT
-                ).show()
-                Log.d(TAG, "showIdentifyAlertDialog selected item $item")
-                if (item == listItems.size-2) {
+        alertDialogBuilder.setSingleChoiceItems(listItems, -1)
+        { dialog, item ->
+            Toast.makeText(
+                context,
+                "Aircraft Identity " + listItems[item], Toast.LENGTH_SHORT
+            ).show()
+            Log.d(TAG, "showIdentifyAlertDialog selected item $item")
+            when (item) {
+                listItems.size - 2 -> {
                     // New(type)
                     enterTagDialog()
                 }
-                else if (item == listItems.size-1) {
+                listItems.size - 1 -> {
                     // New(speak)
                     dispatchSpokenTagIntent()
                 }
-                else {
+                else -> {
                     // item in current craftIdentList
                     craftSpec.tagInx = item
                     craftTagButton.text = craftSpec.tagList[craftSpec.typeInx][craftSpec.tagInx]
-                    Log.d(TAG, "showIdentifyAlertDialog selected tag (${craftSpec.tagInx}) " +
-                            "${craftSpec.tagList[craftSpec.typeInx][craftSpec.tagInx]}")
-                    Log.d(TAG, "showIdentifyAlertDialog aircraft tag list size " +
-                        "${craftSpec.tagList[craftSpec.typeInx].size-1}->${craftSpec.tagList[craftSpec.typeInx]}")
+                    Log.d(
+                        TAG, "showIdentifyAlertDialog selected tag (${craftSpec.tagInx}) " +
+                                craftSpec.tagList[craftSpec.typeInx][craftSpec.tagInx]
+                    )
+                    Log.d(
+                        TAG, "showIdentifyAlertDialog aircraft tag list size " +
+                                "${craftSpec.tagList[craftSpec.typeInx].size - 1}->${craftSpec.tagList[craftSpec.typeInx]}"
+                    )
                 }
+            }
 
-                dialog.dismiss() // dismiss the alertbox after chose option
-            })
+            dialog.dismiss() // dismiss the alertbox after chose option
+        }
         val alert: AlertDialog = alertDialogBuilder.create()
         alert.show()
     }
 
-    fun enterTagDialog() {
-        val builder: AlertDialog.Builder = android.app.AlertDialog.Builder(context)
+    private fun enterTagDialog() {
+        val builder: AlertDialog.Builder = AlertDialog.Builder(context)
         builder.setTitle("Title")
 
         // Set up the input
         val input = EditText(context)
         // Specify the type of input expected; this, for example, sets the input as a password, and will mask the text
-        input.setHint("Enter Aircraft Identity Tag")
+        input.hint = "Enter Aircraft Identity Tag"
         input.inputType = InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS  //.TYPE_CLASS_TEXT
         builder.setView(input)
 
         // Set up the buttons
-        builder.setPositiveButton("OK", DialogInterface.OnClickListener { dialog, which ->
+        builder.setPositiveButton("OK") { _, _ ->
             // Here you get get input text from the Edittext
             craftTagButton.text = input.text.toString()
             addCraftTag(input.text.toString())
             Log.d(TAG, "enterIdentDialog craft entry-> ${craftTagButton.text}")
-        })
-        builder.setNegativeButton("Cancel", DialogInterface.OnClickListener { dialog, which -> dialog.cancel() })
+        }
+        builder.setNegativeButton("Cancel") { dialog, _ -> dialog.cancel() }
 
         builder.show()
     }
     // TODO: tune for single letter/number recognition
-    fun dispatchSpokenTagIntent() {
+    private fun dispatchSpokenTagIntent() {
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
             RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
