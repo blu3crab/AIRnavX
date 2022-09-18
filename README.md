@@ -1,5 +1,5 @@
 Aerial Investigator Reporter - NAVigation eXperiment
-
+(please see "readme.txt" for readable formatting)
 CAPTURE aerial images
 	- actions
 		- select Camera button
