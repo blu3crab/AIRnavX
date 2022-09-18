@@ -1,4 +1,3 @@
-# AIRnavX
 Aerial Investigator Reporter - NAVigation eXperiment
 
 CAPTURE aerial images
