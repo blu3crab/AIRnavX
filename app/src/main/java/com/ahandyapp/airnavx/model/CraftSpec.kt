@@ -21,17 +21,31 @@ data class CraftSpec(
     var craftDimsPA34: CraftDims = CraftDims(craftType = "PA34", wingspan = 38.9, length = 27.58),
     var craftDimsPC12: CraftDims = CraftDims(craftType = "PC12", wingspan = 53.4, length = 47.25),
     var craftDimsGoal: CraftDims = CraftDims(craftType = "GOAL", wingspan = 24.0, length = 8.0),
+//    var craftDimsMoon: CraftDims = CraftDims(craftType = "MOON", wingspan = 11400048.0, length = 11400048.0),
 
-    var dimsList: ArrayList<CraftDims> = arrayListOf(craftDimsC172, craftDimsPA28, craftDimsPA34, craftDimsPC12, craftDimsGoal),
+    var dimsList: ArrayList<CraftDims> = arrayListOf(
+        craftDimsC172,
+        craftDimsPA28,
+        craftDimsPA34,
+        craftDimsPC12,
+        craftDimsGoal),
+        //, craftDimsMoon),
 
     var craftTagC172List: java.util.ArrayList<String> = arrayListOf("UNKNOWN", "N2621Z", "N20283", "New(type)", "New(speak)"),
     var craftTagPA28List: java.util.ArrayList<String> = arrayListOf("UNKNOWN", "N21803", "N38657", "New(type)", "New(speak)"),
     var craftTagPA34List: java.util.ArrayList<String> = arrayListOf("UNKNOWN", "N142GD", "N12345", "New(type)", "New(speak)"),
     var craftTagPC12List: java.util.ArrayList<String> = arrayListOf("UNKNOWN", "UNKNOWN", "UNKNOWN", "New(type)", "New(speak)"),
     var craftTagGoalList: java.util.ArrayList<String> = arrayListOf("UNKNOWN", "UNKNOWN", "UNKNOWN", "New(type)", "New(speak)"),
+//    var craftTagGoalMoon: java.util.ArrayList<String> = arrayListOf("UNKNOWN", "UNKNOWN", "UNKNOWN", "New(type)", "New(speak)"),
 
     var tagInx: Int = 0,
-    var tagList: ArrayList<ArrayList<String>> = arrayListOf(craftTagC172List, craftTagPA28List, craftTagPA34List, craftTagPC12List, craftTagGoalList)
+    var tagList: ArrayList<ArrayList<String>> = arrayListOf(
+        craftTagC172List,
+        craftTagPA28List,
+        craftTagPA34List,
+        craftTagPC12List,
+        craftTagGoalList)
+        //, craftTagGoalMoon)
 )
 {
     private val TAG = "CraftSpec"
