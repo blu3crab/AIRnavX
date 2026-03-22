@@ -6,11 +6,16 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:7.2.1'
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        // Upgrade from 4.x.x to 8.5.0 to support Java 21 and modern Gradle
+        classpath 'com.android.tools.build:gradle:8.5.0'
 
-        // NOTE: Do not place your application dependencies here; they belong
-        // in the individual module build.gradle files
+        // Ensure Kotlin is also updated (1.9.20 or higher)
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.24"
+//        classpath 'com.android.tools.build:gradle:7.2.1'
+//        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+//
+//        // NOTE: Do not place your application dependencies here; they belong
+//        // in the individual module build.gradle files
     }
 }
 

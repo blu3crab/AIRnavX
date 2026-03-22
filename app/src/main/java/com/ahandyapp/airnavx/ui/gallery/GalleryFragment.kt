@@ -254,30 +254,30 @@ class GalleryFragment : Fragment() {
 
     private fun establishGestureDetector(context: Context, imageView: ImageView) {
         val gestureDetector = GestureDetector(activity, object : GestureDetector.SimpleOnGestureListener() {
-            override fun onDown(event: MotionEvent?): Boolean {
+            override fun onDown(event: MotionEvent): Boolean {
                 Log.i("TAG", "establishGestureDetector onDown: ")
                 // don't return false here or else none of the other gestures will work
                 return true
             }
 
-            override fun onSingleTapConfirmed(e: MotionEvent?): Boolean {
+            override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
                 Log.i("TAG", "establishGestureDetector onSingleTapConfirmed ZOOM IN...")
                 return true
             }
 
-            override fun onLongPress(e: MotionEvent?) {
+            override fun onLongPress(e: MotionEvent) {
                 val x = e?.x?.roundToInt()
                 val y = e?.y?.roundToInt()
                 Log.i("TAG", "establishGestureDetector onLongPress: x $x, y $y")
             }
 
-            override fun onDoubleTap(e: MotionEvent?): Boolean {
+            override fun onDoubleTap(e: MotionEvent): Boolean {
                 Log.i("TAG", "establishGestureDetector onDoubleTap...")
                 return true
             }
 
             override fun onScroll(
-                e1: MotionEvent?, e2: MotionEvent?,
+                e1: MotionEvent?, e2: MotionEvent,
                 distanceX: Float, distanceY: Float
             ): Boolean {
                 Log.i("TAG", "establishGestureDetector nScroll: distanceX $distanceX distanceY $distanceY")
@@ -285,7 +285,7 @@ class GalleryFragment : Fragment() {
             }
 
             override fun onFling(
-                event1: MotionEvent?, event2: MotionEvent?,
+                event1: MotionEvent?, event2: MotionEvent,
                 velocityX: Float, velocityY: Float
             ): Boolean {
                 Log.d("TAG", "establishGestureDetector onFling: velocityX $velocityX velocityY $velocityY")
@@ -323,7 +323,7 @@ class GalleryFragment : Fragment() {
                 return true
             }
 
-            override fun onShowPress(e: MotionEvent?) {
+            override fun onShowPress(e: MotionEvent) {
                 Log.i("TAG", "establishGestureDetector onShowPress: ")
                 return
             }

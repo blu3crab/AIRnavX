@@ -259,69 +259,125 @@ class CaptureFragment : Fragment() {
     /////////////////////////////life-cycle////////////////////////////////////
     private fun establishGestureDetector(imageView: ImageView) {
         val gestureDetector = GestureDetector(activity, object : GestureDetector.SimpleOnGestureListener() {
-            override fun onDown(event: MotionEvent?): Boolean {
+            override fun onDown(e: MotionEvent): Boolean { // Remove ?
                 Log.i("TAG", "establishGestureDetector onDown: ")
-                // don't return false here or else none of the other gestures will work
                 return true
             }
 
-            override fun onSingleTapConfirmed(e: MotionEvent?): Boolean {
+            override fun onSingleTapConfirmed(e: MotionEvent): Boolean { // Remove ?
                 Log.i("TAG", "establishGestureDetector onSingleTapConfirmed...")
                 return true
             }
 
-            // LONGPRESS -> delete selected set
-            override fun onLongPress(e: MotionEvent?) {
-                val x = e?.x?.roundToInt()
-                val y = e?.y?.roundToInt()
+            override fun onLongPress(e: MotionEvent) { // Remove ?
+                val x = e.x.roundToInt() // Safe to remove ?. here too
+                val y = e.y.roundToInt()
                 Log.i("TAG", "establishGestureDetector onLongPress: x $x, y $y")
-                airImageUtil.showDeleteAlertDialog(context!!, activity!!, null, captureViewModel)
-                //showAlertDialog()
+                // Note: Use context and activity without !! if possible, or use requireContext()
+                airImageUtil.showDeleteAlertDialog(requireContext(), requireActivity(), null, captureViewModel)
             }
 
-            override fun onDoubleTap(e: MotionEvent?): Boolean {
-                val x = e?.x?.roundToInt()
-                val y = e?.y?.roundToInt()
+            override fun onDoubleTap(e: MotionEvent): Boolean { // Remove ?
+                val x = e.x.roundToInt()
+                val y = e.y.roundToInt()
                 Log.i("TAG", "establishGestureDetector onDoubleTap: x $x, y $y")
                 return true
             }
 
             override fun onScroll(
-                e1: MotionEvent?, e2: MotionEvent?,
-                distanceX: Float, distanceY: Float
+                e1: MotionEvent?, // Usually stays nullable
+                e2: MotionEvent,  // Remove ?
+                distanceX: Float,
+                distanceY: Float
             ): Boolean {
                 Log.i("TAG", "establishGestureDetector nScroll: distanceX $distanceX distanceY $distanceY")
                 return true
             }
 
-            // FLING -> refresh from files
             override fun onFling(
-                event1: MotionEvent?, event2: MotionEvent?,
-                velocityX: Float, velocityY: Float
+                event1: MotionEvent?, // Usually stays nullable
+                event2: MotionEvent,  // Remove ?
+                velocityX: Float,
+                velocityY: Float
             ): Boolean {
                 Log.d("TAG", "establishGestureDetector onFling: velocityX $velocityX velocityY $velocityY")
-                Log.i("TAG", "establishGestureDetector resetting view model...")
-                Toast.makeText(context, "Fetching AIR capture files from storage...", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Fetching AIR capture files from storage...", Toast.LENGTH_SHORT).show()
 
-                Log.i("TAG", "establishGestureDetector resetting view model...")
-                // if unable to restore captureViewModel from previous session
-                if (!airImageUtil.fetchViewModel(context!!, activity!!, captureViewModel)) {
-                    // create empty view model
+                if (!airImageUtil.fetchViewModel(requireContext(), requireActivity(), captureViewModel)) {
                     createEmptyViewModel()
-                }
-                else {
-                    // re-establish view elements
-                    Log.d(TAG, "establishGestureDetector refreshViewModel resetting view model elements...")
+                } else {
                     refreshViewModel(captureViewModel.airCaptureArray[captureViewModel.gridPosition])
                 }
-
                 return true
             }
 
-            override fun onShowPress(e: MotionEvent?) {
+            override fun onShowPress(e: MotionEvent) { // Remove ?
                 Log.i("TAG", "establishGestureDetector onShowPress: ")
                 return
             }
+//            override fun onDown(e: MotionEvent?): Boolean {
+//                Log.i("TAG", "establishGestureDetector onDown: ")
+//                // don't return false here or else none of the other gestures will work
+//                return true
+//            }
+//
+//            override fun onSingleTapConfirmed(e: MotionEvent?): Boolean {
+//                Log.i("TAG", "establishGestureDetector onSingleTapConfirmed...")
+//                return true
+//            }
+//
+//            // LONGPRESS -> delete selected set
+//            override fun onLongPress(e: MotionEvent?) {
+//                val x = e?.x?.roundToInt()
+//                val y = e?.y?.roundToInt()
+//                Log.i("TAG", "establishGestureDetector onLongPress: x $x, y $y")
+//                airImageUtil.showDeleteAlertDialog(context!!, activity!!, null, captureViewModel)
+//                //showAlertDialog()
+//            }
+//
+//            override fun onDoubleTap(e: MotionEvent?): Boolean {
+//                val x = e?.x?.roundToInt()
+//                val y = e?.y?.roundToInt()
+//                Log.i("TAG", "establishGestureDetector onDoubleTap: x $x, y $y")
+//                return true
+//            }
+//
+//            override fun onScroll(
+//                e1: MotionEvent?, e2: MotionEvent?,
+//                distanceX: Float, distanceY: Float
+//            ): Boolean {
+//                Log.i("TAG", "establishGestureDetector nScroll: distanceX $distanceX distanceY $distanceY")
+//                return true
+//            }
+//
+//            // FLING -> refresh from files
+//            override fun onFling(
+//                event1: MotionEvent?, event2: MotionEvent?,
+//                velocityX: Float, velocityY: Float
+//            ): Boolean {
+//                Log.d("TAG", "establishGestureDetector onFling: velocityX $velocityX velocityY $velocityY")
+//                Log.i("TAG", "establishGestureDetector resetting view model...")
+//                Toast.makeText(context, "Fetching AIR capture files from storage...", Toast.LENGTH_SHORT).show()
+//
+//                Log.i("TAG", "establishGestureDetector resetting view model...")
+//                // if unable to restore captureViewModel from previous session
+//                if (!airImageUtil.fetchViewModel(context!!, activity!!, captureViewModel)) {
+//                    // create empty view model
+//                    createEmptyViewModel()
+//                }
+//                else {
+//                    // re-establish view elements
+//                    Log.d(TAG, "establishGestureDetector refreshViewModel resetting view model elements...")
+//                    refreshViewModel(captureViewModel.airCaptureArray[captureViewModel.gridPosition])
+//                }
+//
+//                return true
+//            }
+//
+//            override fun onShowPress(e: MotionEvent?) {
+//                Log.i("TAG", "establishGestureDetector onShowPress: ")
+//                return
+//            }
         })
         imageView.setOnTouchListener { _, event -> gestureDetector.onTouchEvent(event) }
     }

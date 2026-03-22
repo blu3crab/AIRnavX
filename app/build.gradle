@@ -4,40 +4,75 @@ plugins {
 }
 
 android {
-    compileSdkVersion 30
-    buildToolsVersion "30.0.3"
+    // 1. ADD NAMESPACE (Required in AGP 8.0+)
+    namespace 'com.ahandyapp.airnavx'
+
+    // 2. RENAME & UPDATE SDK (compileSdkVersion -> compileSdk)
+    compileSdk 34
 
     defaultConfig {
         applicationId "com.ahandyapp.airnavx"
         minSdkVersion 29
-        targetSdkVersion 30
+
+        // 3. RENAME targetSdkVersion -> targetSdk
+        targetSdk 34
+
         versionCode 1
         versionName "1.0"
-
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
-    buildTypes {
-        release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-        }
-    }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
-    }
-    kotlinOptions {
-        jvmTarget = '1.8'
-    }
-    buildFeatures {
-        viewBinding true
-    }
-    dataBinding {
-        enabled = true
+        // 4. UPDATE JAVA VERSION (AGP 8.0+ requires at least Java 17)
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
 
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+
+    buildFeatures {
+        viewBinding true
+        dataBinding true // Replaces the old dataBinding { enabled = true }
+    }
 }
+//android {
+
+//    compileSdkVersion 30
+//    buildToolsVersion "30.0.3"
+//
+//    defaultConfig {
+//        applicationId "com.ahandyapp.airnavx"
+//        minSdkVersion 29
+//        targetSdkVersion 30
+//        versionCode 1
+//        versionName "1.0"
+//
+//        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+//    }
+//
+//    buildTypes {
+//        release {
+//            minifyEnabled false
+//            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+//        }
+//    }
+//    compileOptions {
+//        sourceCompatibility JavaVersion.VERSION_1_8
+//        targetCompatibility JavaVersion.VERSION_1_8
+//    }
+//    kotlinOptions {
+//        jvmTarget = '1.8'
+//    }
+//    buildFeatures {
+//        viewBinding true
+//    }
+//    dataBinding {
+//        enabled = true
+//    }
+//
+//}
 
 dependencies {
 
