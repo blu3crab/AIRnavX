@@ -63,6 +63,9 @@ class InspectFragment : Fragment() {
     private var zoomStepX = mutableListOf<Int>()
     private var zoomStepY = mutableListOf<Int>()
 
+    private var currentCropLeft = 0
+    private var currentCropTop = 0
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -83,9 +86,6 @@ class InspectFragment : Fragment() {
         craftTypeTextView = root.findViewById(R.id.text_crafttype)
         measureTextView = root.findViewById(R.id.text_measure)
 
-        // set listeners
-        setButtonListeners(root)
-
         // retrieve AirCapture under inspection
         airCapture = captureViewModel.airCaptureArray[captureViewModel.gridPosition]
 
@@ -93,7 +93,18 @@ class InspectFragment : Fragment() {
         captureBitmap = captureViewModel.origBitmapArray[captureViewModel.gridPosition]
         referenceBitmap = captureBitmap
         inspectBitmap = captureBitmap
+
+        currentCropLeft = 0
+        currentCropTop = 0
+
+        // set listeners
+        setButtonListeners(root)
+
         inspectImageView.setImageBitmap(inspectBitmap)
+        inspectImageView.isClickable = true
+        inspectImageView.isLongClickable = true
+        inspectImageView.isFocusable = true
+
         Log.d(TAG, "onCreateView captureBitmap w/h ${captureBitmap.width}/${captureBitmap.height}")
         Log.d(TAG, "onCreateView imageViewInspect w/h ${inspectImageView.width}/${inspectImageView.height}")
 
@@ -111,9 +122,12 @@ class InspectFragment : Fragment() {
         // establish inspect image gesture detector
         establishGestureDetector(inspectImageView)
 
+        // initialize zoom dimensions in viewmodel
+        inspectViewModel.zoomWidth = inspectBitmap.width
+        inspectViewModel.zoomHeight = inspectBitmap.height
+
         return root
     }
-    // TODO: refactor button handlers to methods
     // establish button listeners
     private fun setButtonListeners(root: View) {
         // BUTTON: measure image dimension by HORIZONTAL | VERTICAL
@@ -121,32 +135,14 @@ class InspectFragment : Fragment() {
         dimensionButton.text = inspectViewModel.measureDimension.toString()
         dimensionTextView.text = "H: ${inspectViewModel.zoomWidth} x V: ${inspectViewModel.zoomHeight}"
         dimensionButton.setOnClickListener {
-            //Toast.makeText(this.context, "Set dimension to measure - horizontal or vertical...", Toast.LENGTH_SHORT).show()
-            if (inspectViewModel.measureDimension == AirConstant.MeasureDimension.HORIZONTAL) {
-                inspectViewModel.measureDimension = AirConstant.MeasureDimension.VERTICAL
-            }
-            else {
-                inspectViewModel.measureDimension = AirConstant.MeasureDimension.HORIZONTAL
-            }
-            //updateMeasureDimensionText()
-            dimensionButton.text = inspectViewModel.measureDimension.toString()
-            dimensionTextView.text = "H: ${inspectViewModel.zoomWidth} x V: ${inspectViewModel.zoomHeight}"
-            Log.d(TAG, "buttonDimension.setOnClickListener->Set dimension ${inspectViewModel.measureDimension}")
+            onDimensionButtonClick()
         }
 
         // BUTTON: orient craft to WINGSPAN | LENGTH
         orientButton = root.findViewById(R.id.button_orient) as Button
         orientButton.text = inspectViewModel.craftOrientation.toString()
         orientButton.setOnClickListener {
-            //Toast.makeText(this.context, "Set orientation of measure - wingspan or length-to-tail...", Toast.LENGTH_SHORT).show()
-            if (inspectViewModel.craftOrientation == AirConstant.CraftOrientation.WINGSPAN) {
-                inspectViewModel.craftOrientation = AirConstant.CraftOrientation.LENGTH            }
-            else {
-                inspectViewModel.craftOrientation = AirConstant.CraftOrientation.WINGSPAN
-            }
-            //updateCraftOrientationText()
-            orientButton.text = inspectViewModel.craftOrientation.toString()
-            Log.d(TAG, "buttonOrient.setOnClickListener->Set orientation ${inspectViewModel.craftOrientation}...")
+            onOrientButtonClick()
         }
 
         // TODO: enable craft type entry & dimensions
@@ -163,22 +159,7 @@ class InspectFragment : Fragment() {
                 "${airCapture.craftLength}"
 
         craftTypeButton.setOnClickListener {
-            //Toast.makeText(this.context, "Select aircraft type...", Toast.LENGTH_SHORT).show()
-            ++craftSpec.typeInx
-            if (craftSpec.typeInx > craftSpec.dimsList.size-1) {
-                craftSpec.typeInx = 0
-            }
-            // clear tag list index when new type is selected
-            craftSpec.tagInx = 0
-            craftTagButton.text = craftSpec.tagList[craftSpec.typeInx][craftSpec.tagInx]
-
-            // update button text & textview
-            craftTypeButton.text = craftSpec.dimsList[craftSpec.typeInx].craftType
-            craftTypeTextView.text = "wingspan x length->${craftSpec.dimsList[craftSpec.typeInx].wingspan}x" +
-                    "${craftSpec.dimsList[craftSpec.typeInx].length}"
-
-            Log.d(TAG, "buttonCraftType.setOnClickListener->Select aircraft type ${craftSpec.typeInx}, " +
-                    "${craftSpec.dimsList[craftSpec.typeInx].craftType}...")
+            onCraftTypeButtonClick()
         }
 
         // BUTTON: identify aircraft tag
@@ -187,29 +168,76 @@ class InspectFragment : Fragment() {
         craftTagButton.text = craftSpec.tagList[craftSpec.typeInx][craftSpec.tagInx]
 
         craftTagButton.setOnClickListener {
-            // present aircraft identification tag list
-            showIdentifyAlertDialog()
-            Log.d(TAG, "buttonIdentify.setOnClickListener->Identify aircraft list size " +
-                    "${craftSpec.tagList[craftSpec.typeInx].size-1}->${craftSpec.tagList[craftSpec.typeInx]}")
-
-            craftTagButton.text = craftSpec.tagList[craftSpec.typeInx][craftSpec.tagInx]
-            Log.d(TAG, "buttonIdentify.setOnClickListener->Identify aircraft ${craftSpec.typeInx}->" +
-                    "${craftSpec.tagList[craftSpec.typeInx]}")
+            onCraftTagButtonClick()
         }
 
         // BUTTON: measure
         measureButton = root.findViewById(R.id.button_measure) as Button
         measureTextView.text = "Altitude ${airCapture.airObjectAltitude.toInt()}, distance ${airCapture.airObjectDistance.toInt()}"
         measureButton.setOnClickListener {
-            Toast.makeText(this.context, "Measuring Object Under Inspection...", Toast.LENGTH_SHORT).show()
-            measure()
-            measureTextView.text = "Altitude ${airCapture.airObjectAltitude.toInt()}, distance ${airCapture.airObjectDistance.toInt()}"
-            Log.d(TAG, "buttonMeasure.setOnClickListener->Measuring Object Under Inspection...")
+            onMeasureButtonClick()
         }
     }
 
+    private fun onDimensionButtonClick() {
+        if (inspectViewModel.measureDimension == AirConstant.MeasureDimension.HORIZONTAL) {
+            inspectViewModel.measureDimension = AirConstant.MeasureDimension.VERTICAL
+        } else {
+            inspectViewModel.measureDimension = AirConstant.MeasureDimension.HORIZONTAL
+        }
+        dimensionButton.text = inspectViewModel.measureDimension.toString()
+        dimensionTextView.text = "H: ${inspectViewModel.zoomWidth} x V: ${inspectViewModel.zoomHeight}"
+        Log.d(TAG, "onDimensionButtonClick->Set dimension ${inspectViewModel.measureDimension}")
+    }
+
+    private fun onOrientButtonClick() {
+        if (inspectViewModel.craftOrientation == AirConstant.CraftOrientation.WINGSPAN) {
+            inspectViewModel.craftOrientation = AirConstant.CraftOrientation.LENGTH
+        } else {
+            inspectViewModel.craftOrientation = AirConstant.CraftOrientation.WINGSPAN
+        }
+        orientButton.text = inspectViewModel.craftOrientation.toString()
+        Log.d(TAG, "onOrientButtonClick->Set orientation ${inspectViewModel.craftOrientation}...")
+    }
+
+    private fun onCraftTypeButtonClick() {
+        ++craftSpec.typeInx
+        if (craftSpec.typeInx > craftSpec.dimsList.size - 1) {
+            craftSpec.typeInx = 0
+        }
+        // clear tag list index when new type is selected
+        craftSpec.tagInx = 0
+        craftTagButton.text = craftSpec.tagList[craftSpec.typeInx][craftSpec.tagInx]
+
+        // update button text & textview
+        craftTypeButton.text = craftSpec.dimsList[craftSpec.typeInx].craftType
+        craftTypeTextView.text = "wingspan x length->${craftSpec.dimsList[craftSpec.typeInx].wingspan}x" +
+                "${craftSpec.dimsList[craftSpec.typeInx].length}"
+
+        Log.d(TAG, "onCraftTypeButtonClick->Select aircraft type ${craftSpec.typeInx}, " +
+                "${craftSpec.dimsList[craftSpec.typeInx].craftType}...")
+    }
+
+    private fun onCraftTagButtonClick() {
+        // present aircraft identification tag list
+        showIdentifyAlertDialog()
+        Log.d(TAG, "onCraftTagButtonClick->Identify aircraft list size " +
+                "${craftSpec.tagList[craftSpec.typeInx].size - 1}->${craftSpec.tagList[craftSpec.typeInx]}")
+
+        craftTagButton.text = craftSpec.tagList[craftSpec.typeInx][craftSpec.tagInx]
+        Log.d(TAG, "onCraftTagButtonClick->Identify aircraft ${craftSpec.typeInx}->" +
+                "${craftSpec.tagList[craftSpec.typeInx]}")
+    }
+
+    private fun onMeasureButtonClick() {
+        Toast.makeText(this.context, "Measuring Object Under Inspection...", Toast.LENGTH_SHORT).show()
+        measure()
+        measureTextView.text = "Altitude ${airCapture.airObjectAltitude.toInt()}, distance ${airCapture.airObjectDistance.toInt()}"
+        Log.d(TAG, "onMeasureButtonClick->Measuring Object Under Inspection...")
+    }
+
     private fun establishGestureDetector(imageView: ImageView) {
-        val gestureDetector = GestureDetector(activity, object : GestureDetector.SimpleOnGestureListener() {
+        val gestureDetector = GestureDetector(imageView.context, object : GestureDetector.SimpleOnGestureListener() {
             override fun onDown(event: MotionEvent): Boolean {
                 Log.i("TAG", "establishGestureDetector onDown: ")
                 // don't return false here or else none of the other gestures will work
@@ -270,6 +298,8 @@ class InspectFragment : Fragment() {
                         captureBitmap = captureViewModel.origBitmapArray[captureViewModel.gridPosition]
                         referenceBitmap = captureBitmap
                         inspectBitmap = captureBitmap
+                        currentCropLeft = 0
+                        currentCropTop = 0
                         inspectImageView.setImageBitmap(inspectBitmap)
                         Log.d(TAG, "onFling captureBitmap w/h ${captureBitmap.width}/${captureBitmap.height}")
                         Log.d(TAG, "onFling imageViewInspect w/h ${inspectImageView.width}/${inspectImageView.height}")
@@ -283,7 +313,13 @@ class InspectFragment : Fragment() {
                 return
             }
         })
-        imageView.setOnTouchListener { _, event -> gestureDetector.onTouchEvent(event) }
+        gestureDetector.setIsLongpressEnabled(true)
+        imageView.setOnTouchListener { v, event ->
+            if (event.action == MotionEvent.ACTION_UP) {
+                v.performClick()
+            }
+            gestureDetector.onTouchEvent(event)
+        }
     }
 
     private fun measure() {
@@ -336,13 +372,97 @@ class InspectFragment : Fragment() {
     private fun centerBitmap(x: Int, y: Int) {
         // center bitmap at x, y
         Log.d(TAG, "centerBitmap-> x $x, y $y")
-        // TODO: implement centerBitmap
+        Toast.makeText(this.context, "Centering image at $x, $y", Toast.LENGTH_SHORT).show()
+
+        val width = inspectImageView.width
+        val height = inspectImageView.height
+        val bitmapWidth = inspectBitmap.width
+        val bitmapHeight = inspectBitmap.height
+
+        if (width == 0 || height == 0) return
+
+        val scale: Float
+        val dx: Float
+        val dy: Float
+
+        if (bitmapWidth * height > width * bitmapHeight) {
+            scale = width.toFloat() / bitmapWidth
+            dx = 0f
+            dy = (height - bitmapHeight * scale) * 0.5f
+        } else {
+            scale = height.toFloat() / bitmapHeight
+            dx = (width - bitmapWidth * scale) * 0.5f
+            dy = 0f
+        }
+
+        val bitmapX = ((x - dx) / scale).toInt()
+        val bitmapY = ((y - dy) / scale).toInt()
+
+        val origX = currentCropLeft + bitmapX
+        val origY = currentCropTop + bitmapY
+
+        var newLeft = origX - bitmapWidth / 2
+        var newTop = origY - bitmapHeight / 2
+
+        newLeft = if (newLeft < 0) 0 else if (newLeft + bitmapWidth > captureBitmap.width) captureBitmap.width - bitmapWidth else newLeft
+        newTop = if (newTop < 0) 0 else if (newTop + bitmapHeight > captureBitmap.height) captureBitmap.height - bitmapHeight else newTop
+
+        inspectBitmap = Bitmap.createBitmap(captureBitmap, newLeft, newTop, bitmapWidth, bitmapHeight)
+        currentCropLeft = newLeft
+        currentCropTop = newTop
+
+        inspectImageView.setImageBitmap(inspectBitmap)
     }
 
     private fun inspectZoomOnTap(direction: InspectViewModel.ZoomDirection) {
         // zoom in or out at center of image
         Log.d(TAG, "inspectZoomOnTap-> direction $direction")
-        // TODO: implement inspectZoomOnTap
+
+        if (direction == InspectViewModel.ZoomDirection.IN) {
+            Toast.makeText(this.context, "Zooming IN...", Toast.LENGTH_SHORT).show()
+            // Zoom in: reduce crop area by 20%
+            val newWidth = (inspectBitmap.width * 0.8).toInt()
+            val newHeight = (inspectBitmap.height * 0.8).toInt()
+
+            if (newWidth > 100 && newHeight > 100) {
+                zoomStepX.add(inspectBitmap.width)
+                zoomStepY.add(inspectBitmap.height)
+
+                val left = (inspectBitmap.width - newWidth) / 2
+                val top = (inspectBitmap.height - newHeight) / 2
+
+                inspectBitmap = Bitmap.createBitmap(inspectBitmap, left, top, newWidth, newHeight)
+                currentCropLeft += left
+                currentCropTop += top
+            }
+        } else {
+            Toast.makeText(this.context, "Zooming OUT...", Toast.LENGTH_SHORT).show()
+            // Zoom out: restore from steps
+            if (zoomStepX.isNotEmpty()) {
+                zoomStepX.removeAt(zoomStepX.size - 1)
+                zoomStepY.removeAt(zoomStepY.size - 1)
+
+                // For simplicity in this experiment, zoom out returns to full size
+                // if we don't track the actual Rects.
+                if (zoomStepX.isEmpty()) {
+                    inspectBitmap = captureBitmap
+                    currentCropLeft = 0
+                    currentCropTop = 0
+                } else {
+                    // Reset to full if we can't easily re-crop
+                    zoomStepX.clear()
+                    zoomStepY.clear()
+                    inspectBitmap = captureBitmap
+                    currentCropLeft = 0
+                    currentCropTop = 0
+                }
+            }
+        }
+        
+        inspectImageView.setImageBitmap(inspectBitmap)
+        inspectViewModel.zoomWidth = inspectBitmap.width
+        inspectViewModel.zoomHeight = inspectBitmap.height
+        dimensionTextView.text = "H: ${inspectViewModel.zoomWidth} x V: ${inspectViewModel.zoomHeight}"
     }
 
     private fun showIdentifyAlertDialog() {

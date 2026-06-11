@@ -61,6 +61,14 @@ class MainActivity : AppCompatActivity() {
         setupActionBarWithNavController(navController, appBarConfiguration)
         navView.setupWithNavController(navController)
 
+        navController.addOnDestinationChangedListener { _, destination, _ ->
+            if (destination.id == R.id.nav_inspect) {
+                binding.appBarMain.fab.hide()
+            } else {
+                binding.appBarMain.fab.show()
+            }
+        }
+
         if (!hasPermissions(this, PERMISSIONS_REQUIRED)) {
             Log.d(TAG, "onCreate hasPermissions FALSE...")
             requestPermissions(PERMISSIONS_REQUIRED, PERMISSIONS_REQUEST_CODE)
